@@ -272,9 +272,21 @@ class WindowTemplates {
      * @returns {HTMLElement} The window content
      */
     static createImageViewerContent(imagePath) {
+        // Initialize the pending image variable if it doesn't exist
+        if (!window.imageViewerState) {
+            window.imageViewerState = {
+                pendingImage: null,
+                isAppReady: false,
+                maxRetries: 20,  // More retries for GitHub environment
+                retryCount: 0,
+                retryDelay: 200  // Shorter initial delays but more attempts
+            };
+        }
+        
         // Store the image path to open, if provided
         if (imagePath) {
-            window.pendingImageToOpen = imagePath;
+            window.imageViewerState.pendingImage = imagePath;
+            window.imageViewerState.retryCount = 0; // Reset retry counter
         }
         
         // Create the standard iframe container
@@ -283,38 +295,75 @@ class WindowTemplates {
         // Get the iframe element
         const iframe = content.querySelector('iframe');
         
-        // Add an additional load event listener specifically for image opening
-        iframe.addEventListener('load', function() {
-            // Check if there's a pending image to open
-            if (window.pendingImageToOpen) {
-                // Function to attempt sending the message with retry logic
-                const sendImageMessage = () => {
-                    try {
-                        // Check if iframe content window is ready
-                        if (this.contentWindow && this.contentWindow.postMessage) {
-                            // Use a more specific targetOrigin for security
-                            const targetOrigin = window.location.origin;
-                            this.contentWindow.postMessage({
-                                type: 'open-image',
-                                imagePath: window.pendingImageToOpen
-                            }, targetOrigin === 'null' ? '*' : targetOrigin);
-                            
-                            // Clear the pending image after successful send
-                            window.pendingImageToOpen = null;
-                        } else {
-                            // Retry if iframe content window isn't ready yet
-                            setTimeout(sendImageMessage, 100);
-                        }
-                    } catch (e) {
-                        console.error('Failed to send image to viewer:', e);
-                        // Clear pending image on error to avoid retry loop
-                        window.pendingImageToOpen = null;
-                    }
-                };
+        // Setup message event handler to listen for "ready" message from iframe
+        window.addEventListener('message', function(event) {
+            // Check if message is from our image viewer iframe
+            if (event.data && event.data.type === 'image-viewer-ready') {
+                console.log('Image viewer app reported ready');
+                window.imageViewerState.isAppReady = true;
                 
-                // Start trying to send the message after a short delay
-                // This ensures the iframe application has initialized
-                setTimeout(sendImageMessage, 300);
+                // If there's a pending image and the app is now ready, send it
+                if (window.imageViewerState.pendingImage) {
+                    sendImageToViewer(window.imageViewerState.pendingImage);
+                }
+            }
+        });
+        
+        // Function to send image to viewer with retry logic
+        function sendImageToViewer(imagePath) {
+            if (!iframe.contentWindow || window.imageViewerState.retryCount >= window.imageViewerState.maxRetries) {
+                if (window.imageViewerState.retryCount >= window.imageViewerState.maxRetries) {
+                    console.warn('Max retries reached for sending image to viewer');
+                }
+                return;
+            }
+            
+            try {
+                // Use a more specific targetOrigin for security
+                const targetOrigin = window.location.origin;
+                const actualOrigin = targetOrigin === 'null' ? '*' : targetOrigin;
+                
+                iframe.contentWindow.postMessage({
+                    type: 'open-image',
+                    imagePath: imagePath
+                }, actualOrigin);
+                
+                console.log('Sent open-image message to viewer:', imagePath);
+                
+                // Schedule another attempt with increasing delay
+                window.imageViewerState.retryCount++;
+                const nextDelay = window.imageViewerState.retryDelay * (1 + (window.imageViewerState.retryCount * 0.1));
+                
+                // Continue retrying even after we think it worked, to ensure delivery
+                setTimeout(() => {
+                    if (window.imageViewerState.pendingImage === imagePath) {
+                        sendImageToViewer(imagePath);
+                    }
+                }, nextDelay);
+                
+            } catch (e) {
+                console.error('Failed to send image to viewer:', e);
+                
+                // Retry with increasing delay
+                window.imageViewerState.retryCount++;
+                setTimeout(() => {
+                    if (window.imageViewerState.pendingImage === imagePath) {
+                        sendImageToViewer(imagePath);
+                    }
+                }, window.imageViewerState.retryDelay * window.imageViewerState.retryCount);
+            }
+        }
+        
+        // Add load event listener for iframe and start sending image if needed
+        iframe.addEventListener('load', function() {
+            console.log('Image viewer iframe loaded');
+            
+            // Start sending image if there's a pending one, with a delay
+            // even if we haven't received the ready message yet
+            if (window.imageViewerState.pendingImage) {
+                setTimeout(() => {
+                    sendImageToViewer(window.imageViewerState.pendingImage);
+                }, 500); // Initial delay after load
             }
         });
         
