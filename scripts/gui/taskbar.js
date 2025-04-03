@@ -105,4 +105,19 @@ export default class Taskbar {
             });
         });
     }
+
+    closeStartMenu() {
+        if (!this.startMenu) return;
+        
+        // Hide the menu immediately
+        this.startMenu.classList.remove('active');
+        this.hideAllProgramsMenu();
+        this.startMenu.style.visibility = 'hidden';
+        this.startMenu.style.opacity = '0';
+        
+        // Notify listeners that menu was closed
+        this.eventBus.publish('startmenu:closed');
+        
+        // Remove the timeout - no animation delay
+    }
 }

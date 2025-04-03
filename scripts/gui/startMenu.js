@@ -398,19 +398,17 @@ export default class StartMenu {
     closeStartMenu() {
         if (!this.startMenu) return;
         
-        // Hide the menu with fade-out effect
+        // Hide the menu immediately without animation
         this.startMenu.classList.remove('active');
-        this.hideAllProgramsMenu(); // Ensure submenu is also hidden
+        this.hideAllProgramsMenu();
+        
+        // Immediately hide without waiting
+        this.startMenu.style.visibility = 'hidden';
+        this.startMenu.style.opacity = '0';
         
         // Notify listeners that menu was closed
         this.eventBus.publish('startmenu:closed');
         
-        // Use a timeout to remove the menu from DOM after animation completes
-        setTimeout(() => {
-            if (this.startMenu && this.startMenu.parentNode) {
-                this.startMenu.style.visibility = 'hidden';
-                this.startMenu.style.opacity = '0';
-            }
-        }, 200); // Match this with CSS transition duration
+        // Remove the timeout completely
     }
 }
