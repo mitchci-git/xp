@@ -447,9 +447,6 @@ iframe {
 }
 
 /* My Pictures specific styling */
-.window[data-program="my-pictures"] {
-    /* Common window settings */
-}
 
 .window[data-program="my-pictures"] .window-body {
     padding: 0 !important;
