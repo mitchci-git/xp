@@ -249,24 +249,62 @@ export default class WindowManager {
         window.addEventListener('my-pictures:open-image', (e) => {
             const { imageName, imagePath } = e.detail;
             
+            // Make sure paths are correctly formed
+            const cleanImagePath = imagePath.startsWith('./') ? 
+                imagePath : './' + imagePath.replace(/^\/+/, '');
+                
+            console.log('[Windows] Opening image viewer with:', cleanImagePath);
+            
             // Open image viewer
             this.openProgram('image-viewer');
             
-            // Short delay to ensure window is created
-            setTimeout(() => {
+            // Track attempts to send the message
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            // Function to send image data with retries
+            const sendImageData = () => {
+                attempts++;
+                
                 const imageViewerWindow = document.getElementById('image-viewer-window');
                 if (imageViewerWindow) {
                     const iframe = imageViewerWindow.querySelector('iframe');
                     if (iframe && iframe.contentWindow) {
+                        console.log(`[Windows] Sending image data (attempt ${attempts}):`, cleanImagePath);
+                        
                         // Send message to image viewer
-                        iframe.contentWindow.postMessage({
-                            type: 'load-image',
-                            imageName: imageName,
-                            imagePath: imagePath
-                        }, '*');
+                        try {
+                            iframe.contentWindow.postMessage({
+                                type: 'load-image',
+                                imageName: imageName,
+                                imagePath: cleanImagePath
+                            }, '*');
+                        } catch (e) {
+                            console.error('[Windows] Error sending image data:', e);
+                        }
+                        
+                        return true; // Message sent
                     }
                 }
-            }, 200);
+                
+                return false; // Message not sent
+            };
+            
+            // Try immediately
+            const sent = sendImageData();
+            
+            // If not sent or for redundancy, set up delayed retries
+            if (!sent || true) { // Always do retries for reliability
+                // First retry after 100ms
+                setTimeout(sendImageData, 100);
+                
+                // Second retry after 250ms
+                setTimeout(sendImageData, 250);
+                
+                // More retries with increasing delays
+                setTimeout(sendImageData, 500);
+                setTimeout(sendImageData, 1000);
+            }
         });
     }
     

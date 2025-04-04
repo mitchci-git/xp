@@ -47,13 +47,21 @@
         hasAttemptedRecovery: false,
         recoveryAttempts: 0,
         maxRecoveryAttempts: 3,
-        lastActivityTime: Date.now()
+        lastActivityTime: Date.now(),
+        
+        // Add first-load tracking
+        isFirstLoad: true,
+        loadRetryCount: 0,
+        maxLoadRetries: 5,
+        
+        // Track if we've shown any image successfully
+        hasDisplayedImage: false
     };
 
-    // Initialize immediately and set up a backup initialization
+    // Initialize immediately
     init();
     
-    // Double-check initialization after 50ms
+    // Double-check initialization after a short delay
     setTimeout(init, 50);
     
     // Triple-check initialization after 100ms
@@ -85,6 +93,11 @@
         setupEventListeners();
         setupTooltips();
         
+        // Clear placeholder text immediately
+        if (imageInfo && imageInfo.textContent === "Image name and details") {
+            imageInfo.textContent = "";
+        }
+        
         // Mark app as ready immediately
         state.appReady = true;
         state.lastActivityTime = Date.now();
@@ -95,6 +108,29 @@
         // Set up a repeated ready signal for redundancy
         for (let i = 1; i <= 5; i++) {
             setTimeout(sendReadySignal, i * 100); // Send 5 times over 500ms
+        }
+        
+        // Add a special check for any pending image
+        setTimeout(checkForPendingImages, 300);
+    }
+    
+    // New function to check URL parameters for a direct image load
+    function checkForPendingImages() {
+        // If we have a pending image load, process it now
+        if (state.pendingImageLoad) {
+            console.log('[PhotoViewer] Found pending image, loading now');
+            loadImage(state.pendingImageLoad);
+            state.pendingImageLoad = null;
+        } else {
+            // No pending image, check if we should load a default image
+            // This helps ensure the image viewer always shows something
+            if (!state.hasDisplayedImage && state.imagesArray.length > 0) {
+                console.log('[PhotoViewer] Loading default image');
+                loadImage({
+                    path: state.imagesArray[0].path,
+                    name: state.imagesArray[0].name
+                });
+            }
         }
     }
     
@@ -243,7 +279,9 @@
             window.parent.postMessage({ 
                 type: 'image-viewer-ready',
                 timestamp: Date.now(),
-                attempt: state.readyCheckCount + 1
+                attempt: state.readyCheckCount + 1,
+                // Add info about pending images
+                hasPendingImage: !!state.pendingImageLoad
             }, '*');
             
             state.readyCheckCount++;
@@ -279,11 +317,46 @@
                     console.error('[PhotoViewer] Error sending acknowledgment:', err);
                 }
                 
-                // Load the image - always attempt to load regardless of ready state
-                loadImage({
-                    path: imagePath,
-                    name: imageName
-                });
+                // Extra handling for first load
+                if (state.isFirstLoad) {
+                    console.log('[PhotoViewer] First image load detected');
+                    
+                    // Store as pending in case we need to retry
+                    state.pendingImageLoad = {
+                        path: imagePath,
+                        name: imageName
+                    };
+                    
+                    // Make sure UI is properly cleared
+                    if (imageInfo) imageInfo.textContent = "";
+                    
+                    // Short delay for first load only - helps with race conditions
+                    setTimeout(() => {
+                        loadImage({
+                            path: imagePath,
+                            name: imageName
+                        });
+                        
+                        // Since we're doing a delayed load, also set up a retry
+                        // in case this one fails
+                        setTimeout(() => {
+                            if (!state.hasDisplayedImage && state.pendingImageLoad) {
+                                console.log('[PhotoViewer] First load may have failed, retrying');
+                                loadImage(state.pendingImageLoad);
+                                state.pendingImageLoad = null;
+                            }
+                        }, 500);
+                        
+                    }, 50);
+                    
+                    state.isFirstLoad = false;
+                } else {
+                    // Standard load for subsequent images
+                    loadImage({
+                        path: imagePath,
+                        name: imageName
+                    });
+                }
                 break;
                 
             case 'window-state-update':
@@ -350,6 +423,7 @@
         
         // Prepare the image (completely hide it first)
         if (imageDisplay) {
+            // Clear any previous styling/classes
             imageDisplay.style.transition = 'none';
             imageDisplay.style.visibility = 'hidden';
             imageDisplay.style.opacity = '0';
@@ -370,6 +444,11 @@
             let imagePath = imageData.path;
             if (imagePath.startsWith('./')) {
                 imagePath = '../../' + imagePath.substring(2);
+            }
+            
+            // Make sure path is fully resolved for Firefox compatibility
+            if (!imagePath.includes('://') && !imagePath.startsWith('/') && !imagePath.startsWith('../../')) {
+                imagePath = '../../' + imagePath;
             }
             
             // Store the current path being loaded (helps prevent race conditions)
@@ -421,6 +500,11 @@
                 // Clear loading state and path
                 state.isLoading = false;
                 state.currentlyLoading = null;
+                state.hasDisplayedImage = true;
+                state.loadRetryCount = 0;
+                
+                // Clear any pending image load since we've loaded successfully
+                state.pendingImageLoad = null;
             };
             
             imageDisplay.onerror = function(err) {
@@ -432,8 +516,10 @@
                 imageDisplay.style.opacity = '0';
                 imageDisplay.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
                 
-                // Update info
-                if (imageInfo) imageInfo.textContent = `Error: Could not load ${state.imageName}`;
+                // Update info with error
+                if (imageInfo) {
+                    imageInfo.textContent = `Error: Could not load ${state.imageName}`;
+                }
                 
                 // Create error message
                 if (imageContainer) {
@@ -456,15 +542,32 @@
                 if (prevButton) prevButton.disabled = false;
                 if (nextButton) nextButton.disabled = false;
                 
-                // Clear loading state and path
+                // Clear loading state
                 state.isLoading = false;
                 state.currentlyLoading = null;
+                
+                // Try to retry loading a few times for the first image
+                if (!state.hasDisplayedImage && state.loadRetryCount < state.maxLoadRetries) {
+                    state.loadRetryCount++;
+                    console.log(`[PhotoViewer] Retrying image load (${state.loadRetryCount}/${state.maxLoadRetries})`);
+                    
+                    // Try again with a delay
+                    setTimeout(() => {
+                        loadImage(imageData);
+                    }, 200 * state.loadRetryCount);
+                }
             };
             
             // Set image source to start loading (do this last)
             console.log(`[PhotoViewer] Setting image src: ${imagePath}`);
             setTimeout(() => {
                 if (imageDisplay) {
+                    // For debugging, show the path in the UI if we have issues
+                    if (state.loadRetryCount > 0 && imageInfo) {
+                        imageInfo.textContent = `Loading: ${imagePath} (try ${state.loadRetryCount})`;
+                    }
+                    
+                    // Set the source to begin loading
                     imageDisplay.src = imagePath;
                 }
             }, 0);
@@ -496,6 +599,9 @@
         } else {
             state.currentImageIndex = 0;
         }
+        
+        // We're now in a manual navigation, not first load
+        state.isFirstLoad = false;
         
         navigateToImageIndex();
     }
