@@ -1,519 +1,512 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const imageDisplay = document.getElementById('image-display');
-    const imageContainer = document.getElementById('image-container');
-    const imageInfo = document.getElementById('image-info');
-    const zoomLevel = document.getElementById('zoom-level');
-    
-    // Cache button elements
-    const prevButton = document.getElementById('prev-button');
-    const nextButton = document.getElementById('next-button');
-    const zoomInButton = document.getElementById('zoom-in-button');
-    const zoomOutButton = document.getElementById('zoom-out-button');
-    const rotateButton = document.getElementById('rotate-button');
-    
-    // Prevent selection and highlighting throughout the app
-    document.addEventListener('mousedown', function(e) {
-        if (!e.target.classList.contains('toolbar-button')) {
-            e.preventDefault();
-        }
-    });
-    
-    // Prevent drag start for all elements
-    document.addEventListener('dragstart', e => e.preventDefault());
-    
-    // Add tooltip functionality
-    setupTooltips();
-    
-    // State variables
-    let currentZoom = 0.825; // 82.5%
-    let currentRotation = 0;
-    let imageName = '';
-    let imagesArray = [];
-    let currentImageIndex = 0;
-    let isWindowMaximized = false;
-    let initialImageLoaded = false;
-    let displayScaleFactor = 100 / 82.5;
-    let isLoadingImage = false; // Flag to prevent multiple simultaneous loads
-    let readyMessageSent = false; // Track if ready message was sent
-    let messageHandlersRegistered = false;
-    
-    // Setup tooltips for toolbar buttons with single tooltip instance
-    let activeTooltip = null;
-    
-    function setupTooltips() {
-        const buttons = document.querySelectorAll('.toolbar-button');
-        
-        buttons.forEach(button => {
-            button.addEventListener('mouseenter', () => showTooltip(button));
-            button.addEventListener('mouseleave', () => hideTooltip());
-        });
-    }
-    
-    function showTooltip(element) {
-        hideTooltip();
-        
-        const tooltipText = element.getAttribute('data-tooltip');
-        if (!tooltipText) return;
-        
-        const tooltip = document.createElement('div');
-        tooltip.className = 'viewer-tooltip';
-        tooltip.textContent = tooltipText;
-        document.body.appendChild(tooltip);
-        activeTooltip = tooltip;
-        
-        const rect = element.getBoundingClientRect();
-        
-        let left = rect.left + rect.width/2 - tooltip.offsetWidth/2;
-        let top = rect.top - tooltip.offsetHeight - 5;
-        
-        if (left < 5) left = 5;
-        if (left + tooltip.offsetWidth > window.innerWidth - 5) {
-            left = window.innerWidth - tooltip.offsetWidth - 5;
-        }
-        if (top < 5) {
-            top = rect.bottom + 5;
-        }
-        
-        tooltip.style.left = left + 'px';
-        tooltip.style.top = top + 'px';
-    }
-    
-    function hideTooltip() {
-        if (activeTooltip) {
-            activeTooltip.parentNode.removeChild(activeTooltip);
-            activeTooltip = null;
-        }
-    }
+// PhotoViewer - Complete rebuild with ultra-reliable image loading
 
-    // Improved ready notification system with guaranteed delivery
-    function notifyParentReady() {
-        if (readyMessageSent) return; // Don't send multiple times
-        
-        readyMessageSent = true;
-        console.log('[ImageViewer] Sending ready notification to parent');
-        
-        // Send the ready message
-        window.parent.postMessage({ 
-            type: 'image-viewer-ready',
-            timestamp: Date.now() // Add timestamp to make messages unique
-        }, '*');
-        
-        // Set up a more robust retry system
-        let retryCount = 0;
-        const maxRetries = 10;
-        const retryInterval = 300; // ms
-        
-        const readyCheckInterval = setInterval(() => {
-            if (initialImageLoaded || retryCount >= maxRetries) {
-                // Success or max retries reached - stop sending
-                clearInterval(readyCheckInterval);
-                if (!initialImageLoaded && retryCount >= maxRetries) {
-                    console.warn('[ImageViewer] Max retries reached, no image loaded');
-                }
-                return;
-            }
-            
-            // Send another ready message
-            console.log(`[ImageViewer] Retry ${retryCount + 1}/${maxRetries} sending ready notification`);
-            window.parent.postMessage({ 
-                type: 'image-viewer-ready',
-                retry: retryCount + 1,
-                timestamp: Date.now()
-            }, '*');
-            
-            retryCount++;
-        }, retryInterval);
-    }
-
-    // Register message handlers once
-    function setupMessageHandlers() {
-        if (messageHandlersRegistered) return;
-        messageHandlersRegistered = true;
-        
-        // Listen for messages from parent window
-        window.addEventListener('message', function(event) {
-            try {
-                console.log('[ImageViewer] Received message:', event.data.type);
-                
-                if (event.data.type === 'load-image' || event.data.type === 'open-image') {
-                    // Handle both message types
-                    const data = event.data;
-                    
-                    // For open-image messages, normalize the data format
-                    if (event.data.type === 'open-image') {
-                        // Extract image name from path if needed
-                        if (data.imagePath && !data.imageName) {
-                            const pathParts = data.imagePath.split('/');
-                            data.imageName = pathParts[pathParts.length - 1];
-                        }
-                    }
-                    
-                    // Important: Acknowledge receipt BEFORE processing
-                    // This prevents race conditions
-                    window.parent.postMessage({ 
-                        type: 'image-open-received', 
-                        imagePath: data.imagePath || '',
-                        timestamp: Date.now()
-                    }, '*');
-                    
-                    // Now actually process the image
-                    handleLoadImage(data);
-                    
-                } else if (event.data.type === 'window-state-update') {
-                    isWindowMaximized = event.data.isMaximized;
-                    
-                } else if (event.data.type === 'check-viewer-ready') {
-                    // Parent is polling to check if we're ready
-                    console.log('[ImageViewer] Parent is checking if viewer is ready');
-                    notifyParentReady();
-                    
-                } else if (event.data.type === 'ready-acknowledged') {
-                    // Parent has acknowledged our ready message
-                    console.log('[ImageViewer] Parent acknowledged our ready message');
-                    // If we have a pending image path in the message, load it
-                    if (event.data.pendingImagePath) {
-                        console.log('[ImageViewer] Loading pending image from acknowledgment:', event.data.pendingImagePath);
-                        handleLoadImage({
-                            type: 'open-image',
-                            imagePath: event.data.pendingImagePath
-                        });
-                    }
-                }
-            } catch (err) {
-                console.error("[ImageViewer] Error handling window message:", err);
-                imageInfo.textContent = "Error loading image";
-            }
-        });
-    }
+(function() {
+    // ========== INITIALIZATION ==========
     
-    // Initialize message handling and ready notification
-    function initialize() {
-        setupMessageHandlers();
-        notifyParentReady();
-        
-        // Send another ready message after a short delay to catch any missed handlers
-        setTimeout(notifyParentReady, 50);
-    }
+    // DOM elements
+    let imageDisplay = null;
+    let imageContainer = null;
+    let imageInfo = null;
+    let zoomLevel = null;
+    let prevButton = null;
+    let nextButton = null;
+    let zoomInButton = null;
+    let zoomOutButton = null;
+    let rotateButton = null;
     
-    // Initialize the viewer on DOM load
-    initialize();
-    
-    function handleLoadImage(data) {
-        // Don't interrupt current loading operation
-        if (isLoadingImage) {
-            console.log("[ImageViewer] Already loading image, queuing request");
-            setTimeout(() => handleLoadImage(data), 50);
-            return;
-        }
-        
-        console.log('[ImageViewer] Starting to load image:', data.imageName || data.imagePath);
-        isLoadingImage = true;
-        
-        imageName = data.imageName || '';
-        
-        if (data.isMaximized !== undefined) {
-            isWindowMaximized = data.isMaximized;
-        }
-        
-        // Update info immediately
-        imageInfo.textContent = imageName;
-        
-        // Disable any transition before hiding the image to avoid fade effects
-        imageDisplay.style.transition = 'none';
-        
-        // Keep image hidden until loaded
-        imageDisplay.style.visibility = 'hidden';
-        imageDisplay.style.opacity = '0';
-        
-        // Force browser to apply the no-transition state
-        // This trick forces the browser to apply the style changes immediately
-        window.getComputedStyle(imageDisplay).opacity;
-        
-        // Disable navigation buttons during load
-        prevButton.disabled = true;
-        nextButton.disabled = true;
-        
-        // Clear any previous error messages
-        Array.from(imageContainer.querySelectorAll('.error-message')).forEach(errorEl => errorEl.remove());
-        
-        // If imagePath is provided directly, use it - but fix relative paths
-        let imagePath;
-        if (data.imagePath) {
-            // Fix relative paths that start with ./ by changing to ../../
-            if (data.imagePath.startsWith('./')) {
-                imagePath = '../../' + data.imagePath.substring(2);
-            } else {
-                // Otherwise use the provided path
-                imagePath = data.imagePath;
-            }
-        } else {
-            // Otherwise build it from the image name
-            imagePath = `../../assets/images/full/${imageName}`;
-        }
-        
-        // Reset view settings
-        currentZoom = 0.825;
-        currentRotation = 0;
-        
-        // Clear previous image and any pending event handlers
-        imageDisplay.onload = null;
-        imageDisplay.onerror = null;
-        imageDisplay.src = '';
-        
-        console.log(`About to load image from path: ${imagePath}`);
-        
-        // Set up image load handler
-        imageDisplay.onload = function() {
-            handleImageLoaded();
-            isLoadingImage = false;
-        };
-        
-        imageDisplay.onerror = function() {
-            handleImageError(imageName);
-            isLoadingImage = false;
-        };
-        
-        // Set the src immediately to start loading
-        imageDisplay.src = imagePath;
-    }
-    
-    function handleImageLoaded() {
-        // Apply transform while transition is still disabled
-        imageDisplay.style.transform = `scale(${currentZoom}) rotate(${currentRotation}deg)`;
-        
-        // Make image visible immediately without transition
-        imageDisplay.style.visibility = 'visible';
-        imageDisplay.style.opacity = '1';
-        
-        // Force browser to apply visibility changes before enabling transition
-        window.getComputedStyle(imageDisplay).opacity;
-        
-        // Restore transform transition only after image is visible
-        imageDisplay.style.transition = 'transform 0.2s ease';
-        
-        // Update info
-        imageInfo.textContent = imageName;
-        zoomLevel.textContent = '100%';
-        
-        // Setup image array for navigation - ensure using correct path format
-        imagesArray = [
+    // State
+    const state = {
+        currentZoom: 0.825,
+        currentRotation: 0,
+        imageName: '',
+        imagesArray: [
             { name: 'image1.jpg', path: '../../assets/images/full/image1.jpg' },
             { name: 'image2.jpg', path: '../../assets/images/full/image2.jpg' },
             { name: 'image3.jpg', path: '../../assets/images/full/image3.jpg' },
             { name: 'image4.jpg', path: '../../assets/images/full/image4.jpg' },
             { name: 'image5.jpg', path: '../../assets/images/full/image5.jpg' }
-        ];
+        ],
+        currentImageIndex: 0,
+        isLoading: false,
+        appReady: false,
+        displayScaleFactor: 100 / 82.5,
+        pendingImageLoad: null,
+        readyCheckCount: 0,
         
-        currentImageIndex = imagesArray.findIndex(img => img.name === imageName);
-        if (currentImageIndex === -1) currentImageIndex = 0;
+        // Add direct reference to the actual image path being loaded
+        currentlyLoading: null,
         
-        updateNavigationButtons();
+        // Keep track of ready state
+        readyMessageSent: false,
+        readyConfirmed: false,
         
-        // Handle window sizing/notification
-        if (!initialImageLoaded) {
-            if (!isWindowMaximized) {
-                notifyParentAboutImage(true);
-            } else {
-                notifyParentAboutImage();
+        // Initialize with a sync flag to avoid race conditions
+        initComplete: false
+    };
+
+    // Initialize everything once DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        // If already loaded, init immediately
+        init();
+    }
+    
+    // ========== CORE FUNCTIONALITY ==========
+    
+    function init() {
+        if (state.initComplete) return;
+        state.initComplete = true;
+        
+        console.log('[PhotoViewer] Initializing');
+        
+        // Get DOM elements
+        imageDisplay = document.getElementById('image-display');
+        imageContainer = document.getElementById('image-container');
+        imageInfo = document.getElementById('image-info');
+        zoomLevel = document.getElementById('zoom-level');
+        prevButton = document.getElementById('prev-button');
+        nextButton = document.getElementById('next-button');
+        zoomInButton = document.getElementById('zoom-in-button');
+        zoomOutButton = document.getElementById('zoom-out-button');
+        rotateButton = document.getElementById('rotate-button');
+        
+        // Set up event listeners
+        setupEventListeners();
+        setupTooltips();
+        
+        // Initialize the app (100ms delay to ensure everything is ready)
+        setTimeout(() => {
+            state.appReady = true;
+            
+            // Send ready signal to parent
+            notifyReady();
+            
+            // Check if there's a pending image to load
+            if (state.pendingImageLoad) {
+                loadImage(state.pendingImageLoad);
+                state.pendingImageLoad = null;
             }
-            initialImageLoaded = true;
-        } else {
-            notifyParentAboutImage(false);
+        }, 100);
+    }
+    
+    // Setup all event listeners
+    function setupEventListeners() {
+        // Prevent selection and dragging throughout the app
+        document.addEventListener('mousedown', function(e) {
+            if (!e.target.classList.contains('toolbar-button')) {
+                e.preventDefault();
+            }
+        });
+        
+        document.addEventListener('dragstart', e => e.preventDefault());
+        
+        // Navigation buttons
+        prevButton.addEventListener('click', prevImage);
+        nextButton.addEventListener('click', nextImage);
+        
+        // Zoom and rotation
+        zoomInButton.addEventListener('click', zoomIn);
+        zoomOutButton.addEventListener('click', zoomOut);
+        rotateButton.addEventListener('click', rotateImage);
+        
+        // Message communication with parent window
+        window.addEventListener('message', handleMessage);
+    }
+    
+    // Tooltip functionality
+    function setupTooltips() {
+        let activeTooltip = null;
+        
+        const buttons = document.querySelectorAll('.toolbar-button');
+        
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', () => {
+                const tooltipText = button.getAttribute('data-tooltip');
+                if (!tooltipText) return;
+                
+                if (activeTooltip) {
+                    activeTooltip.remove();
+                }
+                
+                const tooltip = document.createElement('div');
+                tooltip.className = 'viewer-tooltip';
+                tooltip.textContent = tooltipText;
+                document.body.appendChild(tooltip);
+                activeTooltip = tooltip;
+                
+                const rect = button.getBoundingClientRect();
+                let left = rect.left + rect.width/2 - tooltip.offsetWidth/2;
+                let top = rect.top - tooltip.offsetHeight - 5;
+                
+                if (left < 5) left = 5;
+                if (left + tooltip.offsetWidth > window.innerWidth - 5) {
+                    left = window.innerWidth - tooltip.offsetWidth - 5;
+                }
+                if (top < 5) {
+                    top = rect.bottom + 5;
+                }
+                
+                tooltip.style.left = left + 'px';
+                tooltip.style.top = top + 'px';
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                if (activeTooltip) {
+                    activeTooltip.remove();
+                    activeTooltip = null;
+                }
+            });
+        });
+    }
+    
+    // ========== PARENT WINDOW COMMUNICATION ==========
+    
+    // Send ready signal to parent window with guaranteed delivery
+    function notifyReady() {
+        if (!state.readyMessageSent) {
+            console.log('[PhotoViewer] Sending ready signal to parent');
+            state.readyMessageSent = true;
+            
+            // Send the ready message
+            window.parent.postMessage({ 
+                type: 'image-viewer-ready',
+                timestamp: Date.now()
+            }, '*');
+            
+            // Start a retry interval for reliability
+            const readyInterval = setInterval(() => {
+                if (state.readyConfirmed || state.readyCheckCount >= 10) {
+                    clearInterval(readyInterval);
+                    return;
+                }
+                
+                state.readyCheckCount++;
+                console.log(`[PhotoViewer] Ready signal retry #${state.readyCheckCount}`);
+                window.parent.postMessage({ 
+                    type: 'image-viewer-ready',
+                    retry: state.readyCheckCount,
+                    timestamp: Date.now()
+                }, '*');
+            }, 500);
         }
     }
     
-    function handleImageError(imageName) {
-        // Ensure image is completely hidden
+    // Handle incoming messages from parent window
+    function handleMessage(event) {
+        const data = event.data;
+        if (!data || !data.type) return;
+        
+        console.log(`[PhotoViewer] Received message: ${data.type}`);
+        
+        switch (data.type) {
+            case 'open-image':
+            case 'load-image':
+                // Extract image info
+                const imagePath = data.imagePath;
+                const imageName = data.imageName || extractFilenameFromPath(imagePath);
+                
+                // Acknowledge receipt immediately before doing anything else
+                console.log(`[PhotoViewer] Acknowledging receipt of image: ${imagePath}`);
+                window.parent.postMessage({
+                    type: 'image-open-received',
+                    imagePath: imagePath,
+                    timestamp: Date.now()
+                }, '*');
+                
+                // Load the image
+                if (state.appReady) {
+                    loadImage({
+                        path: imagePath,
+                        name: imageName
+                    });
+                } else {
+                    console.log('[PhotoViewer] App not ready, storing image for later');
+                    state.pendingImageLoad = {
+                        path: imagePath, 
+                        name: imageName
+                    };
+                    
+                    // Force ready check again
+                    notifyReady();
+                }
+                break;
+                
+            case 'window-state-update':
+                // Just store window state
+                state.isMaximized = !!data.isMaximized;
+                break;
+                
+            case 'check-viewer-ready':
+                // Parent is checking if we're ready
+                notifyReady();
+                break;
+                
+            case 'ready-acknowledged':
+                // Parent confirmed our ready message
+                state.readyConfirmed = true;
+                console.log('[PhotoViewer] Ready state confirmed by parent');
+                
+                // If the acknowledgment contains a pending image, load it
+                if (data.pendingImagePath) {
+                    console.log('[PhotoViewer] Loading image from acknowledgment');
+                    loadImage({
+                        path: data.pendingImagePath,
+                        name: extractFilenameFromPath(data.pendingImagePath)
+                    });
+                }
+                break;
+        }
+    }
+    
+    // ========== IMAGE HANDLING ==========
+    
+    // Load an image
+    function loadImage(imageData) {
+        if (!imageData || !imageData.path) {
+            console.error('[PhotoViewer] Invalid image data');
+            return;
+        }
+        
+        // If already loading, wait until current load finishes
+        if (state.isLoading) {
+            console.log('[PhotoViewer] Already loading, waiting 100ms');
+            setTimeout(() => loadImage(imageData), 100);
+            return;
+        }
+        
+        state.isLoading = true;
+        console.log(`[PhotoViewer] Loading image: ${imageData.path}`);
+        
+        // Update the info immediately
+        state.imageName = imageData.name || '';
+        imageInfo.textContent = state.imageName;
+        
+        // Disable navigation buttons
+        prevButton.disabled = true;
+        nextButton.disabled = true;
+        
+        // Reset view settings
+        state.currentZoom = 0.825;
+        state.currentRotation = 0;
+        
+        // Prepare the image (completely hide it first)
+        imageDisplay.style.transition = 'none';
         imageDisplay.style.visibility = 'hidden';
         imageDisplay.style.opacity = '0';
-        imageDisplay.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        imageDisplay.style.transform = `scale(${state.currentZoom}) rotate(${state.currentRotation}deg)`;
         
-        // Update info
-        imageInfo.textContent = `Error: Could not load ${imageName}`;
+        // Force styles to apply
+        window.getComputedStyle(imageDisplay).opacity;
         
-        // Create error message with improved styling
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.style.display = 'flex'; // Make error message visible
-        errorDiv.style.flexDirection = 'column';
-        errorDiv.style.alignItems = 'center';
-        errorDiv.style.justifyContent = 'center';
-        errorDiv.style.color = 'white';
-        errorDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
-        errorDiv.style.padding = '20px';
-        errorDiv.style.borderRadius = '8px';
-        errorDiv.style.margin = 'auto';
+        // Clear any previous error messages
+        const errorElements = imageContainer.querySelectorAll('.error-message');
+        errorElements.forEach(el => el.remove());
         
-        errorDiv.innerHTML = `
-            <h3>Image Failed to Load</h3>
-            <p>Could not display: ${imageName}</p>
-            <p>Please check that the file exists in:</p>
-            <p class="path">assets/images/full/</p>
-        `;
-        
-        // Clear any previous errors
-        Array.from(imageContainer.querySelectorAll('.error-message')).forEach(el => el.remove());
-        
-        // Add new error
-        imageContainer.appendChild(errorDiv);
-        
-        // Enable navigation buttons so user can try another image
-        updateNavigationButtons();
-    }
-    
-    // Enable navigation buttons
-    function updateNavigationButtons() {
-        prevButton.disabled = false;
-        nextButton.disabled = false;
-    }
-    
-    // Zoom in
-    zoomInButton.addEventListener('click', function() {
-        if (currentZoom < 3) {
-            currentZoom += 0.25;
-            updateImageTransform();
-            zoomLevel.textContent = `${Math.round(currentZoom * displayScaleFactor * 100)}%`;
+        // Process the path
+        let imagePath = imageData.path;
+        if (imagePath.startsWith('./')) {
+            imagePath = '../../' + imagePath.substring(2);
         }
-    });
-    
-    // Zoom out
-    zoomOutButton.addEventListener('click', function() {
-        if (currentZoom > 0.25) {
-            currentZoom -= 0.25;
-            updateImageTransform();
-            zoomLevel.textContent = `${Math.round(currentZoom * displayScaleFactor * 100)}%`;
-        }
-    });
-    
-    // Rotate image
-    rotateButton.addEventListener('click', function() {
-        currentRotation += 90;
-        imageDisplay.style.transform = `scale(${currentZoom}) rotate(${currentRotation}deg)`;
-        zoomLevel.textContent = `${Math.round(currentZoom * displayScaleFactor * 100)}%`;
-    });
+        
+        // Store the current path being loaded (helps prevent race conditions)
+        state.currentlyLoading = imagePath;
+        
+        // Clear previous image and event handlers
+        imageDisplay.onload = null;
+        imageDisplay.onerror = null;
+        imageDisplay.src = '';
+        
+        // Add new handlers
+        imageDisplay.onload = function() {
+            // Only process if this is still the current image being loaded
+            if (state.currentlyLoading !== imagePath) {
+                console.log('[PhotoViewer] Ignoring stale image load');
+                return;
+            }
+            
+            console.log('[PhotoViewer] Image loaded successfully');
+            
+            // Make image visible
+            imageDisplay.style.visibility = 'visible';
+            imageDisplay.style.opacity = '1';
+            
+            // Force browser to apply visibility
+            window.getComputedStyle(imageDisplay).opacity;
+            
+            // Re-enable transition for future transformations
+            imageDisplay.style.transition = 'transform 0.2s ease';
+            
+            // Update info
+            imageInfo.textContent = state.imageName;
+            zoomLevel.textContent = '100%';
+            
+            // Find index of image in array for navigation
+            state.currentImageIndex = state.imagesArray.findIndex(img => img.name === state.imageName);
+            if (state.currentImageIndex === -1) state.currentImageIndex = 0;
+            
+            // Re-enable navigation
+            prevButton.disabled = false;
+            nextButton.disabled = false;
+            
+            // Notify parent about successful load
+            notifyParentAboutImage();
+            
+            // Clear loading state and path
+            state.isLoading = false;
+            state.currentlyLoading = null;
+        };
+        
+        imageDisplay.onerror = function() {
+            // Only process if this is still the current image being loaded
+            if (state.currentlyLoading !== imagePath) {
+                console.log('[PhotoViewer] Ignoring stale image error');
+                return;
+            }
+            
+            console.error(`[PhotoViewer] Failed to load image: ${imagePath}`);
+            
+            // Hide the image
+            imageDisplay.style.visibility = 'hidden';
+            imageDisplay.style.opacity = '0';
+            imageDisplay.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            
+            // Update info
+            imageInfo.textContent = `Error: Could not load ${state.imageName}`;
+            
+            // Create error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.style.display = 'flex';
+            errorDiv.style.flexDirection = 'column';
+            errorDiv.style.alignItems = 'center';
+            errorDiv.style.justifyContent = 'center';
+            errorDiv.style.color = 'white';
+            errorDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
+            errorDiv.style.padding = '20px';
+            errorDiv.style.borderRadius = '8px';
+            errorDiv.style.margin = 'auto';
+            
+            errorDiv.innerHTML = `
+                <h3>Image Failed to Load</h3>
+                <p>Could not display: ${state.imageName}</p>
+                <p>Please check that the file exists in:</p>
+                <p class="path">assets/images/full/</p>
+            `;
+            
+            imageContainer.appendChild(errorDiv);
+            
+            // Re-enable navigation
+            prevButton.disabled = false;
+            nextButton.disabled = false;
+            
+            // Clear loading state and path
+            state.isLoading = false;
+            state.currentlyLoading = null;
+        };
+        
+        // Set image source to start loading (do this last)
+        console.log(`[PhotoViewer] Setting image src: ${imagePath}`);
+        imageDisplay.src = imagePath;
+    }
     
     // Navigate to previous image
-    prevButton.addEventListener('click', function() {
-        if (isLoadingImage) return; // Ignore clicks during loading
+    function prevImage() {
+        if (state.isLoading) return;
         
-        if (currentImageIndex > 0) {
-            currentImageIndex--;
+        if (state.currentImageIndex > 0) {
+            state.currentImageIndex--;
         } else {
-            currentImageIndex = imagesArray.length - 1;
+            state.currentImageIndex = state.imagesArray.length - 1;
         }
-        loadImageAtIndex();
-    });
+        
+        navigateToImageIndex();
+    }
     
     // Navigate to next image
-    nextButton.addEventListener('click', function() {
-        if (isLoadingImage) return; // Ignore clicks during loading
+    function nextImage() {
+        if (state.isLoading) return;
         
-        if (currentImageIndex < imagesArray.length - 1) {
-            currentImageIndex++;
+        if (state.currentImageIndex < state.imagesArray.length - 1) {
+            state.currentImageIndex++;
         } else {
-            currentImageIndex = 0;
+            state.currentImageIndex = 0;
         }
-        loadImageAtIndex();
-    });
-    
-    // Update image transform
-    function updateImageTransform() {
-        imageDisplay.style.transform = `scale(${currentZoom}) rotate(${currentRotation}deg)`;
+        
+        navigateToImageIndex();
     }
     
     // Load image at current index
-    function loadImageAtIndex() {
-        // Don't do anything if we're already loading
-        if (isLoadingImage) return;
+    function navigateToImageIndex() {
+        if (state.isLoading) return;
         
-        if (imagesArray[currentImageIndex]) {
-            isLoadingImage = true;
-            
-            // Disable navigation buttons during load
-            prevButton.disabled = true;
-            nextButton.disabled = true;
-            
-            const image = imagesArray[currentImageIndex];
-            
-            // Clear any previous errors
-            Array.from(imageContainer.querySelectorAll('.error-message')).forEach(el => el.remove());
-            
-            // Disable transition completely - don't store it as we'll set the correct one later
-            imageDisplay.style.transition = 'none';
-            
-            // Force browser to apply the no-transition state
-            window.getComputedStyle(imageDisplay).opacity;
-            
-            // Hide image completely while loading
-            imageDisplay.style.opacity = "0";
-            imageDisplay.style.visibility = "hidden";
-            
-            // Cancel any pending loads by clearing event handlers
-            imageDisplay.onload = null;
-            imageDisplay.onerror = null;
-            imageDisplay.src = '';
-            
-            console.log(`Loading next/prev image: ${image.path}`);
-            
-            // Reset view settings immediately without animation
-            currentZoom = 0.825;
-            currentRotation = 0;
-            
-            // Apply transform instantly while image is still hidden
-            imageDisplay.style.transform = `scale(${currentZoom}) rotate(0deg)`;
-            
-            // Set up handlers
-            imageDisplay.onload = function() {
-                // Make image visible first while transition is still disabled
-                imageDisplay.style.visibility = "visible";
-                imageDisplay.style.opacity = "1";
-                
-                // Force browser to apply visibility changes
-                window.getComputedStyle(imageDisplay).opacity;
-                
-                // Now restore only the transform transition, not opacity
-                imageDisplay.style.transition = 'transform 0.2s ease';
-                
-                // Update info
-                imageName = image.name;
-                imageInfo.textContent = imageName;
-                zoomLevel.textContent = '100%';
-                
-                // Never resize when navigating between images
-                notifyParentAboutImage(false);
-                
-                // Re-enable navigation
-                updateNavigationButtons();
-                
-                // Clear loading flag
-                isLoadingImage = false;
-            };
-            
-            imageDisplay.onerror = function() {
-                handleImageError(image.name);
-                isLoadingImage = false;
-            };
-            
-            // Set the src to start loading
-            imageDisplay.src = image.path;
+        const image = state.imagesArray[state.currentImageIndex];
+        if (image) {
+            loadImage({
+                path: image.path,
+                name: image.name
+            });
         }
     }
     
-    /**
-     * Notify parent about new image without requesting resize
-     * @param {boolean} allowResize - Whether to allow resize (false for navigation)
-     */
-    function notifyParentAboutImage(allowResize = true) {
+    // Notify parent about loaded image
+    function notifyParentAboutImage() {
         const imgWidth = imageDisplay.naturalWidth;
         const imgHeight = imageDisplay.naturalHeight;
         
         window.parent.postMessage({
             type: 'image-changed',
-            imageName: imageName,
+            imageName: state.imageName,
             imgWidth: imgWidth,
             imgHeight: imgHeight,
             preserveMaximized: true,
-            allowResize: allowResize
+            allowResize: true
         }, '*');
     }
-});
+    
+    // ========== IMAGE OPERATIONS ==========
+    
+    // Zoom in
+    function zoomIn() {
+        if (state.currentZoom < 3) {
+            state.currentZoom += 0.25;
+            updateImageTransform();
+            updateZoomInfo();
+        }
+    }
+    
+    // Zoom out
+    function zoomOut() {
+        if (state.currentZoom > 0.25) {
+            state.currentZoom -= 0.25;
+            updateImageTransform();
+            updateZoomInfo();
+        }
+    }
+    
+    // Rotate image
+    function rotateImage() {
+        state.currentRotation += 90;
+        updateImageTransform();
+        updateZoomInfo();
+    }
+    
+    // Apply transform to image
+    function updateImageTransform() {
+        imageDisplay.style.transform = `scale(${state.currentZoom}) rotate(${state.currentRotation}deg)`;
+    }
+    
+    // Update zoom display
+    function updateZoomInfo() {
+        zoomLevel.textContent = `${Math.round(state.currentZoom * state.displayScaleFactor * 100)}%`;
+    }
+    
+    // ========== UTILITY FUNCTIONS ==========
+    
+    // Extract filename from path
+    function extractFilenameFromPath(path) {
+        if (!path) return '';
+        const parts = path.split('/');
+        return parts[parts.length - 1];
+    }
+})();

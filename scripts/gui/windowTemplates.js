@@ -272,155 +272,151 @@ class WindowTemplates {
      * @returns {HTMLElement} The window content
      */
     static createImageViewerContent(imagePath) {
-        // Ensure we only have one global imageViewerState
-        if (!window.imageViewerState) {
-            window.imageViewerState = {
-                pendingImage: null,
-                isAppReady: false,
-                readyMessageReceived: false,
-                iframeLoaded: false,
-                imageAcknowledged: false,
-                lastImagePath: null,
-                debugMode: true
-            };
-            
-            // Set up the global message handler only once
-            this.setupImageViewerMessageHandlers();
-        }
+        // Create an extremely simplified global state object
+        window._photoViewerGlobalState = window._photoViewerGlobalState || {
+            pendingImageToOpen: null,
+            iframeReady: false,
+            imageAcknowledged: false,
+            currentIframe: null,
+            fatalErrorCount: 0
+        };
         
-        // Store the image path to open
+        // Store any pending image path
         if (imagePath) {
-            console.log('[Parent] Storing pending image path:', imagePath);
-            window.imageViewerState.pendingImage = imagePath;
-            window.imageViewerState.lastImagePath = imagePath;
-            window.imageViewerState.imageAcknowledged = false;
+            console.log('[WindowManager] Setting pending image to open:', imagePath);
+            window._photoViewerGlobalState.pendingImageToOpen = imagePath;
+            window._photoViewerGlobalState.imageAcknowledged = false;
         }
         
-        // Create the standard iframe container
-        const content = this.createIframeContainer('image-viewer', 'Image Viewer');
+        // Create the container directly
+        const content = document.createElement('div');
+        content.className = `window-body special-iframe-container`;
         
-        // Get the iframe element
-        const iframe = content.querySelector('iframe');
+        // Create and configure iframe with extreme simplicity
+        const iframe = document.createElement('iframe');
         
-        // Mark iframe as not loaded yet
-        window.imageViewerState.iframeLoaded = false;
-        window.imageViewerState.isAppReady = false;
+        // Set essential attributes only
+        iframe.className = 'image-viewer-frame';
+        iframe.src = './apps/image-viewer/index.html';
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allowtransparency', 'true');
         
-        // Add load event listener for iframe
-        iframe.addEventListener('load', () => {
-            console.log('[Parent] Image viewer iframe loaded');
-            window.imageViewerState.iframeLoaded = true;
+        // Set basic styles
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        iframe.style.margin = '0';
+        iframe.style.padding = '0';
+        iframe.style.overflow = 'hidden';
+        
+        // Store reference to current iframe
+        window._photoViewerGlobalState.currentIframe = iframe;
+        
+        // Extremely simplified message handling - set only once per page load
+        if (!window._photoViewerMessageHandlerSet) {
+            window._photoViewerMessageHandlerSet = true;
             
-            // Register iframe reference for future use
-            if (!window.imageViewerState.iframe) {
-                window.imageViewerState.iframe = iframe;
-            }
-            
-            // Check if there's a pending image to send
-            this.checkAndSendPendingImage();
-            
-            // Even if we don't have a pending image, poll the iframe to confirm it's ready
-            setTimeout(() => {
-                if (!window.imageViewerState.readyMessageReceived) {
-                    console.log('[Parent] Polling image viewer to check if ready');
-                    iframe.contentWindow.postMessage({ 
-                        type: 'check-viewer-ready' 
-                    }, '*');
-                }
-            }, 100);
-        });
-        
-        return content;
-    }
-
-    /**
-     * Set up message handlers for image viewer communication
-     * Only called once to prevent duplicate handlers
-     */
-    static setupImageViewerMessageHandlers() {
-        if (window.imageViewerHandlersInitialized) return;
-        window.imageViewerHandlersInitialized = true;
-        
-        console.log('[Parent] Setting up image viewer message handlers');
-        
-        window.addEventListener('message', event => {
-            try {
-                // Skip messages that aren't relevant
-                if (!event.data || !event.data.type) return;
+            // Overall message handler
+            window.addEventListener('message', (event) => {
+                const data = event.data;
+                if (!data || !data.type) return;
                 
-                // Handle ready message from image viewer
-                if (event.data.type === 'image-viewer-ready') {
-                    console.log('[Parent] Received ready message from image viewer');
-                    window.imageViewerState.readyMessageReceived = true;
-                    window.imageViewerState.isAppReady = true;
+                // Handle "ready" message from image viewer iframe
+                if (data.type === 'image-viewer-ready') {
+                    console.log('[WindowManager] Received ready message from image viewer');
+                    window._photoViewerGlobalState.iframeReady = true;
                     
-                    // Acknowledge receipt of ready message
+                    // Send acknowledgment
                     if (event.source && typeof event.source.postMessage === 'function') {
-                        console.log('[Parent] Acknowledging ready message');
+                        // Include any pending image path in the acknowledgment
                         event.source.postMessage({
                             type: 'ready-acknowledged',
-                            pendingImagePath: window.imageViewerState.pendingImage
+                            pendingImagePath: window._photoViewerGlobalState.pendingImageToOpen
                         }, '*');
-                    }
-                    
-                    // Try to send pending image
-                    this.checkAndSendPendingImage();
-                }
-                
-                // Handle image received acknowledgment
-                else if (event.data.type === 'image-open-received') {
-                    console.log('[Parent] Image viewer acknowledged receipt of image');
-                    if (window.imageViewerState.pendingImage === event.data.imagePath) {
-                        window.imageViewerState.pendingImage = null;
-                        window.imageViewerState.imageAcknowledged = true;
+                        
+                        // Try sending the pending image if one is waiting
+                        if (window._photoViewerGlobalState.pendingImageToOpen) {
+                            sendPendingImage(event.source);
+                        }
                     }
                 }
-            } catch (err) {
-                console.error('[Parent] Error handling message from image viewer:', err);
-            }
-        });
-    }
-    
-    /**
-     * Check if there's a pending image and the viewer is ready, then send it
-     */
-    static checkAndSendPendingImage() {
-        if (!window.imageViewerState) return;
-        
-        const state = window.imageViewerState;
-        const pendingImage = state.pendingImage;
-        const iframe = state.iframe;
-        
-        if (!pendingImage || !iframe || !iframe.contentWindow) return;
-        
-        if (state.isAppReady && state.iframeLoaded) {
-            console.log('[Parent] Sending pending image to viewer:', pendingImage);
-            
-            // Send the image open message
-            iframe.contentWindow.postMessage({
-                type: 'open-image',
-                imagePath: pendingImage
-            }, '*');
-            
-            // Set a safety timeout to clear pending image if not acknowledged
-            setTimeout(() => {
-                if (state.pendingImage === pendingImage && !state.imageAcknowledged) {
-                    console.warn('[Parent] No acknowledgment received, clearing pending image');
-                    state.pendingImage = null;
+                // Handle image receipt acknowledgment
+                else if (data.type === 'image-open-received') {
+                    console.log('[WindowManager] Image receipt acknowledged:', data.imagePath);
+                    if (data.imagePath === window._photoViewerGlobalState.pendingImageToOpen) {
+                        window._photoViewerGlobalState.imageAcknowledged = true;
+                        window._photoViewerGlobalState.pendingImageToOpen = null;
+                    }
                 }
-            }, 2000);
-        } else {
-            console.log('[Parent] Waiting for viewer to be ready before sending image');
+            });
+        }
+        
+        // Function to send pending image to iframe
+        function sendPendingImage(target) {
+            const pendingImage = window._photoViewerGlobalState.pendingImageToOpen;
+            if (!pendingImage) return;
             
-            // If the iframe is loaded but we haven't received the ready message,
-            // poll the iframe to check if it's ready
-            if (state.iframeLoaded && !state.isAppReady && iframe.contentWindow) {
-                console.log('[Parent] Polling image viewer to check if ready');
-                iframe.contentWindow.postMessage({ 
-                    type: 'check-viewer-ready' 
+            console.log('[WindowManager] Sending pending image:', pendingImage);
+            
+            // Send with most basic object possible
+            try {
+                target.postMessage({
+                    type: 'open-image',
+                    imagePath: pendingImage
                 }, '*');
+                
+                // Set a simple timeout to clear pending image if not acknowledged
+                setTimeout(() => {
+                    if (window._photoViewerGlobalState.pendingImageToOpen === pendingImage && 
+                        !window._photoViewerGlobalState.imageAcknowledged) {
+                        
+                        console.warn('[WindowManager] No image acknowledgment received, clearing');
+                        
+                        // Track fatal errors
+                        window._photoViewerGlobalState.fatalErrorCount++;
+                        
+                        // If we've had too many errors, force a page reload
+                        if (window._photoViewerGlobalState.fatalErrorCount > 3) {
+                            console.error('[WindowManager] Too many failures, reloading page');
+                            // This is a drastic measure but will fix persistent issues
+                            setTimeout(() => location.reload(), 300);
+                            return;
+                        }
+                        
+                        // Otherwise just clear the pending image
+                        window._photoViewerGlobalState.pendingImageToOpen = null;
+                    }
+                }, 2000);
+                
+            } catch (err) {
+                console.error('[WindowManager] Error sending image to viewer:', err);
+                window._photoViewerGlobalState.pendingImageToOpen = null;
             }
         }
+        
+        // Setup reliable load event for iframe
+        iframe.onload = function() {
+            console.log('[WindowManager] Image viewer iframe loaded');
+            
+            // Check if we need to poll for readiness
+            setTimeout(() => {
+                // If not marked ready yet, ask the iframe if it's ready
+                if (!window._photoViewerGlobalState.iframeReady && iframe.contentWindow) {
+                    console.log('[WindowManager] Polling iframe to check if ready');
+                    try {
+                        iframe.contentWindow.postMessage({
+                            type: 'check-viewer-ready'
+                        }, '*');
+                    } catch (e) {
+                        console.error('[WindowManager] Error checking iframe ready state:', e);
+                    }
+                }
+            }, 200);
+        };
+        
+        // Add the iframe to the container
+        content.appendChild(iframe);
+        return content;
     }
 
     /**
