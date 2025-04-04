@@ -1,11 +1,11 @@
-@import 'reset.css';
+@import 'utils/reset.css';
 @import 'gui/desktop.css';
 @import 'gui/icons.css';
 @import 'gui/windows.css';
 @import 'gui/taskbar.css';
 @import 'gui/startmenu.css';
 @import 'gui/iframe-apps.css';
-@import 'effects/crt-effect.css';
+@import 'utils/crt-effect.css';
 
 /* Z-index hierarchy */
 :root {

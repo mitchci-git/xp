@@ -278,9 +278,7 @@ class WindowTemplates {
             iframeReady: false,
             imageAcknowledged: false,
             currentIframe: null,
-            fatalErrorCount: 0,
-            // Add a last attempt tracking
-            lastAttemptTime: 0
+            fatalErrorCount: 0
         };
         
         // Store any pending image path
@@ -314,7 +312,7 @@ class WindowTemplates {
         // Store reference to current iframe
         window._photoViewerGlobalState.currentIframe = iframe;
         
-        // More aggressive message handling setup
+        // Extremely simplified message handling - set only once per page load
         if (!window._photoViewerMessageHandlerSet) {
             window._photoViewerMessageHandlerSet = true;
             
@@ -327,20 +325,18 @@ class WindowTemplates {
                 if (data.type === 'image-viewer-ready') {
                     console.log('[WindowManager] Received ready message from image viewer');
                     window._photoViewerGlobalState.iframeReady = true;
-                    window._photoViewerGlobalState.lastAttemptTime = Date.now();
                     
                     // Send acknowledgment
                     if (event.source && typeof event.source.postMessage === 'function') {
                         // Include any pending image path in the acknowledgment
                         event.source.postMessage({
                             type: 'ready-acknowledged',
-                            pendingImagePath: window._photoViewerGlobalState.pendingImageToOpen,
-                            timestamp: Date.now()
+                            pendingImagePath: window._photoViewerGlobalState.pendingImageToOpen
                         }, '*');
                         
                         // Try sending the pending image if one is waiting
                         if (window._photoViewerGlobalState.pendingImageToOpen) {
-                            sendPendingImageWithRetries(event.source);
+                            sendPendingImage(event.source);
                         }
                     }
                 }
@@ -349,72 +345,52 @@ class WindowTemplates {
                     console.log('[WindowManager] Image receipt acknowledged:', data.imagePath);
                     if (data.imagePath === window._photoViewerGlobalState.pendingImageToOpen) {
                         window._photoViewerGlobalState.imageAcknowledged = true;
-                        window._photoViewerGlobalState.lastAttemptTime = Date.now();
-                        // Don't clear the pending image here, wait for actual load confirmation
+                        window._photoViewerGlobalState.pendingImageToOpen = null;
                     }
-                }
-                // Handle successful image load confirmation
-                else if (data.type === 'image-changed') {
-                    console.log('[WindowManager] Image successfully loaded:', data.imageName);
-                    // Now we can safely clear the pending image
-                    window._photoViewerGlobalState.pendingImageToOpen = null;
                 }
             });
         }
         
-        // Function to send pending image with multiple retries
-        function sendPendingImageWithRetries(target) {
+        // Function to send pending image to iframe
+        function sendPendingImage(target) {
             const pendingImage = window._photoViewerGlobalState.pendingImageToOpen;
             if (!pendingImage) return;
             
             console.log('[WindowManager] Sending pending image:', pendingImage);
-            window._photoViewerGlobalState.lastAttemptTime = Date.now();
             
             // Send with most basic object possible
             try {
-                // Immediately send the first attempt
                 target.postMessage({
                     type: 'open-image',
-                    imagePath: pendingImage,
-                    timestamp: Date.now()
+                    imagePath: pendingImage
                 }, '*');
                 
-                // Set up additional retries
-                const maxRetries = 5;
-                for (let i = 1; i <= maxRetries; i++) {
-                    setTimeout(() => {
-                        // Only send retry if not acknowledged yet
-                        if (window._photoViewerGlobalState.pendingImageToOpen === pendingImage && 
-                            !window._photoViewerGlobalState.imageAcknowledged) {
-                            
-                            console.log(`[WindowManager] Retry #${i} sending image:`, pendingImage);
-                            try {
-                                target.postMessage({
-                                    type: 'open-image',
-                                    imagePath: pendingImage,
-                                    timestamp: Date.now(),
-                                    retry: i
-                                }, '*');
-                            } catch (err) {
-                                console.error('[WindowManager] Error during retry:', err);
-                            }
-                        }
-                    }, i * 200); // Increasing delay between retries
-                }
-                
-                // Final cleanup after all retries
+                // Set a simple timeout to clear pending image if not acknowledged
                 setTimeout(() => {
                     if (window._photoViewerGlobalState.pendingImageToOpen === pendingImage && 
-                        !window._photoViewerGlobalState.imageAcknowledged &&
-                        Date.now() - window._photoViewerGlobalState.lastAttemptTime > 2000) {
+                        !window._photoViewerGlobalState.imageAcknowledged) {
                         
-                        console.warn('[WindowManager] No image acknowledgment received after all retries, clearing');
+                        console.warn('[WindowManager] No image acknowledgment received, clearing');
+                        
+                        // Track fatal errors
+                        window._photoViewerGlobalState.fatalErrorCount++;
+                        
+                        // If we've had too many errors, force a page reload
+                        if (window._photoViewerGlobalState.fatalErrorCount > 3) {
+                            console.error('[WindowManager] Too many failures, reloading page');
+                            // This is a drastic measure but will fix persistent issues
+                            setTimeout(() => location.reload(), 300);
+                            return;
+                        }
+                        
+                        // Otherwise just clear the pending image
                         window._photoViewerGlobalState.pendingImageToOpen = null;
                     }
-                }, 3000);
+                }, 2000);
                 
             } catch (err) {
                 console.error('[WindowManager] Error sending image to viewer:', err);
+                window._photoViewerGlobalState.pendingImageToOpen = null;
             }
         }
         
@@ -422,10 +398,11 @@ class WindowTemplates {
         iframe.onload = function() {
             console.log('[WindowManager] Image viewer iframe loaded');
             
-            // Immediately check if we need to handle a pending image
+            // Check if we need to poll for readiness
             setTimeout(() => {
-                // Ask the iframe if it's ready
-                if (iframe.contentWindow) {
+                // If not marked ready yet, ask the iframe if it's ready
+                if (!window._photoViewerGlobalState.iframeReady && iframe.contentWindow) {
+                    console.log('[WindowManager] Polling iframe to check if ready');
                     try {
                         iframe.contentWindow.postMessage({
                             type: 'check-viewer-ready'
@@ -434,7 +411,7 @@ class WindowTemplates {
                         console.error('[WindowManager] Error checking iframe ready state:', e);
                     }
                 }
-            }, 100);
+            }, 200);
         };
         
         // Add the iframe to the container
