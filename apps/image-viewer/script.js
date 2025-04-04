@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let isWindowMaximized = false;
     let initialImageLoaded = false;
     let displayScaleFactor = 100 / 82.5;
+    let isLoadingImage = false; // Flag to prevent multiple simultaneous loads
     
     // Setup tooltips for toolbar buttons with single tooltip instance
     let activeTooltip = null;
@@ -85,8 +86,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Listen for messages from parent window
     window.addEventListener('message', function(event) {
         try {
-            if (event.data.type === 'load-image') {
-                handleLoadImage(event.data);
+            if (event.data.type === 'load-image' || event.data.type === 'open-image') {
+                // Handle both message types
+                const data = event.data;
+                
+                // For open-image messages, normalize the data format
+                if (event.data.type === 'open-image') {
+                    // Extract image name from path if needed
+                    if (data.imagePath && !data.imageName) {
+                        const pathParts = data.imagePath.split('/');
+                        data.imageName = pathParts[pathParts.length - 1];
+                    }
+                }
+                
+                handleLoadImage(data);
             } else if (event.data.type === 'window-state-update') {
                 isWindowMaximized = event.data.isMaximized;
             }
@@ -96,7 +109,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Notify parent window that the viewer is ready to receive images
+    window.parent.postMessage({ type: 'image-viewer-ready' }, '*');
+    
     function handleLoadImage(data) {
+        // Don't interrupt current loading operation
+        if (isLoadingImage) {
+            console.log("Already loading image, queuing request");
+            // Further reduce delay from 100ms to 50ms
+            setTimeout(() => handleLoadImage(data), 50);
+            return;
+        }
+        
+        isLoadingImage = true;
+        
         imageName = data.imageName || '';
         
         if (data.isMaximized !== undefined) {
@@ -106,52 +132,90 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update info immediately
         imageInfo.textContent = imageName;
         
+        // Disable any transition before hiding the image to avoid fade effects
+        imageDisplay.style.transition = 'none';
+        
         // Keep image hidden until loaded
         imageDisplay.style.visibility = 'hidden';
         imageDisplay.style.opacity = '0';
         
+        // Force browser to apply the no-transition state
+        // This trick forces the browser to apply the style changes immediately
+        window.getComputedStyle(imageDisplay).opacity;
+        
+        // Disable navigation buttons during load
+        prevButton.disabled = true;
+        nextButton.disabled = true;
+        
         // Clear any previous error messages
         Array.from(imageContainer.querySelectorAll('.error-message')).forEach(errorEl => errorEl.remove());
         
-        const fileName = data.imageName;
-        const imagePath = `../../assets/images/full/${fileName}`;
+        // If imagePath is provided directly, use it - but fix relative paths
+        let imagePath;
+        if (data.imagePath) {
+            // Fix relative paths that start with ./ by changing to ../../
+            if (data.imagePath.startsWith('./')) {
+                imagePath = '../../' + data.imagePath.substring(2);
+            } else {
+                // Otherwise use the provided path
+                imagePath = data.imagePath;
+            }
+        } else {
+            // Otherwise build it from the image name
+            imagePath = `../../assets/images/full/${imageName}`;
+        }
         
         // Reset view settings
         currentZoom = 0.825;
         currentRotation = 0;
         
-        // Clear previous image
+        // Clear previous image and any pending event handlers
+        imageDisplay.onload = null;
+        imageDisplay.onerror = null;
         imageDisplay.src = '';
         
-        // Short timeout to ensure browser clears the previous image
-        setTimeout(function() {
-            imageDisplay.onload = handleImageLoaded;
-            imageDisplay.onerror = () => handleImageError(imageName);
-            imageDisplay.src = imagePath;
-        }, 50);
+        console.log(`About to load image from path: ${imagePath}`);
+        
+        // Set up image load handler
+        imageDisplay.onload = function() {
+            handleImageLoaded();
+            isLoadingImage = false;
+        };
+        
+        imageDisplay.onerror = function() {
+            handleImageError(imageName);
+            isLoadingImage = false;
+        };
+        
+        // Set the src immediately to start loading
+        imageDisplay.src = imagePath;
     }
     
     function handleImageLoaded() {
-        // Update style and display image
+        // Apply transform while transition is still disabled
         imageDisplay.style.transform = `scale(${currentZoom}) rotate(${currentRotation}deg)`;
-        imageDisplay.style.visibility = 'visible';
         
-        // Fade in the image
-        setTimeout(() => {
-            imageDisplay.style.opacity = '1';
-        }, 10);
+        // Make image visible immediately without transition
+        imageDisplay.style.visibility = 'visible';
+        imageDisplay.style.opacity = '1';
+        
+        // Force browser to apply visibility changes before enabling transition
+        window.getComputedStyle(imageDisplay).opacity;
+        
+        // Restore transform transition only after image is visible
+        imageDisplay.style.transition = 'transform 0.2s ease';
         
         // Update info
         imageInfo.textContent = imageName;
         zoomLevel.textContent = '100%';
         
-        // Setup image array for navigation
+        // Setup image array for navigation - ensure using correct path format
         imagesArray = [
             { name: 'image1.jpg', path: '../../assets/images/full/image1.jpg' },
             { name: 'image2.jpg', path: '../../assets/images/full/image2.jpg' },
             { name: 'image3.jpg', path: '../../assets/images/full/image3.jpg' },
             { name: 'image4.jpg', path: '../../assets/images/full/image4.jpg' },
-            { name: 'image5.png', path: '../../assets/images/full/image5.png' }
+            { name: 'image5.jpg', path: '../../assets/images/full/image5.jpg' }
         ];
         
         currentImageIndex = imagesArray.findIndex(img => img.name === imageName);
@@ -184,6 +248,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create error message with improved styling
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
+        errorDiv.style.display = 'flex'; // Make error message visible
+        errorDiv.style.flexDirection = 'column';
+        errorDiv.style.alignItems = 'center';
+        errorDiv.style.justifyContent = 'center';
+        errorDiv.style.color = 'white';
+        errorDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
+        errorDiv.style.padding = '20px';
+        errorDiv.style.borderRadius = '8px';
+        errorDiv.style.margin = 'auto';
+        
         errorDiv.innerHTML = `
             <h3>Image Failed to Load</h3>
             <p>Could not display: ${imageName}</p>
@@ -196,9 +270,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add new error
         imageContainer.appendChild(errorDiv);
+        
+        // Enable navigation buttons so user can try another image
+        updateNavigationButtons();
     }
     
-    // For looping navigation, buttons are always enabled
+    // Enable navigation buttons
     function updateNavigationButtons() {
         prevButton.disabled = false;
         nextButton.disabled = false;
@@ -231,6 +308,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Navigate to previous image
     prevButton.addEventListener('click', function() {
+        if (isLoadingImage) return; // Ignore clicks during loading
+        
         if (currentImageIndex > 0) {
             currentImageIndex--;
         } else {
@@ -241,6 +320,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Navigate to next image
     nextButton.addEventListener('click', function() {
+        if (isLoadingImage) return; // Ignore clicks during loading
+        
         if (currentImageIndex < imagesArray.length - 1) {
             currentImageIndex++;
         } else {
@@ -256,59 +337,79 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load image at current index
     function loadImageAtIndex() {
+        // Don't do anything if we're already loading
+        if (isLoadingImage) return;
+        
         if (imagesArray[currentImageIndex]) {
+            isLoadingImage = true;
+            
+            // Disable navigation buttons during load
+            prevButton.disabled = true;
+            nextButton.disabled = true;
+            
             const image = imagesArray[currentImageIndex];
             
             // Clear any previous errors
             Array.from(imageContainer.querySelectorAll('.error-message')).forEach(el => el.remove());
             
-            // Store current transform transition
-            const originalTransition = imageDisplay.style.transition;
-            
-            // Remove transition to prevent animation during image switch
+            // Disable transition completely - don't store it as we'll set the correct one later
             imageDisplay.style.transition = 'none';
+            
+            // Force browser to apply the no-transition state
+            window.getComputedStyle(imageDisplay).opacity;
             
             // Hide image completely while loading
             imageDisplay.style.opacity = "0";
+            imageDisplay.style.visibility = "hidden";
             
-            // Load the new image
-            imageDisplay.src = image.path;
+            // Cancel any pending loads by clearing event handlers
+            imageDisplay.onload = null;
+            imageDisplay.onerror = null;
+            imageDisplay.src = '';
             
-            // Save the image name for error handling
-            const currentImageName = image.name;
+            console.log(`Loading next/prev image: ${image.path}`);
             
-            // Process after image loads
+            // Reset view settings immediately without animation
+            currentZoom = 0.825;
+            currentRotation = 0;
+            
+            // Apply transform instantly while image is still hidden
+            imageDisplay.style.transform = `scale(${currentZoom}) rotate(0deg)`;
+            
+            // Set up handlers
             imageDisplay.onload = function() {
-                // Reset view settings immediately without animation
-                currentZoom = 0.825;
-                currentRotation = 0;
+                // Make image visible first while transition is still disabled
+                imageDisplay.style.visibility = "visible";
+                imageDisplay.style.opacity = "1";
                 
-                // Apply transform instantly while image is still hidden
-                imageDisplay.style.transform = `scale(${currentZoom}) rotate(0deg)`;
+                // Force browser to apply visibility changes
+                window.getComputedStyle(imageDisplay).opacity;
                 
-                // Use a small delay to ensure browser has processed the transform
-                setTimeout(() => {
-                    // Restore transition for future transforms
-                    imageDisplay.style.transition = originalTransition;
-                    
-                    // Now fade the image in
-                    imageDisplay.style.opacity = "1";
-                    
-                    // Update info
-                    imageName = image.name;
-                    imageInfo.textContent = imageName;
-                    zoomLevel.textContent = '100%';
-                    
-                    // Never resize when navigating between images
-                    notifyParentAboutImage(false);
-                }, 50);
+                // Now restore only the transform transition, not opacity
+                imageDisplay.style.transition = 'transform 0.2s ease';
+                
+                // Update info
+                imageName = image.name;
+                imageInfo.textContent = imageName;
+                zoomLevel.textContent = '100%';
+                
+                // Never resize when navigating between images
+                notifyParentAboutImage(false);
+                
+                // Re-enable navigation
+                updateNavigationButtons();
+                
+                // Clear loading flag
+                isLoadingImage = false;
             };
             
-            // Add error handler to maintain consistency with handleLoadImage
-            imageDisplay.onerror = () => handleImageError(currentImageName);
+            imageDisplay.onerror = function() {
+                handleImageError(image.name);
+                isLoadingImage = false;
+            };
             
-            // Update navigation buttons
-            updateNavigationButtons();
+            // Set the src to start loading
+            imageDisplay.src = image.path;
         }
     }
     

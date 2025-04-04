@@ -137,33 +137,33 @@ class WindowTemplates {
                             <div class="thumbnails-view" id="thumbnails-view">
                                 <div class="thumbnail-item" data-image="image1.jpg">
                                     <div class="thumbnail-container">
-                                        <img src="./assets/images/full/image1.jpg" alt="Image 1">
+                                        <img src="./assets/images/thumb/image1.jpg" alt="Image 1">
                                     </div>
                                     <span class="filename">image1.jpg</span>
                                 </div>
                                 <div class="thumbnail-item" data-image="image2.jpg">
                                     <div class="thumbnail-container">
-                                        <img src="./assets/images/full/image2.jpg" alt="Image 2">
+                                        <img src="./assets/images/thumb/image2.jpg" alt="Image 2">
                                     </div>
                                     <span class="filename">image2.jpg</span>
                                 </div>
                                 <div class="thumbnail-item" data-image="image3.jpg">
                                     <div class="thumbnail-container">
-                                        <img src="./assets/images/full/image3.jpg" alt="Image 3">
+                                        <img src="./assets/images/thumb/image3.jpg" alt="Image 3">
                                     </div>
                                     <span class="filename">image3.jpg</span>
                                 </div>
                                 <div class="thumbnail-item" data-image="image4.jpg">
                                     <div class="thumbnail-container">
-                                        <img src="./assets/images/full/image4.jpg" alt="Image 4">
+                                        <img src="./assets/images/thumb/image4.jpg" alt="Image 4">
                                     </div>
                                     <span class="filename">image4.jpg</span>
                                 </div>
-                                <div class="thumbnail-item" data-image="image5.png">
+                                <div class="thumbnail-item" data-image="image5.jpg">
                                     <div class="thumbnail-container">
-                                        <img src="./assets/images/full/image5.png" alt="Image 5">
+                                        <img src="./assets/images/thumb/image5.jpg" alt="Image 5">
                                     </div>
-                                    <span class="filename">image5.png</span>
+                                    <span class="filename">image5.jpg</span>
                                 </div>
                             </div>
                         </div>
@@ -277,9 +277,9 @@ class WindowTemplates {
             window.imageViewerState = {
                 pendingImage: null,
                 isAppReady: false,
-                maxRetries: 20,  // More retries for GitHub environment
+                maxRetries: 10,  // Reduced from 20 to 10
                 retryCount: 0,
-                retryDelay: 200  // Shorter initial delays but more attempts
+                retryDelay: 100  // Reduced from 200ms to 100ms
             };
         }
         
@@ -302,14 +302,14 @@ class WindowTemplates {
                 console.log('Image viewer app reported ready');
                 window.imageViewerState.isAppReady = true;
                 
-                // If there's a pending image and the app is now ready, send it
+                // If there's a pending image and the app is now ready, send it immediately
                 if (window.imageViewerState.pendingImage) {
                     sendImageToViewer(window.imageViewerState.pendingImage);
                 }
             }
         });
         
-        // Function to send image to viewer with retry logic
+        // Function to send image to viewer with simplified retry logic
         function sendImageToViewer(imagePath) {
             if (!iframe.contentWindow || window.imageViewerState.retryCount >= window.imageViewerState.maxRetries) {
                 if (window.imageViewerState.retryCount >= window.imageViewerState.maxRetries) {
@@ -330,27 +330,26 @@ class WindowTemplates {
                 
                 console.log('Sent open-image message to viewer:', imagePath);
                 
-                // Schedule another attempt with increasing delay
+                // Use a fixed delay for retries rather than increasing delay
                 window.imageViewerState.retryCount++;
-                const nextDelay = window.imageViewerState.retryDelay * (1 + (window.imageViewerState.retryCount * 0.1));
                 
-                // Continue retrying even after we think it worked, to ensure delivery
+                // Continue retrying at a consistent interval
                 setTimeout(() => {
                     if (window.imageViewerState.pendingImage === imagePath) {
                         sendImageToViewer(imagePath);
                     }
-                }, nextDelay);
+                }, window.imageViewerState.retryDelay);
                 
             } catch (e) {
                 console.error('Failed to send image to viewer:', e);
                 
-                // Retry with increasing delay
+                // Retry with consistent delay
                 window.imageViewerState.retryCount++;
                 setTimeout(() => {
                     if (window.imageViewerState.pendingImage === imagePath) {
                         sendImageToViewer(imagePath);
                     }
-                }, window.imageViewerState.retryDelay * window.imageViewerState.retryCount);
+                }, window.imageViewerState.retryDelay);
             }
         }
         
@@ -358,12 +357,11 @@ class WindowTemplates {
         iframe.addEventListener('load', function() {
             console.log('Image viewer iframe loaded');
             
-            // Start sending image if there's a pending one, with a delay
-            // even if we haven't received the ready message yet
+            // Start sending image immediately if there's a pending one
+            // Reduce delay to 0ms for immediate sending
             if (window.imageViewerState.pendingImage) {
-                setTimeout(() => {
-                    sendImageToViewer(window.imageViewerState.pendingImage);
-                }, 500); // Initial delay after load
+                // Send immediately instead of using setTimeout
+                sendImageToViewer(window.imageViewerState.pendingImage);
             }
         });
         
