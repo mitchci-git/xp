@@ -41,16 +41,26 @@
         readyConfirmed: false,
         
         // Initialize with a sync flag to avoid race conditions
-        initComplete: false
+        initComplete: false,
+        
+        // Add recovery mechanism flags
+        hasAttemptedRecovery: false,
+        recoveryAttempts: 0,
+        maxRecoveryAttempts: 3,
+        lastActivityTime: Date.now()
     };
 
-    // Initialize everything once DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        // If already loaded, init immediately
-        init();
-    }
+    // Initialize immediately and set up a backup initialization
+    init();
+    
+    // Double-check initialization after 50ms
+    setTimeout(init, 50);
+    
+    // Triple-check initialization after 100ms
+    setTimeout(init, 100);
+    
+    // Add a recovery mechanism that runs every 500ms
+    const recoveryInterval = setInterval(checkAndRecover, 500);
     
     // ========== CORE FUNCTIONALITY ==========
     
@@ -75,19 +85,53 @@
         setupEventListeners();
         setupTooltips();
         
-        // Initialize the app (100ms delay to ensure everything is ready)
-        setTimeout(() => {
-            state.appReady = true;
+        // Mark app as ready immediately
+        state.appReady = true;
+        state.lastActivityTime = Date.now();
+        
+        // Send ready signal to parent immediately
+        sendReadySignal();
+        
+        // Set up a repeated ready signal for redundancy
+        for (let i = 1; i <= 5; i++) {
+            setTimeout(sendReadySignal, i * 100); // Send 5 times over 500ms
+        }
+    }
+    
+    // Recovery mechanism to check for lost messages or hanging state
+    function checkAndRecover() {
+        // Update last activity timestamp to prevent premature recovery
+        if (document.visibilityState === 'visible') {
+            state.lastActivityTime = Date.now();
+        }
+        
+        // If initialization didn't happen, force it
+        if (!state.initComplete) {
+            console.warn('[PhotoViewer] Recovery: Forcing initialization');
+            init();
+        }
+        
+        // If ready wasn't confirmed and we have a pending image, resend ready signal
+        if (!state.readyConfirmed && state.pendingImageLoad) {
+            console.warn('[PhotoViewer] Recovery: Resending ready signal');
+            sendReadySignal();
             
-            // Send ready signal to parent
-            notifyReady();
-            
-            // Check if there's a pending image to load
-            if (state.pendingImageLoad) {
-                loadImage(state.pendingImageLoad);
+            // If we've waited too long, try to load the image directly
+            if (state.recoveryAttempts >= 2 && state.pendingImageLoad) {
+                console.warn('[PhotoViewer] Recovery: Forcing image load');
+                const imageToLoad = state.pendingImageLoad;
                 state.pendingImageLoad = null;
+                loadImage(imageToLoad);
             }
-        }, 100);
+        }
+        
+        // If no activity for 5 seconds, clear the recovery interval
+        if (Date.now() - state.lastActivityTime > 5000) {
+            console.log('[PhotoViewer] Recovery: Clearing recovery interval');
+            clearInterval(recoveryInterval);
+        }
+        
+        state.recoveryAttempts++;
     }
     
     // Setup all event listeners
@@ -97,21 +141,45 @@
             if (!e.target.classList.contains('toolbar-button')) {
                 e.preventDefault();
             }
+            state.lastActivityTime = Date.now();
         });
         
         document.addEventListener('dragstart', e => e.preventDefault());
         
         // Navigation buttons
-        prevButton.addEventListener('click', prevImage);
-        nextButton.addEventListener('click', nextImage);
+        prevButton.addEventListener('click', function(e) {
+            state.lastActivityTime = Date.now();
+            prevImage();
+        });
+        
+        nextButton.addEventListener('click', function(e) {
+            state.lastActivityTime = Date.now();
+            nextImage();
+        });
         
         // Zoom and rotation
-        zoomInButton.addEventListener('click', zoomIn);
-        zoomOutButton.addEventListener('click', zoomOut);
-        rotateButton.addEventListener('click', rotateImage);
+        zoomInButton.addEventListener('click', function(e) {
+            state.lastActivityTime = Date.now();
+            zoomIn();
+        });
         
-        // Message communication with parent window
+        zoomOutButton.addEventListener('click', function(e) {
+            state.lastActivityTime = Date.now();
+            zoomOut();
+        });
+        
+        rotateButton.addEventListener('click', function(e) {
+            state.lastActivityTime = Date.now();
+            rotateImage();
+        });
+        
+        // Message communication with parent window - ensure setup immediately
         window.addEventListener('message', handleMessage);
+        
+        // Make sure default text is cleared when we're initialized properly
+        if (imageInfo && imageInfo.textContent === "Image name and details") {
+            imageInfo.textContent = "";
+        }
     }
     
     // Tooltip functionality
@@ -162,33 +230,25 @@
     
     // ========== PARENT WINDOW COMMUNICATION ==========
     
-    // Send ready signal to parent window with guaranteed delivery
-    function notifyReady() {
-        if (!state.readyMessageSent) {
-            console.log('[PhotoViewer] Sending ready signal to parent');
-            state.readyMessageSent = true;
-            
+    // Send ready signal to parent window 
+    function sendReadySignal() {
+        state.lastActivityTime = Date.now();
+        
+        // Always send ready signal regardless of previous state
+        console.log('[PhotoViewer] Sending ready signal to parent');
+        state.readyMessageSent = true;
+        
+        try {
             // Send the ready message
             window.parent.postMessage({ 
                 type: 'image-viewer-ready',
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                attempt: state.readyCheckCount + 1
             }, '*');
             
-            // Start a retry interval for reliability
-            const readyInterval = setInterval(() => {
-                if (state.readyConfirmed || state.readyCheckCount >= 10) {
-                    clearInterval(readyInterval);
-                    return;
-                }
-                
-                state.readyCheckCount++;
-                console.log(`[PhotoViewer] Ready signal retry #${state.readyCheckCount}`);
-                window.parent.postMessage({ 
-                    type: 'image-viewer-ready',
-                    retry: state.readyCheckCount,
-                    timestamp: Date.now()
-                }, '*');
-            }, 500);
+            state.readyCheckCount++;
+        } catch (err) {
+            console.error('[PhotoViewer] Error sending ready signal:', err);
         }
     }
     
@@ -197,7 +257,8 @@
         const data = event.data;
         if (!data || !data.type) return;
         
-        console.log(`[PhotoViewer] Received message: ${data.type}`);
+        console.log(`[PhotoViewer] Received message: ${data.type}`, data);
+        state.lastActivityTime = Date.now();
         
         switch (data.type) {
             case 'open-image':
@@ -206,30 +267,23 @@
                 const imagePath = data.imagePath;
                 const imageName = data.imageName || extractFilenameFromPath(imagePath);
                 
-                // Acknowledge receipt immediately before doing anything else
+                // Acknowledge receipt immediately
                 console.log(`[PhotoViewer] Acknowledging receipt of image: ${imagePath}`);
-                window.parent.postMessage({
-                    type: 'image-open-received',
-                    imagePath: imagePath,
-                    timestamp: Date.now()
-                }, '*');
-                
-                // Load the image
-                if (state.appReady) {
-                    loadImage({
-                        path: imagePath,
-                        name: imageName
-                    });
-                } else {
-                    console.log('[PhotoViewer] App not ready, storing image for later');
-                    state.pendingImageLoad = {
-                        path: imagePath, 
-                        name: imageName
-                    };
-                    
-                    // Force ready check again
-                    notifyReady();
+                try {
+                    window.parent.postMessage({
+                        type: 'image-open-received',
+                        imagePath: imagePath,
+                        timestamp: Date.now()
+                    }, '*');
+                } catch (err) {
+                    console.error('[PhotoViewer] Error sending acknowledgment:', err);
                 }
+                
+                // Load the image - always attempt to load regardless of ready state
+                loadImage({
+                    path: imagePath,
+                    name: imageName
+                });
                 break;
                 
             case 'window-state-update':
@@ -238,8 +292,8 @@
                 break;
                 
             case 'check-viewer-ready':
-                // Parent is checking if we're ready
-                notifyReady();
+                // Parent is checking if we're ready - respond immediately
+                sendReadySignal();
                 break;
                 
             case 'ready-acknowledged':
@@ -268,10 +322,12 @@
             return;
         }
         
-        // If already loading, wait until current load finishes
+        state.lastActivityTime = Date.now();
+        
+        // If already loading, queue this image with very short delay
         if (state.isLoading) {
-            console.log('[PhotoViewer] Already loading, waiting 100ms');
-            setTimeout(() => loadImage(imageData), 100);
+            console.log('[PhotoViewer] Already loading, queuing for 50ms');
+            setTimeout(() => loadImage(imageData), 50);
             return;
         }
         
@@ -280,134 +336,142 @@
         
         // Update the info immediately
         state.imageName = imageData.name || '';
-        imageInfo.textContent = state.imageName;
+        if (imageInfo) {
+            imageInfo.textContent = state.imageName;
+        }
         
         // Disable navigation buttons
-        prevButton.disabled = true;
-        nextButton.disabled = true;
+        if (prevButton) prevButton.disabled = true;
+        if (nextButton) nextButton.disabled = true;
         
         // Reset view settings
         state.currentZoom = 0.825;
         state.currentRotation = 0;
         
         // Prepare the image (completely hide it first)
-        imageDisplay.style.transition = 'none';
-        imageDisplay.style.visibility = 'hidden';
-        imageDisplay.style.opacity = '0';
-        imageDisplay.style.transform = `scale(${state.currentZoom}) rotate(${state.currentRotation}deg)`;
-        
-        // Force styles to apply
-        window.getComputedStyle(imageDisplay).opacity;
-        
-        // Clear any previous error messages
-        const errorElements = imageContainer.querySelectorAll('.error-message');
-        errorElements.forEach(el => el.remove());
-        
-        // Process the path
-        let imagePath = imageData.path;
-        if (imagePath.startsWith('./')) {
-            imagePath = '../../' + imagePath.substring(2);
-        }
-        
-        // Store the current path being loaded (helps prevent race conditions)
-        state.currentlyLoading = imagePath;
-        
-        // Clear previous image and event handlers
-        imageDisplay.onload = null;
-        imageDisplay.onerror = null;
-        imageDisplay.src = '';
-        
-        // Add new handlers
-        imageDisplay.onload = function() {
-            // Only process if this is still the current image being loaded
-            if (state.currentlyLoading !== imagePath) {
-                console.log('[PhotoViewer] Ignoring stale image load');
-                return;
-            }
-            
-            console.log('[PhotoViewer] Image loaded successfully');
-            
-            // Make image visible
-            imageDisplay.style.visibility = 'visible';
-            imageDisplay.style.opacity = '1';
-            
-            // Force browser to apply visibility
-            window.getComputedStyle(imageDisplay).opacity;
-            
-            // Re-enable transition for future transformations
-            imageDisplay.style.transition = 'transform 0.2s ease';
-            
-            // Update info
-            imageInfo.textContent = state.imageName;
-            zoomLevel.textContent = '100%';
-            
-            // Find index of image in array for navigation
-            state.currentImageIndex = state.imagesArray.findIndex(img => img.name === state.imageName);
-            if (state.currentImageIndex === -1) state.currentImageIndex = 0;
-            
-            // Re-enable navigation
-            prevButton.disabled = false;
-            nextButton.disabled = false;
-            
-            // Notify parent about successful load
-            notifyParentAboutImage();
-            
-            // Clear loading state and path
-            state.isLoading = false;
-            state.currentlyLoading = null;
-        };
-        
-        imageDisplay.onerror = function() {
-            // Only process if this is still the current image being loaded
-            if (state.currentlyLoading !== imagePath) {
-                console.log('[PhotoViewer] Ignoring stale image error');
-                return;
-            }
-            
-            console.error(`[PhotoViewer] Failed to load image: ${imagePath}`);
-            
-            // Hide the image
+        if (imageDisplay) {
+            imageDisplay.style.transition = 'none';
             imageDisplay.style.visibility = 'hidden';
             imageDisplay.style.opacity = '0';
-            imageDisplay.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            imageDisplay.style.transform = `scale(${state.currentZoom}) rotate(${state.currentRotation}deg)`;
             
-            // Update info
-            imageInfo.textContent = `Error: Could not load ${state.imageName}`;
+            // Force styles to apply
+            try {
+                window.getComputedStyle(imageDisplay).opacity;
+            } catch (err) {
+                console.error('[PhotoViewer] Error getting computed style:', err);
+            }
             
-            // Create error message
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.style.display = 'flex';
-            errorDiv.style.flexDirection = 'column';
-            errorDiv.style.alignItems = 'center';
-            errorDiv.style.justifyContent = 'center';
-            errorDiv.style.color = 'white';
-            errorDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
-            errorDiv.style.padding = '20px';
-            errorDiv.style.borderRadius = '8px';
-            errorDiv.style.margin = 'auto';
+            // Clear previous image and event handlers
+            imageDisplay.onload = null;
+            imageDisplay.onerror = null;
             
-            errorDiv.innerHTML = `
-                <h3>Image Failed to Load</h3>
-                <p>Could not display: ${state.imageName}</p>
-                <p>Please check that the file exists in:</p>
-                <p class="path">assets/images/full/</p>
-            `;
+            // Process the path
+            let imagePath = imageData.path;
+            if (imagePath.startsWith('./')) {
+                imagePath = '../../' + imagePath.substring(2);
+            }
             
-            imageContainer.appendChild(errorDiv);
+            // Store the current path being loaded (helps prevent race conditions)
+            state.currentlyLoading = imagePath;
             
-            // Re-enable navigation
-            prevButton.disabled = false;
-            nextButton.disabled = false;
+            // Set empty source first to ensure proper loading
+            imageDisplay.src = '';
             
-            // Clear loading state and path
+            // Add new handlers
+            imageDisplay.onload = function() {
+                // Only process if this is still the current image being loaded
+                if (state.currentlyLoading !== imagePath) {
+                    console.log('[PhotoViewer] Ignoring stale image load');
+                    return;
+                }
+                
+                console.log('[PhotoViewer] Image loaded successfully');
+                state.lastActivityTime = Date.now();
+                
+                // Make image visible
+                imageDisplay.style.visibility = 'visible';
+                imageDisplay.style.opacity = '1';
+                
+                // Force browser to apply visibility
+                try {
+                    window.getComputedStyle(imageDisplay).opacity;
+                } catch (err) {
+                    console.error('[PhotoViewer] Error getting computed style:', err);
+                }
+                
+                // Re-enable transition for future transformations
+                imageDisplay.style.transition = 'transform 0.2s ease';
+                
+                // Update info
+                if (imageInfo) imageInfo.textContent = state.imageName;
+                if (zoomLevel) zoomLevel.textContent = '100%';
+                
+                // Find index of image in array for navigation
+                state.currentImageIndex = state.imagesArray.findIndex(img => img.name === state.imageName);
+                if (state.currentImageIndex === -1) state.currentImageIndex = 0;
+                
+                // Re-enable navigation
+                if (prevButton) prevButton.disabled = false;
+                if (nextButton) nextButton.disabled = false;
+                
+                // Notify parent about successful load
+                notifyParentAboutImage();
+                
+                // Clear loading state and path
+                state.isLoading = false;
+                state.currentlyLoading = null;
+            };
+            
+            imageDisplay.onerror = function(err) {
+                console.error(`[PhotoViewer] Failed to load image: ${imagePath}`, err);
+                state.lastActivityTime = Date.now();
+                
+                // Hide the image
+                imageDisplay.style.visibility = 'hidden';
+                imageDisplay.style.opacity = '0';
+                imageDisplay.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                
+                // Update info
+                if (imageInfo) imageInfo.textContent = `Error: Could not load ${state.imageName}`;
+                
+                // Create error message
+                if (imageContainer) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'image-error';
+                    errorDiv.innerHTML = `
+                        <h3>Image Failed to Load</h3>
+                        <p>Could not display: ${state.imageName}</p>
+                        <p>Please check that the file exists and try again.</p>
+                    `;
+                    
+                    // Clear any previous error messages
+                    const previousErrors = imageContainer.querySelectorAll('.image-error');
+                    previousErrors.forEach(el => el.remove());
+                    
+                    imageContainer.appendChild(errorDiv);
+                }
+                
+                // Re-enable navigation
+                if (prevButton) prevButton.disabled = false;
+                if (nextButton) nextButton.disabled = false;
+                
+                // Clear loading state and path
+                state.isLoading = false;
+                state.currentlyLoading = null;
+            };
+            
+            // Set image source to start loading (do this last)
+            console.log(`[PhotoViewer] Setting image src: ${imagePath}`);
+            setTimeout(() => {
+                if (imageDisplay) {
+                    imageDisplay.src = imagePath;
+                }
+            }, 0);
+        } else {
+            console.error('[PhotoViewer] Image display element not found');
             state.isLoading = false;
-            state.currentlyLoading = null;
-        };
-        
-        // Set image source to start loading (do this last)
-        console.log(`[PhotoViewer] Setting image src: ${imagePath}`);
-        imageDisplay.src = imagePath;
+        }
     }
     
     // Navigate to previous image
@@ -451,17 +515,23 @@
     
     // Notify parent about loaded image
     function notifyParentAboutImage() {
+        if (!imageDisplay) return;
+        
         const imgWidth = imageDisplay.naturalWidth;
         const imgHeight = imageDisplay.naturalHeight;
         
-        window.parent.postMessage({
-            type: 'image-changed',
-            imageName: state.imageName,
-            imgWidth: imgWidth,
-            imgHeight: imgHeight,
-            preserveMaximized: true,
-            allowResize: true
-        }, '*');
+        try {
+            window.parent.postMessage({
+                type: 'image-changed',
+                imageName: state.imageName,
+                imgWidth: imgWidth,
+                imgHeight: imgHeight,
+                preserveMaximized: true,
+                allowResize: true
+            }, '*');
+        } catch (err) {
+            console.error('[PhotoViewer] Error notifying parent about image:', err);
+        }
     }
     
     // ========== IMAGE OPERATIONS ==========
