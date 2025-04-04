@@ -29,7 +29,7 @@
 }
 
 .window-maximize.restore {
-  background-image: url('../assets/icons/windows/restore.png');
+  background-image: url('../assets/gui/desktop/restore.png');
   background-size: 10px 10px;
 }
 

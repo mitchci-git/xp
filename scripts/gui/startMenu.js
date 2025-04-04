@@ -59,11 +59,11 @@ export default class StartMenu {
             <ul class="all-programs-items">
                 <li class="all-programs-separator"></li>
                 <li class="all-programs-item category">
-                    <img src="./assets/icons/windows/folder.png" alt="Folder">
+                    <img src="./assets/gui/windows/folder.png" alt="Folder">
                     Windows Accessories
                 </li>
                 <li class="all-programs-item category">
-                    <img src="./assets/icons/windows/folder.png" alt="Folder">
+                    <img src="./assets/gui/windows/folder.png" alt="Folder">
                     Games
                 </li>
             </ul>
@@ -81,21 +81,21 @@ export default class StartMenu {
     getMenuTemplate() {
         return `
             <div class="menutopbar">
-                <img src="./assets/start-menu/user.png" alt="User" class="userpicture">
+                <img src="./assets/gui/start-menu/user.png" alt="User" class="userpicture">
                 <span class="username">Mitch's Portfolio</span>
             </div>
             <div class="start-menu-middle">
                 <div class="middle-section middle-left">
                     <ul class="menu-items">
                         <li class="menu-item" id="menu-internet">
-                            <img src="./assets/start-menu/internet.png" alt="Internet Explorer">
+                            <img src="./assets/gui/start-menu/internet.png" alt="Internet Explorer">
                             <div class="item-content">
                                 <span class="item-title">Internet</span>
                                 <span class="item-description">Internet Explorer</span>
                             </div>
                         </li>
                         <li class="menu-item" id="menu-email">
-                            <img src="./assets/start-menu/email.png" alt="E-mail">
+                            <img src="./assets/gui/start-menu/email.png" alt="E-mail">
                             <div class="item-content">
                                 <span class="item-title">E-mail</span>
                                 <span class="item-description">Outlook Express</span>
@@ -103,31 +103,31 @@ export default class StartMenu {
                         </li>
                         <li class="menu-divider"><hr class="divider"></li>
                         <li class="menu-item" id="menu-media-player">
-                            <img src="./assets/icons/desktop/music-player.png" alt="Media Player">
+                            <img src="./assets/gui/desktop/music-player.png" alt="Media Player">
                             <div class="item-content">
                                 <span class="item-title">Media Player</span>
                             </div>
                         </li>
                         <li class="menu-item" id="menu-my-computer">
-                            <img src="./assets/start-menu/computer.png" alt="My Computer">
+                            <img src="./assets/gui/start-menu/computer.png" alt="My Computer">
                             <div class="item-content">
                                 <span class="item-title">My Computer</span>
                             </div>
                         </li>
                         <li class="menu-item" id="menu-my-documents">
-                            <img src="./assets/start-menu/documents.png" alt="My Documents">
+                            <img src="./assets/gui/start-menu/documents.png" alt="My Documents">
                             <div class="item-content">
                                 <span class="item-title">My Documents</span>
                             </div>
                         </li>
                         <li class="menu-item" id="menu-my-pictures">
-                            <img src="./assets/start-menu/pictures.png" alt="My Pictures">
+                            <img src="./assets/gui/start-menu/pictures.png" alt="My Pictures">
                             <div class="item-content">
                                 <span class="item-title">My Pictures</span>
                             </div>
                         </li>
                         <li class="menu-item" id="menu-paint">
-                            <img src="./assets/start-menu/paint.png" alt="Paint">
+                            <img src="./assets/gui/start-menu/paint.png" alt="Paint">
                             <div class="item-content">
                                 <span class="item-title">Paint</span>
                             </div>
@@ -137,26 +137,26 @@ export default class StartMenu {
                         <hr class="divider">
                         <div class="all-programs-button" id="menu-all-programs">
                             <span>All Programs</span>
-                            <img src="./assets/start-menu/arrow.ico" alt="All Programs">
+                            <img src="./assets/gui/start-menu/arrow.ico" alt="All Programs">
                         </div>
                     </div>
                 </div>
                 <div class="middle-section middle-right">
                     <ul class="menu-items">
                         <li class="menu-item" id="menu-linkedin">
-                            <img src="./assets/start-menu/linkedin.png" alt="LinkedIn">
+                            <img src="./assets/gui/start-menu/linkedin.png" alt="LinkedIn">
                             <div class="item-content">
                                 <span class="item-title">LinkedIn</span>
                             </div>
                         </li>
                         <li class="menu-item" id="menu-github">
-                            <img src="./assets/start-menu/github.png" alt="GitHub">
+                            <img src="./assets/gui/start-menu/github.png" alt="GitHub">
                             <div class="item-content">
                                 <span class="item-title">GitHub</span>
                             </div>
                         </li>
                         <li class="menu-item" id="menu-instagram">
-                            <img src="./assets/start-menu/instagram.png" alt="Instagram">
+                            <img src="./assets/gui/start-menu/instagram.png" alt="Instagram">
                             <div class="item-content">
                                 <span class="item-title">Instagram</span>
                             </div>
@@ -167,11 +167,11 @@ export default class StartMenu {
             <div class="start-menu-footer">
                 <div class="footer-buttons">
                     <div class="footer-button" id="btn-log-off">
-                        <img src="./assets/start-menu/logoff.png" alt="Log Off">
+                        <img src="./assets/gui/start-menu/logoff.png" alt="Log Off">
                         <span>Log Off</span>
                     </div>
                     <div class="footer-button" id="btn-shut-down">
-                        <img src="./assets/start-menu/shutdown.png" alt="Shut Down">
+                        <img src="./assets/gui/start-menu/shutdown.png" alt="Shut Down">
                         <span>Shut Down</span>
                     </div>
                 </div>

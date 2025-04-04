@@ -22,7 +22,7 @@
     left: 0;
     width: 100%;
     height: var(--taskbar-height);
-    background-image: url('../../assets/taskbar/taskbar-bg.png');
+    background-image: url('../../assets/gui/taskbar/taskbar-bg.png');
     background-repeat: repeat-x;
     background-size: auto 100%;
     z-index: 1000;
@@ -44,6 +44,8 @@
     margin: 0;
     box-shadow: none !important;
     transition: filter 0.1s ease;
+    -webkit-tap-highlight-color: transparent; /* Prevents tap highlight on mobile */
+    user-select: none; /* Prevents selection */
 }
 
 .start-button:hover {
@@ -53,19 +55,31 @@
 .start-button:active,
 .start-button.active {
     filter: brightness(0.9);
+    background: transparent !important; /* Force transparent background */
+    border: none !important; /* Force no border */
+    outline: none !important; /* Force no outline */
 }
 
 .start-button:focus {
     outline: none !important;
     border: none !important;
+    background: transparent !important; /* Force transparent background */
+    box-shadow: none !important; /* Force no box shadow */
 }
 
+/* Ensure no white box appears in Firefox */
+.start-button::-moz-focus-inner {
+    border: 0;
+}
+
+/* Ensure image has no border */
 .start-button img {
     height: var(--taskbar-height);
     display: block;
     border: none;
     outline: none;
     box-shadow: none;
+    -webkit-user-drag: none; /* Prevent dragging */
 }
 
 /* Quick launch */
@@ -247,7 +261,7 @@
     left: 0;
     width: 320px;
     height: 480px;
-    background-image: url('../../assets/start-menu/start-menu-bg.png');
+    background-image: url('../../assets/gui/start-menu/start-menu-bg.png');
     display: none;
     user-select: none;
     cursor: default;

@@ -86,7 +86,7 @@ const programData = {
     "image-viewer": {
         id: "image-viewer-window",
         title: "Windows Photo Viewer",
-        icon: "./assets/icons/windows/image-viewer.png",
+        icon: "./assets/icons/desktop/image-viewer.png",
         template: "image-viewer",
         centerWindow: true
     },

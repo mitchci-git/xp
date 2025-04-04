@@ -16,49 +16,49 @@ export default class WindowManager {
             "my-computer": {
                 id: "my-computer-window",
                 title: "My Computer",
-                icon: "./assets/icons/desktop/my-computer.png",
+                icon: "./assets/gui/desktop/my-computer.png", // Updated path
                 template: "my-computer",
                 isOpen: false
             },
             "my-documents": {
                 id: "my-documents-window",
                 title: "My Documents",
-                icon: "./assets/icons/desktop/my-documents.png",
+                icon: "./assets/gui/desktop/my-documents.png", // Updated path
                 template: "folder-view",
                 isOpen: false
             },
             "recycle-bin": {
                 id: "recycle-bin-window",
                 title: "Recycle Bin",
-                icon: "./assets/icons/desktop/recycle-bin.png",
+                icon: "./assets/gui/desktop/recycle-bin.png", // Updated path
                 template: "folder-view",
                 isOpen: false
             },
             "internet-explorer": {
                 id: "internet-explorer-window",
                 title: "Internet Explorer",
-                icon: "./assets/icons/desktop/internet-explorer.png",
+                icon: "./assets/gui/desktop/internet-explorer.png", // Updated path
                 template: "browser",
                 isOpen: false
             },
             "email": {
                 id: "email-window",
                 title: "Outlook Express",
-                icon: "./assets/icons/desktop/email.png",
+                icon: "./assets/gui/desktop/email.png", // Updated path
                 template: "folder-view",
                 isOpen: false
             },
             "messenger": {
                 id: "messenger-window",
                 title: "Windows Messenger",
-                icon: "./assets/icons/desktop/messenger.png",
+                icon: "./assets/gui/desktop/messenger.png", // Updated path
                 template: "messenger",
                 isOpen: false
             },
             "paint": {
                 id: "paint-window",
                 title: "Paint",
-                icon: "./assets/start-menu/paint.png",
+                icon: "./assets/gui/desktop/paint.png", // Updated path (assuming paint.png was moved too)
                 template: "folder-view",
                 isOpen: false
             },
@@ -66,7 +66,7 @@ export default class WindowManager {
             "my-pictures": {
                 id: "my-pictures-window",
                 title: "My Pictures",
-                icon: "./assets/icons/desktop/my-pictures.png",
+                icon: "./assets/gui/desktop/my-pictures.png", // Updated path
                 template: "folder-view", 
                 isOpen: false
             },
@@ -74,7 +74,7 @@ export default class WindowManager {
             "image-viewer": {
                 id: "image-viewer-window",
                 title: "Windows Photo Viewer",
-                icon: "./assets/icons/windows/image-viewer.png",
+                icon: "./assets/gui/desktop/image-viewer.png", // Updated path
                 template: "image-viewer",
                 isOpen: false
             },
@@ -82,7 +82,7 @@ export default class WindowManager {
             "music-player": {
                 id: "music-player-window",
                 title: "Windows Media Player",
-                icon: "./assets/icons/desktop/music-player.png",
+                icon: "./assets/gui/desktop/music-player.png", // Updated path
                 template: "music-player",
                 isOpen: false
             }

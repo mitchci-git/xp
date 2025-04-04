@@ -137,31 +137,31 @@ class WindowTemplates {
                             <div class="thumbnails-view" id="thumbnails-view">
                                 <div class="thumbnail-item" data-image="image1.jpg">
                                     <div class="thumbnail-container">
-                                        <img src="./assets/images/thumb/image1.jpg" alt="Image 1">
+                                        <img src="./assets/apps/image-viewer/images/thumb/image1.jpg" alt="Image 1">
                                     </div>
                                     <span class="filename">image1.jpg</span>
                                 </div>
                                 <div class="thumbnail-item" data-image="image2.jpg">
                                     <div class="thumbnail-container">
-                                        <img src="./assets/images/thumb/image2.jpg" alt="Image 2">
+                                        <img src="./assets/apps/image-viewer/images/thumb/image2.jpg" alt="Image 2">
                                     </div>
                                     <span class="filename">image2.jpg</span>
                                 </div>
                                 <div class="thumbnail-item" data-image="image3.jpg">
                                     <div class="thumbnail-container">
-                                        <img src="./assets/images/thumb/image3.jpg" alt="Image 3">
+                                        <img src="./assets/apps/image-viewer/images/thumb/image3.jpg" alt="Image 3">
                                     </div>
                                     <span class="filename">image3.jpg</span>
                                 </div>
                                 <div class="thumbnail-item" data-image="image4.jpg">
                                     <div class="thumbnail-container">
-                                        <img src="./assets/images/thumb/image4.jpg" alt="Image 4">
+                                        <img src="./assets/apps/image-viewer/images/thumb/image4.jpg" alt="Image 4">
                                     </div>
                                     <span class="filename">image4.jpg</span>
                                 </div>
                                 <div class="thumbnail-item" data-image="image5.jpg">
                                     <div class="thumbnail-container">
-                                        <img src="./assets/images/thumb/image5.jpg" alt="Image 5">
+                                        <img src="./assets/apps/image-viewer/images/thumb/image5.jpg" alt="Image 5">
                                     </div>
                                     <span class="filename">image5.jpg</span>
                                 </div>
@@ -198,7 +198,7 @@ class WindowTemplates {
                     window.dispatchEvent(new CustomEvent('my-pictures:open-image', {
                         detail: {
                             imageName: imageName,
-                            imagePath: `./assets/images/full/${imageName}`
+                            imagePath: `./assets/apps/image-viewer/images/full/${imageName}`
                         }
                     }));
                     
@@ -297,7 +297,15 @@ class WindowTemplates {
         
         // Set essential attributes only
         iframe.className = 'image-viewer-frame';
-        iframe.src = './apps/image-viewer/index.html';
+        // Explicitly add the correct path to the control icons as a URL parameter
+        iframe.src = './apps/image-viewer/index.html?controlsPath=./assets/apps/image-viewer';
+        
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allowtransparency', 'true');
+        
+        // Pass the updated path for icons as a URL parameter
+        iframe.src += '?iconsPath=./assets/apps/image-viewer/';
+        
         iframe.setAttribute('frameborder', '0');
         iframe.setAttribute('allowtransparency', 'true');
         
