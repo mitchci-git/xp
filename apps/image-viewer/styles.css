@@ -132,9 +132,9 @@ body.image-viewer-container {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    transition: transform 0.2s ease; /* Removed opacity transition, keeping transform transition */
+    /* Removed all transitions to prevent fade effect */
     transform-origin: center center; /* Ensure rotation happens from center */
-    will-change: transform, opacity; /* Optimize for animation performance */
+    will-change: transform; /* Only optimize transform performance */
     cursor: default; /* Ensure default cursor on images */
     -webkit-user-drag: none; /* Prevent image dragging */
     pointer-events: none; /* Prevent image selection/highlighting */

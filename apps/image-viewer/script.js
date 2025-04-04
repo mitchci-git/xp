@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let initialImageLoaded = false;
     let displayScaleFactor = 100 / 82.5;
     let isLoadingImage = false; // Flag to prevent multiple simultaneous loads
+    let readyMessageSent = false; // Track if ready message was sent
     
     // Setup tooltips for toolbar buttons with single tooltip instance
     let activeTooltip = null;
@@ -83,6 +84,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Send ready message with retry mechanism
+    function notifyParentReady() {
+        readyMessageSent = true;
+        console.log('Sending image-viewer-ready notification to parent');
+        window.parent.postMessage({ type: 'image-viewer-ready' }, '*');
+        
+        // Set up confirmation check - if we don't get a response in 500ms, try again
+        setTimeout(() => {
+            if (!initialImageLoaded) {
+                console.log('No response from parent, sending ready notification again');
+                window.parent.postMessage({ type: 'image-viewer-ready' }, '*');
+                
+                // Try one more time after another delay
+                setTimeout(() => {
+                    if (!initialImageLoaded) {
+                        console.log('Still no response, sending final ready notification');
+                        window.parent.postMessage({ type: 'image-viewer-ready' }, '*');
+                    }
+                }, 1000);
+            }
+        }, 500);
+    }
+
     // Listen for messages from parent window
     window.addEventListener('message', function(event) {
         try {
@@ -100,8 +124,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 handleLoadImage(data);
+                
+                // Acknowledge receipt of the message
+                if (event.data.type === 'open-image') {
+                    window.parent.postMessage({ 
+                        type: 'image-open-received', 
+                        imagePath: data.imagePath 
+                    }, '*');
+                }
             } else if (event.data.type === 'window-state-update') {
                 isWindowMaximized = event.data.isMaximized;
+            } else if (event.data.type === 'check-viewer-ready') {
+                // If parent is checking if we're ready, respond immediately
+                notifyParentReady();
             }
         } catch (err) {
             console.error("Error handling window message:", err);
@@ -110,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Notify parent window that the viewer is ready to receive images
-    window.parent.postMessage({ type: 'image-viewer-ready' }, '*');
+    notifyParentReady();
     
     function handleLoadImage(data) {
         // Don't interrupt current loading operation
