@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let displayScaleFactor = 100 / 82.5;
     let isLoadingImage = false; // Flag to prevent multiple simultaneous loads
     let readyMessageSent = false; // Track if ready message was sent
+    let messageHandlersRegistered = false;
     
     // Setup tooltips for toolbar buttons with single tooltip instance
     let activeTooltip = null;
@@ -84,78 +85,128 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Send ready message with retry mechanism
+    // Improved ready notification system with guaranteed delivery
     function notifyParentReady() {
-        readyMessageSent = true;
-        console.log('Sending image-viewer-ready notification to parent');
-        window.parent.postMessage({ type: 'image-viewer-ready' }, '*');
+        if (readyMessageSent) return; // Don't send multiple times
         
-        // Set up confirmation check - if we don't get a response in 500ms, try again
-        setTimeout(() => {
-            if (!initialImageLoaded) {
-                console.log('No response from parent, sending ready notification again');
-                window.parent.postMessage({ type: 'image-viewer-ready' }, '*');
-                
-                // Try one more time after another delay
-                setTimeout(() => {
-                    if (!initialImageLoaded) {
-                        console.log('Still no response, sending final ready notification');
-                        window.parent.postMessage({ type: 'image-viewer-ready' }, '*');
-                    }
-                }, 1000);
+        readyMessageSent = true;
+        console.log('[ImageViewer] Sending ready notification to parent');
+        
+        // Send the ready message
+        window.parent.postMessage({ 
+            type: 'image-viewer-ready',
+            timestamp: Date.now() // Add timestamp to make messages unique
+        }, '*');
+        
+        // Set up a more robust retry system
+        let retryCount = 0;
+        const maxRetries = 10;
+        const retryInterval = 300; // ms
+        
+        const readyCheckInterval = setInterval(() => {
+            if (initialImageLoaded || retryCount >= maxRetries) {
+                // Success or max retries reached - stop sending
+                clearInterval(readyCheckInterval);
+                if (!initialImageLoaded && retryCount >= maxRetries) {
+                    console.warn('[ImageViewer] Max retries reached, no image loaded');
+                }
+                return;
             }
-        }, 500);
+            
+            // Send another ready message
+            console.log(`[ImageViewer] Retry ${retryCount + 1}/${maxRetries} sending ready notification`);
+            window.parent.postMessage({ 
+                type: 'image-viewer-ready',
+                retry: retryCount + 1,
+                timestamp: Date.now()
+            }, '*');
+            
+            retryCount++;
+        }, retryInterval);
     }
 
-    // Listen for messages from parent window
-    window.addEventListener('message', function(event) {
-        try {
-            if (event.data.type === 'load-image' || event.data.type === 'open-image') {
-                // Handle both message types
-                const data = event.data;
+    // Register message handlers once
+    function setupMessageHandlers() {
+        if (messageHandlersRegistered) return;
+        messageHandlersRegistered = true;
+        
+        // Listen for messages from parent window
+        window.addEventListener('message', function(event) {
+            try {
+                console.log('[ImageViewer] Received message:', event.data.type);
                 
-                // For open-image messages, normalize the data format
-                if (event.data.type === 'open-image') {
-                    // Extract image name from path if needed
-                    if (data.imagePath && !data.imageName) {
-                        const pathParts = data.imagePath.split('/');
-                        data.imageName = pathParts[pathParts.length - 1];
+                if (event.data.type === 'load-image' || event.data.type === 'open-image') {
+                    // Handle both message types
+                    const data = event.data;
+                    
+                    // For open-image messages, normalize the data format
+                    if (event.data.type === 'open-image') {
+                        // Extract image name from path if needed
+                        if (data.imagePath && !data.imageName) {
+                            const pathParts = data.imagePath.split('/');
+                            data.imageName = pathParts[pathParts.length - 1];
+                        }
                     }
-                }
-                
-                handleLoadImage(data);
-                
-                // Acknowledge receipt of the message
-                if (event.data.type === 'open-image') {
+                    
+                    // Important: Acknowledge receipt BEFORE processing
+                    // This prevents race conditions
                     window.parent.postMessage({ 
                         type: 'image-open-received', 
-                        imagePath: data.imagePath 
+                        imagePath: data.imagePath || '',
+                        timestamp: Date.now()
                     }, '*');
+                    
+                    // Now actually process the image
+                    handleLoadImage(data);
+                    
+                } else if (event.data.type === 'window-state-update') {
+                    isWindowMaximized = event.data.isMaximized;
+                    
+                } else if (event.data.type === 'check-viewer-ready') {
+                    // Parent is polling to check if we're ready
+                    console.log('[ImageViewer] Parent is checking if viewer is ready');
+                    notifyParentReady();
+                    
+                } else if (event.data.type === 'ready-acknowledged') {
+                    // Parent has acknowledged our ready message
+                    console.log('[ImageViewer] Parent acknowledged our ready message');
+                    // If we have a pending image path in the message, load it
+                    if (event.data.pendingImagePath) {
+                        console.log('[ImageViewer] Loading pending image from acknowledgment:', event.data.pendingImagePath);
+                        handleLoadImage({
+                            type: 'open-image',
+                            imagePath: event.data.pendingImagePath
+                        });
+                    }
                 }
-            } else if (event.data.type === 'window-state-update') {
-                isWindowMaximized = event.data.isMaximized;
-            } else if (event.data.type === 'check-viewer-ready') {
-                // If parent is checking if we're ready, respond immediately
-                notifyParentReady();
+            } catch (err) {
+                console.error("[ImageViewer] Error handling window message:", err);
+                imageInfo.textContent = "Error loading image";
             }
-        } catch (err) {
-            console.error("Error handling window message:", err);
-            imageInfo.textContent = "Error loading image";
-        }
-    });
+        });
+    }
     
-    // Notify parent window that the viewer is ready to receive images
-    notifyParentReady();
+    // Initialize message handling and ready notification
+    function initialize() {
+        setupMessageHandlers();
+        notifyParentReady();
+        
+        // Send another ready message after a short delay to catch any missed handlers
+        setTimeout(notifyParentReady, 50);
+    }
+    
+    // Initialize the viewer on DOM load
+    initialize();
     
     function handleLoadImage(data) {
         // Don't interrupt current loading operation
         if (isLoadingImage) {
-            console.log("Already loading image, queuing request");
-            // Further reduce delay from 100ms to 50ms
+            console.log("[ImageViewer] Already loading image, queuing request");
             setTimeout(() => handleLoadImage(data), 50);
             return;
         }
         
+        console.log('[ImageViewer] Starting to load image:', data.imageName || data.imagePath);
         isLoadingImage = true;
         
         imageName = data.imageName || '';
