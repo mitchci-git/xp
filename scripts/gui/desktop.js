@@ -1,7 +1,8 @@
 /**
- * Desktop module for managing desktop icons and selection box
- * Handles icon selection and drag selection functionality
+ * Initiate desktop icons functionality and program launching
  */
+import { EVENTS } from '../utils/constants.js';
+
 export default class Desktop {
     constructor(eventBus) {
         this.eventBus = eventBus;
@@ -22,8 +23,8 @@ export default class Desktop {
         this.setupDesktopEvents();
         this.setupPointerSelectionEvents();
 
-        this.eventBus.subscribe('window:created', () => this.clearSelection());
-        this.eventBus.subscribe('window:focused', () => this.clearSelection());
+        this.eventBus.subscribe(EVENTS.WINDOW_CREATED, () => this.clearSelection());
+        this.eventBus.subscribe(EVENTS.WINDOW_FOCUSED, () => this.clearSelection());
     }
 
     cleanupArtifacts() {
@@ -64,9 +65,13 @@ export default class Desktop {
                     this.selectIcon(icon, true);
                 }
                 let programName = iconText.toLowerCase().replace(/\s+/g, '-');
+                
+                // Handle special cases for program names
                 if (programName === 'windows-messenger') programName = 'messenger';
-                else if (programName === 'windows-media-player') programName = 'music-player';
-                this.eventBus.publish('program:open', { programName });
+                if (programName === 'command-prompt') programName = 'cmd-prompt';
+                if (programName === 'internet-explorer') programName = 'projects';
+                
+                this.eventBus.publish(EVENTS.PROGRAM_OPEN, { programName });
             });
 
             icon.style.position = 'relative';
@@ -86,8 +91,6 @@ export default class Desktop {
 
     setupPointerSelectionEvents() {
         window.addEventListener('pointerdown', (e) => {
-            // Only start selection if clicking directly on the overlay or desktop element
-            // This prevents selection when clicking on windows or other elements
             if (e.target !== this.overlay && e.target !== this.desktop) return;
             
             const rect = this.desktop.getBoundingClientRect();
@@ -95,7 +98,6 @@ export default class Desktop {
             this.startY = e.clientY - rect.top;
             this.clearTemporaryHighlights();
 
-            // Get the computed style variables
             const styles = getComputedStyle(document.documentElement);
             const selectionColor = styles.getPropertyValue('--desktop-selection-color').trim();
             const selectionBorder = styles.getPropertyValue('--selection-border').trim();
@@ -103,19 +105,13 @@ export default class Desktop {
             this.selectionBox = document.createElement('div');
             this.selectionBox.className = 'selection-box';
             
-            // Apply styles using CSS variables
-            this.selectionBox.style.cssText = `
-                position: absolute;
-                left: ${this.startX}px;
-                top: ${this.startY}px; Changed from 1000 to 1 to stay behind windows
-                width: 0px;
-                height: 0px;
-                background-color: ${selectionColor};
-                border: ${selectionBorder};
-                border-radius: 3px;
-                pointer-events: none;
-                z-index: 1;
-            `;
+            // Apply only dynamic styles directly
+            Object.assign(this.selectionBox.style, {
+                left: `${this.startX}px`,
+                top: `${this.startY}px`,
+                width: '0px',
+                height: '0px'
+            });
             
             this.desktop.appendChild(this.selectionBox);
             this.isDragging = true;
@@ -154,38 +150,9 @@ export default class Desktop {
                 }
             });
 
-            if (this.selectionBox && this.selectionBox.parentNode) {
+            if (this.selectionBox?.parentNode) {
                 this.selectionBox.parentNode.removeChild(this.selectionBox);
                 this.selectionBox = null;
-            }
-        });
-    }
-
-    setupSelectionEvents() {
-        // Start selection on mousedown
-        this.overlay.addEventListener('mousedown', (e) => {
-            if (e.button === 0) {
-                // Only allow selection when clicking directly on overlay or desktop
-                const target = e.target;
-                
-                // Strict target checking - only allow .selection-overlay or .desktop
-                if (target === this.overlay || target === this.desktop) {
-                    this.startSelectionBox(e.clientX, e.clientY, e);
-                }
-            }
-        });
-        
-        // Update selection box on mouse move
-        document.addEventListener('mousemove', (e) => {
-            if (this.isDragging) {
-                this.updateSelectionBox(e.clientX, e.clientY);
-            }
-        });
-        
-        // Finalize selection on mouseup
-        document.addEventListener('mouseup', (e) => {
-            if (this.isDragging && e.button === 0) {
-                this.finalizeSelection();
             }
         });
     }

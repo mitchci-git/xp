@@ -1,11 +1,17 @@
+/**
+ * Manages CRT visual effects for the Windows XP simulation
+ */
+import { EVENTS } from '../utils/constants.js';
+
 export default class CrtEffectManager {
     constructor(eventBus) {
         this.eventBus = eventBus;
         this.crtEnabled = true;
+        this.scanlineOpacity = 0.2;
+        this.flickerIntensity = 0.1;
+        this.vignetteOpacity = 0.3;
         
-        // Cache all CRT elements at initialization
         this.crtElements = this.getCrtElements();
-        
         this.initializeEffects();
         this.subscribeToEvents();
     }
@@ -19,7 +25,6 @@ export default class CrtEffectManager {
             scanline: document.querySelector('.crt-scanline'),
             aberration: document.querySelector('.crt-aberration'),
             flicker: document.querySelector('.crt-flicker')
-            // Removed persistence element that has no corresponding usage
         };
     }
     
@@ -39,15 +44,9 @@ export default class CrtEffectManager {
             return;
         }
         
-        this.eventBus.subscribe('crt:toggle', () => {
-            this.toggleCrtEffects();
-        });
+        this.eventBus.subscribe(EVENTS.CRT_TOGGLE, () => this.toggleCrtEffects());
+        this.eventBus.subscribe(EVENTS.CRT_UPDATE_SETTINGS, settings => this.updateSettings(settings));
         
-        this.eventBus.subscribe('crt:update-settings', (settings) => {
-            this.updateSettings(settings);
-        });
-        
-        // Use throttled resize handler
         this.boundHandleResize = this.handleResize.bind(this);
         window.addEventListener('resize', this.boundHandleResize);
     }
@@ -63,7 +62,7 @@ export default class CrtEffectManager {
             } else if (this.crtEnabled) {
                 this.updateCrtEffects();
             }
-        }, 200); // 200ms throttle
+        }, 200);
     }
     
     isMobileDevice() {
@@ -74,8 +73,6 @@ export default class CrtEffectManager {
         this.crtEnabled = !this.crtEnabled;
         this.updateCrtEffects();
         this.saveSettings();
-        
-        // Removed unused event publication as nothing subscribes to this event
     }
     
     disableCrtEffects() {
@@ -86,14 +83,12 @@ export default class CrtEffectManager {
     updateCrtEffects() {
         const displayValue = this.crtEnabled ? 'block' : 'none';
         
-        // Update all elements at once using the cached references
         Object.values(this.crtElements).forEach(element => {
             if (element) {
                 element.style.display = displayValue;
             }
         });
         
-        // Update body class in one operation
         document.body.classList.toggle('crt-disabled', !this.crtEnabled);
     }
     
@@ -139,10 +134,9 @@ export default class CrtEffectManager {
             
             if (savedSettings) {
                 const settings = JSON.parse(savedSettings);
-                this.crtEnabled = settings.enabled !== undefined ? settings.enabled : true;
-                
-                // Apply saved opacity values if they exist
                 const root = document.documentElement;
+                
+                this.crtEnabled = settings.enabled !== undefined ? settings.enabled : true;
                 
                 if (settings.scanlineOpacity !== undefined) {
                     this.scanlineOpacity = settings.scanlineOpacity;
@@ -159,7 +153,6 @@ export default class CrtEffectManager {
                     root.style.setProperty('--crt-vignette-opacity', settings.vignetteOpacity);
                 }
             } else {
-                // Check for legacy setting
                 const savedEnabled = localStorage.getItem('crt-enabled');
                 if (savedEnabled !== null) {
                     this.crtEnabled = savedEnabled === 'true';

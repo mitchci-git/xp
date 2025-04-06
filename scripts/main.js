@@ -9,6 +9,7 @@ import StartMenu from './gui/startMenu.js';
 import Clock from './gui/clock.js';
 import CrtEffectManager from './utils/crtEffectManager.js';
 import eventBus from './utils/eventBus.js';
+import { EVENTS } from './utils/constants.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize components in dependency order
@@ -19,60 +20,42 @@ document.addEventListener('DOMContentLoaded', () => {
     new Taskbar(eventBus);
     new CrtEffectManager(eventBus);
     
-    // Store image data temporarily when opening image viewer
-    let pendingImageData = null;
-    
-    // Listen for iframe messages
+    // Handle iframe messages
     window.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'iframe-clicked') {
-            // Handle window focus requests from iframes
-            const windowId = event.data.windowId;
-            if (windowId) {
-                const targetWindow = document.getElementById(windowId.split('?')[0]); // Remove query params if any
-                if (targetWindow) {
-                    eventBus.publish('window:focus', { windowId: targetWindow.id });
-                }
+        // Handle focus message (existing)
+        if (event.data?.type === EVENTS.IFRAME_CLICKED && event.data.windowId) {
+            const targetWindow = document.getElementById(event.data.windowId.split('?')[0]);
+            if (targetWindow) {
+                eventBus.publish(EVENTS.WINDOW_FOCUSED, { windowId: targetWindow.id });
             }
-        } else if (event.data && event.data.type === 'open-image-viewer') {
-            // Handle requests to open image viewer with specific image
-            pendingImageData = {
-                imageName: event.data.imageName,
-                imagePath: event.data.imagePath,
-                absolutePath: event.data.absolutePath,
-                basePath: event.data.basePath
-            };
-            
-            // Open the image viewer program
-            eventBus.publish('program:open', { programName: 'image-viewer' });
+        }
+
+        // --- Handle Project Hub message to open a new project tab --- 
+        if (event.data && event.data.type === 'openProject') {
+            const hubProjectId = event.data.id;
+            console.log(`Received request to open project from hub: ${hubProjectId}`);
+
+            let detailProgramName = '';
+
+            // Map the ID from the hub to the specific detail program name in programData
+            switch (hubProjectId) {
+                case 'retro-os':
+                    detailProgramName = 'retro-os-details'; 
+                    break;
+                // Add cases for other projects here when you add them
+                // case 'my-other-project-id-from-hub':
+                //     detailProgramName = 'my-other-project-details-program-name';
+                //     break;
+                default:
+                    console.warn(`Hub requested unknown project ID: ${hubProjectId}`);
+                    // Optionally show an error in the simulation UI
+                    // alert(`Error: Cannot open unknown project '${hubProjectId}'`);
+                    return; // Stop if the ID is unknown
+            }
+
+            // Publish the event to open the corresponding program/window
+            // The WindowManager will handle the actual opening based on programData
+            eventBus.publish(EVENTS.PROGRAM_OPEN, { programName: detailProgramName });
         }
     });
-    
-    // Listen for window creation events to pass image data to new image viewer windows
-    eventBus.subscribe('window:created', data => {
-        if (data.programName === 'image-viewer' && pendingImageData) {
-            // Wait a moment for the iframe to load
-            setTimeout(() => {
-                const imageViewerWindow = document.getElementById(data.windowId);
-                if (imageViewerWindow) {
-                    const iframe = imageViewerWindow.querySelector('iframe');
-                    if (iframe) {
-                        // Forward the image data to the image viewer
-                        iframe.contentWindow.postMessage({
-                            type: 'load-image',
-                            ...pendingImageData,
-                            isMaximized: imageViewerWindow.classList.contains('maximized')
-                        }, '*');
-                        
-                        // Clear pending data
-                        pendingImageData = null;
-                    }
-                }
-            }, 200); // Reduced timeout for faster response
-        }
-    });
-    
-    // Open Messenger window automatically on load
-    setTimeout(() => {
-        eventBus.publish('program:open', { programName: 'messenger' });
-    }, 100);
 });

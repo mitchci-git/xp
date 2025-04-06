@@ -2,6 +2,8 @@
  * Window manager module for handling window operations
  */
 import WindowTemplates from './windowTemplates.js';
+import programData from '../utils/programData.js';
+import { EVENTS } from '../utils/constants.js';
 
 export default class WindowManager {
     constructor(eventBus) {
@@ -11,206 +13,88 @@ export default class WindowManager {
         this.taskbarItems = {};
         this.windowCount = 0;
         this.cascadeOffset = 35;
-        
-        this.programData = {
-            "my-computer": {
-                id: "my-computer-window",
-                title: "My Computer",
-                icon: "./assets/gui/desktop/my-computer.png", // Updated path
-                template: "my-computer",
-                isOpen: false
-            },
-            "my-documents": {
-                id: "my-documents-window",
-                title: "My Documents",
-                icon: "./assets/gui/desktop/my-documents.png", // Updated path
-                template: "folder-view",
-                isOpen: false
-            },
-            "recycle-bin": {
-                id: "recycle-bin-window",
-                title: "Recycle Bin",
-                icon: "./assets/gui/desktop/recycle-bin.png", // Updated path
-                template: "folder-view",
-                isOpen: false
-            },
-            "internet-explorer": {
-                id: "internet-explorer-window",
-                title: "Internet Explorer",
-                icon: "./assets/gui/desktop/internet-explorer.png", // Updated path
-                template: "browser",
-                isOpen: false
-            },
-            "email": {
-                id: "email-window",
-                title: "Outlook Express",
-                icon: "./assets/gui/desktop/email.png", // Updated path
-                template: "folder-view",
-                isOpen: false
-            },
-            "messenger": {
-                id: "messenger-window",
-                title: "Windows Messenger",
-                icon: "./assets/gui/desktop/messenger.png", // Updated path
-                template: "messenger",
-                isOpen: false
-            },
-            "paint": {
-                id: "paint-window",
-                title: "Paint",
-                icon: "./assets/gui/desktop/paint.png", // Updated path (assuming paint.png was moved too)
-                template: "folder-view",
-                isOpen: false
-            },
-            // Add missing My Pictures program data
-            "my-pictures": {
-                id: "my-pictures-window",
-                title: "My Pictures",
-                icon: "./assets/gui/desktop/my-pictures.png", // Updated path
-                template: "folder-view", 
-                isOpen: false
-            },
-            // Add the missing image-viewer entry
-            "image-viewer": {
-                id: "image-viewer-window",
-                title: "Windows Photo Viewer",
-                icon: "./assets/gui/desktop/image-viewer.png", // Updated path
-                template: "image-viewer",
-                isOpen: false
-            },
-            // Add music player entry
-            "music-player": {
-                id: "music-player-window",
-                title: "Windows Media Player",
-                icon: "./assets/gui/desktop/music-player.png", // Updated path
-                template: "music-player",
-                isOpen: false
-            }
-        };
+        this.programData = programData;
         
         this.init();
         this.subscribeToEvents();
-
-        // Add global click handler to deactivate windows when clicking desktop
+        this.setupGlobalHandlers();
+    }
+    
+    setupGlobalHandlers() {
+        // Global click handler to deactivate windows when clicking desktop
         document.addEventListener('mousedown', (e) => {
-            // Check if we clicked inside a window by traversing up the DOM tree
-            let targetElement = e.target;
-            let isWindowClick = false;
-            let isTaskbarClick = false;
-            
-            while (targetElement) {
-                // Check if we clicked inside a window
-                if (targetElement.classList && targetElement.classList.contains('window')) {
-                    isWindowClick = true;
-                    break;
-                }
-                
-                // Check if we clicked on the taskbar or desktop icons
-                if (targetElement.classList) {
-                    if (targetElement.classList.contains('taskbar') || 
-                        targetElement.classList.contains('desktop-icon') ||
-                        targetElement.classList.contains('start-button') ||
-                        targetElement.classList.contains('startmenu')) {
-                        isTaskbarClick = true;
-                        break;
-                    }
-                }
-                
-                targetElement = targetElement.parentElement;
-            }
-            
-            // If we didn't click on a window or taskbar, and the desktop was clicked,
-            // consider it a click on empty space
-            if (!isWindowClick && !isTaskbarClick && this.activeWindow) {
-                // Only consider it a desktop click if we clicked on:
-                // - The desktop element itself
-                // - The selection overlay
-                // - Any other element that is inside the desktop but not taskbar/desktop-icon
-                const clickedOnDesktopSpace = 
-                    e.target.classList.contains('desktop') ||
-                    e.target.classList.contains('selection-overlay') ||
-                    (document.querySelector('.desktop') && document.querySelector('.desktop').contains(e.target));
-                
-                if (clickedOnDesktopSpace) {
-                    this.deactivateAllWindows();
-                    e.stopPropagation(); // Prevent other handlers from interfering
-                }
-            }
-        }, true); // Use capture phase for earliest possible handling
+            // Check if the direct click target is the desktop or overlay
+            const clickedOnDesktopSpace = 
+                e.target.classList.contains('desktop') ||
+                e.target.classList.contains('selection-overlay');
 
-        // Ensure we properly handle iframe messages for window activation
+            if (clickedOnDesktopSpace) {
+                // Make sure the click wasn't actually inside a window
+                // (e.g., on padding/margin of the overlay/desktop element
+                // that happens to be visually behind a window)
+                if (!e.target.closest('.window')) { 
+                    if (this.activeWindow) {
+                        this.deactivateAllWindows();
+                    }
+                    // Allow desktop component to handle its own click/drag logic
+                    // e.stopPropagation(); // Removed stopPropagation
+                }
+            }
+        }, true); // Use capture phase to potentially intercept before others
+
+        // Handle iframe messages for window activation
         window.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'iframe-clicked') {
+            if (event.data?.type === EVENTS.IFRAME_CLICKED) {
                 const windowId = event.data.windowId;
                 if (windowId) {
-                    // Extract the base window ID without query parameters
                     const baseWindowId = windowId.split('?')[0];
                     const targetWindow = document.getElementById(baseWindowId);
                     
                     if (targetWindow) {
                         this.bringToFront(targetWindow);
-                        // Stop event propagation to prevent desktop click handler from interfering
                         event.stopPropagation();
                     }
                 }
-            } else if (event.data && event.data.action === 'closeMediaPlayer') {
-                // Handle the close message from the music player iframe
-                const musicPlayerWindow = document.getElementById('music-player-window');
-                if (musicPlayerWindow) {
-                    musicPlayerWindow.remove();
-                    
-                    // Update any program state tracking
-                    if (this.programData["music-player"]) {
-                        this.programData["music-player"].isOpen = false;
-                    }
-                    
-                    // Remove from taskbar if needed
-                    const taskbarItem = document.querySelector(`.taskbar-item[data-window="music-player-window"]`);
-                    if (taskbarItem) {
-                        taskbarItem.remove();
-                    }
-                }
             }
-        }, true); // Use capture phase for earliest handling
+        }, true);
     }
     
     subscribeToEvents() {
-        // Subscribe to program open requests
-        this.eventBus.subscribe('program:open', data => {
+        this.eventBus.subscribe(EVENTS.PROGRAM_OPEN, data => {
             this.openProgram(data.programName);
         });
         
-        // Subscribe to window action requests
-        this.eventBus.subscribe('window:minimize', data => {
+        this.eventBus.subscribe(EVENTS.WINDOW_MINIMIZE, data => {
             const window = document.getElementById(data.windowId);
             if (window) this.minimizeWindow(window);
         });
         
-        this.eventBus.subscribe('window:maximize', data => {
+        this.eventBus.subscribe(EVENTS.WINDOW_MAXIMIZE, data => {
             const window = document.getElementById(data.windowId);
             if (window) this.toggleMaximize(window);
         });
         
-        this.eventBus.subscribe('window:close', data => {
+        this.eventBus.subscribe(EVENTS.WINDOW_CLOSE, data => {
             const window = document.getElementById(data.windowId);
             if (window) this.closeWindow(window);
         });
         
-        this.eventBus.subscribe('window:focus', data => {
+        this.eventBus.subscribe(EVENTS.WINDOW_FOCUSED, data => {
             const window = document.getElementById(data.windowId);
             if (window) this.bringToFront(window);
         });
         
-        this.eventBus.subscribe('window:restore', data => {
+        this.eventBus.subscribe(EVENTS.WINDOW_RESTORED, data => {
             const window = document.getElementById(data.windowId);
             if (window) this.restoreWindow(window);
         });
         
-        // Fix taskbar item handling - remove specific messenger handling
-        this.eventBus.subscribe('taskbar:item:clicked', data => {
+        this.eventBus.subscribe(EVENTS.TASKBAR_ITEM_CLICKED, data => {
             const window = document.getElementById(data.windowId);
+            const programName = data.windowId.replace('-window', '');
             
             if (window) {
+                // Window exists: Handle restore/minimize/focus
                 if (window.classList.contains('minimized')) {
                     this.restoreWindow(window);
                 } else if (this.activeWindow === window) {
@@ -218,10 +102,12 @@ export default class WindowManager {
                 } else {
                     this.bringToFront(window);
                 }
-            } else if (data.windowId && !this.programData[data.windowId.replace('-window', '')].isOpen) {
-                // If window doesn't exist but should be open, reopen it
-                const programName = data.windowId.replace('-window', '');
-                this.openProgram(programName);
+            } else {
+                // Window doesn't exist, attempt to open it.
+                // openProgram will handle the isOpen flag logic correctly.
+                if (programName && this.programData[programName]) { 
+                    this.openProgram(programName);
+                }
             }
         });
     }
@@ -230,116 +116,57 @@ export default class WindowManager {
         document.querySelectorAll('.window').forEach(window => {
             this.registerWindow(window);
         });
-        
-        // We don't need to set up desktop icons here anymore as
-        // Desktop module now handles icon events via eventBus
-
-        // Listen for custom events from My Pictures direct DOM content
-        window.addEventListener('my-pictures:action', (e) => {
-            const { action, text, folder } = e.detail;
-            
-            // Handle like we would a postMessage event
-            this.eventBus.publish('sidebar-link-clicked', {
-                text: text,
-                folder: folder,
-                action: action
-            });
-        });
-        
-        window.addEventListener('my-pictures:open-image', (e) => {
-            const { imageName, imagePath } = e.detail;
-            
-            // Open image viewer
-            this.openProgram('image-viewer');
-            
-            // Short delay to ensure window is created
-            setTimeout(() => {
-                const imageViewerWindow = document.getElementById('image-viewer-window');
-                if (imageViewerWindow) {
-                    const iframe = imageViewerWindow.querySelector('iframe');
-                    if (iframe && iframe.contentWindow) {
-                        // Send message to image viewer
-                        iframe.contentWindow.postMessage({
-                            type: 'load-image',
-                            imageName: imageName,
-                            imagePath: imagePath
-                        }, '*');
-                    }
-                }
-            }, 200);
-        });
     }
     
     openProgram(programName) {
         const program = this.programData[programName];
-        if (!program) return;
-        
-        if (program.isOpen) {
-            const window = document.getElementById(program.id);
-            if (window) {
-                if (window.classList.contains('minimized')) {
-                    this.restoreWindow(window);
-                }
-                this.bringToFront(window);
-                return;
-            }
+        if (!program || !program.id) {
+            console.error(`Invalid program data for: ${programName}`);
+            return;
         }
         
+        // console.log(`[openProgram] START - Opening: ${programName}.`); // Removed log
+
+        // --- Primary Check: Does the window element already exist? ---
+        const existingWindow = document.getElementById(program.id);
+        
+        if (existingWindow) {
+            // console.log(`[openProgram] Found existing window element #${program.id}. Focusing.`); // Removed log
+            if (existingWindow.classList.contains('minimized')) {
+                this.restoreWindow(existingWindow);
+            }
+            this.bringToFront(existingWindow);
+            return; // Don't open a new window
+        }
+
+        // --- Element doesn't exist, proceed to create --- 
+        // console.log(`[openProgram] No existing window element found for ${programName}. Creating NEW window.`); // Removed log
+        
+        // Reset isOpen flag just in case it was stuck (good practice)
+        if (program.isOpen) {
+             // console.warn(`[openProgram] Resetting stale isOpen flag for ${programName} because window element was missing.`); // Keep warn?
+             this.programData[programName].isOpen = false; 
+        }
+
         const window = this.createWindowFromTemplate(program);
         if (!window) return;
         
         document.getElementById('windows-container').appendChild(window);
+        this.positionWindowCascade(window);
+        this.registerWindow(window); // Register will set up events, state, etc.
         
-        // Position window based on program name or position property
-        if (programName === 'messenger') {
-            // Always position Messenger at bottom-right
-            this.positionWindowBottomRight(window);
-        } else if (programName === 'music-player') {
-            // Always position Music Player at top-right
-            this.positionWindowTopRight(window);
-        } else {
-            // Use position property if available, otherwise cascade
-            switch (program.position) {
-                case 'bottom-right':
-                    this.positionWindowBottomRight(window);
-                    break;
-                case 'top-right':
-                    this.positionWindowTopRight(window);
-                    break;
-                case 'top-left':
-                    this.positionWindowTopLeft(window);
-                    break;
-                case 'bottom-left':
-                    this.positionWindowBottomLeft(window);
-                    break;
-                case 'center':
-                    this.positionWindowCenter(window);
-                    break;
-                case 'cascade':
-                default:
-                    this.positionWindowCascade(window);
-                    break;
-            }
-        }
+        // console.log(`[openProgram] Setting this.programData[${programName}].isOpen = true`); // Removed log
+        this.programData[programName].isOpen = true; // Set flag after successful creation
+        // console.log(`[openProgram] Value of this.programData[${programName}].isOpen AFTER set:`, this.programData[programName]?.isOpen); // Removed log
         
-        this.registerWindow(window);
-        
-        program.isOpen = true;
-        
-        // Skip creating taskbar item for music player
-        if (programName !== 'music-player') {
-            this.createTaskbarItem(window, program);
-        }
-        
-        // Publish window created event
-        this.eventBus.publish('window:created', {
+        this.eventBus.publish(EVENTS.WINDOW_CREATED, {
             windowId: window.id,
             programName,
             title: program.title,
             icon: program.icon
         });
         
-        this.bringToFront(window);
+        this.bringToFront(window); // Bring the newly created window to front
     }
     
     createWindowFromTemplate(program) {
@@ -348,43 +175,6 @@ export default class WindowManager {
         window.className = 'window';
         window.setAttribute('data-program', program.id.replace('-window', ''));
         
-        // Special case for music player - create without any window chrome
-        if (program.template === 'music-player') {
-            // Only add the bare minimum structure
-            window.innerHTML = ``;  // Remove even the window-inactive-mask
-            
-            // Get content from template
-            const content = WindowTemplates.getTemplate(program.template, program.title);
-            window.appendChild(content);
-            
-            // Set exact dimensions for the player at 50% scale
-            window.style.width = '348px'; // 50% of 697px
-            window.style.height = '186px'; // 50% of 372px
-            window.style.position = 'absolute';
-            window.style.left = '50%';
-            window.style.top = '50%';
-            window.style.transform = 'translate(-50%, -50%)';
-            
-            // Add special classes for frameless window
-            window.classList.add('frameless-window');
-            
-            // Apply additional styles to completely remove window chrome
-            Object.assign(window.style, {
-                border: 'none',
-                background: 'transparent',
-                backgroundColor: 'transparent',
-                borderRadius: '21px', // 50% of original 43px
-                overflow: 'hidden',
-                boxShadow: 'none',
-                outline: 'none',
-                padding: '0',
-                margin: '0'
-            });
-            
-            return window;
-        }
-        
-        // Basic structure with title bar for all other windows
         window.innerHTML = `
             <div class="title-bar">
                 <div class="title-bar-left">
@@ -402,105 +192,36 @@ export default class WindowManager {
             <div class="window-inactive-mask"></div>
         `;
         
-        // Get content from template
-        const content = WindowTemplates.getTemplate(program.template, program.title);
+        const content = WindowTemplates.getTemplate(program.template, program);
         window.appendChild(content);
         
-        // CRITICAL: Only add status bar for windows OTHER than My Pictures
-        if (program.title !== 'My Pictures') {
-            const statusBar = document.createElement('div');
-            statusBar.className = 'status-bar';
-            statusBar.innerHTML = '<p class="status-bar-field">Ready</p>';
-            window.appendChild(statusBar);
-        }
+        const statusBar = document.createElement('div');
+        statusBar.className = 'status-bar';
+        statusBar.innerHTML = '<p class="status-bar-field">Ready</p>';
+        window.appendChild(statusBar);
         
-        // Set initial dimensions based on program type
-        if (program.template === "messenger") {
-            // Reduced height by 27px (the height of the tabs section we removed)
-            window.style.width = '550px';
-            window.style.height = '453px'; // Reduced from 480px to 453px
-        } else if (program.template === "browser") {
-            window.style.width = '800px';
-            window.style.height = '600px';
-        } else if (program.template === "my-computer") {
-            // Double the default size for My Computer (100% increase)
-            window.style.width = '1200px'; // Increased from 600px
-            window.style.height = '800px';  // Increased from 400px
-        } else {
-            window.style.width = '600px';
-            window.style.height = '400px';
-        }
+        // Use dimensions from program data, with fallbacks
+        const defaultWidth = 600;
+        const defaultHeight = 400;
+        window.style.width = `${program.dimensions?.width || defaultWidth}px`; 
+        window.style.height = `${program.dimensions?.height || defaultHeight}px`;
         
+        // Initial position centered - cascade/constrain happens later
         window.style.position = 'absolute';
         window.style.left = '50%';
         window.style.top = '50%';
         window.style.transform = 'translate(-50%, -50%)';
         
-        // Add special handling for iframe-based applications
-        if (program.template === 'messenger' || program.template === 'browser' || 
-            program.template === 'email' || program.template === 'my-computer' || 
-            program.template === 'folder-view' || program.template === 'image-viewer') {
-            
-            // Use a slight delay to ensure the iframe is loaded
-            setTimeout(() => {
-                const iframe = window.querySelector('iframe');
-                if (iframe) {
-                    this.adjustWindowToIframeContent(window, iframe);
-                }
-            }, 300);
-        }
-        
         return window;
-    }
-
-    /**
-     * Adjust window dimensions based on iframe content
-     * @param {HTMLElement} window - The window element
-     * @param {HTMLIFrameElement} iframe - The iframe element
-     */
-    adjustWindowToIframeContent(window, iframe) {
-        try {
-            // Get iframe content dimensions
-            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-            const iframeBody = iframeDoc.body;
-            
-            if (!iframeBody) return;
-            
-            // Get the program name to apply specific adjustments
-            const programName = Object.keys(this.programData).find(
-                name => this.programData[name].id === window.id
-            );
-            
-            // Skip auto-resizing for Messenger since it has fixed dimensions
-            if (programName === 'messenger') {
-                // For Messenger, set overflow to hidden to prevent scrollbars
-                try {
-                    iframe.style.overflow = 'hidden';
-                    iframeBody.style.overflow = 'hidden';
-                    
-                    // NO size adjustments to prevent window resizing after load
-                    // Just keep the initial dimensions that were set when creating the window
-                } catch (e) {
-                    console.warn('Unable to set styles for Messenger iframe:', e);
-                }
-                return;
-            }
-            
-        } catch (e) {
-            // Cross-origin restrictions might prevent accessing iframe content
-            console.warn('Unable to adjust window to iframe content:', e);
-        }
     }
     
     positionWindowCascade(window) {
-        // Get viewport dimensions
         const viewportWidth = document.documentElement.clientWidth;
         const viewportHeight = document.documentElement.clientHeight;
         
         const offsetX = 120 + (this.windowCount * this.cascadeOffset);
         const offsetY = 100 + (this.windowCount * this.cascadeOffset);
         
-        // Constrain maximum offsets to viewport size
         const maxOffsetX = Math.min(viewportWidth * 0.6, viewportWidth - 300); 
         const maxOffsetY = Math.min(viewportHeight * 0.6, viewportHeight - 200);
         
@@ -518,86 +239,20 @@ export default class WindowManager {
             this.windowCount = 1;
         }
         
-        // Ensure window is within viewport bounds
         this.constrainWindowToViewport(window);
     }
     
-    /**
-     * Position a window in the bottom right corner of the screen
-     * @param {HTMLElement} window - The window to position
-     */
-    positionWindowBottomRight(window) {
-        const screenWidth = document.documentElement.clientWidth;
-        const screenHeight = document.documentElement.clientHeight;
-        const taskbarHeight = 30;
-        
-        const windowWidth = parseInt(window.style.width) || 600;
-        const windowHeight = parseInt(window.style.height) || 400;
-        
-        // Get program name to access margin settings
-        const programName = window.getAttribute('data-program');
-        const program = programName ? this.programData[programName] : null;
-        
-        // Default margins
-        const rightMargin = program && program.margin && program.margin.right ? program.margin.right : 20;
-        const bottomMargin = program && program.margin && program.margin.bottom ? program.margin.bottom : 20;
-        
-        window.style.position = 'absolute';
-        window.style.left = (screenWidth - windowWidth - rightMargin) + 'px';
-        window.style.top = (screenHeight - windowHeight - taskbarHeight - bottomMargin) + 'px';
-        window.style.transform = 'none';
-    }
-    
-    /**
-     * Position a window in the top right corner of the screen
-     * @param {HTMLElement} window - The window to position
-     */
-    positionWindowTopRight(window) {
-        const screenWidth = document.documentElement.clientWidth;
-        
-        const windowWidth = parseInt(window.style.width) || 600;
-        
-        // Get program name to access margin settings
-        const programName = window.getAttribute('data-program');
-        const program = programName ? this.programData[programName] : null;
-        
-        // Default margins
-        const rightMargin = program && program.margin && program.margin.right ? program.margin.right : 20;
-        const topMargin = program && program.margin && program.margin.top ? program.margin.top : 20;
-        
-        window.style.position = 'absolute';
-        window.style.left = (screenWidth - windowWidth - rightMargin) + 'px';
-        window.style.top = topMargin + 'px';
-        window.style.transform = 'none';
-    }
-    
-    /**
-     * Position a window in the center of the screen
-     * @param {HTMLElement} window - The window to position
-     */
-    positionWindowCenter(window) {
-        // Get screen dimensions
-        const screenWidth = document.documentElement.clientWidth;
-        const screenHeight = document.documentElement.clientHeight;
-        
-        // Get window dimensions
-        const windowWidth = parseInt(window.style.width) || 600;
-        const windowHeight = parseInt(window.style.height) || 400;
-        
-        // Calculate center position (accounting for taskbar)
-        const posX = (screenWidth - windowWidth) / 2;
-        const posY = (screenHeight - windowHeight - 30) / 2; // 30px taskbar height
-        
-        // Position window
-        window.style.position = 'absolute';
-        window.style.left = posX + 'px';
-        window.style.top = posY + 'px';
-        window.style.transform = 'none';
-    }
-    
     registerWindow(window) {
+        // console.log(`[registerWindow] START for ${window.id}`); // Removed log
         const windowId = window.id;
-        
+        const programName = window.getAttribute('data-program');
+        const program = this.programData[programName];
+
+        // Create taskbar item first
+        if (program) {
+            this.createTaskbarItem(window, program);
+        }
+
         const controls = {
             minimizeBtn: window.querySelector('[aria-label="Minimize"]'),
             maximizeBtn: window.querySelector('[aria-label="Maximize"]'),
@@ -621,12 +276,9 @@ export default class WindowManager {
         
         this.setupWindowEvents(window, controls);
         this.bringToFront(window);
-        
-        // New: Ensure window fits within viewport after creation
         this.constrainWindowToViewport(window);
-        
-        // New: Add resize observer to adjust window on viewport changes
         this.setupResponsiveHandling(window);
+        // console.log(`[registerWindow] END for ${window.id}`); // Removed log
     }
     
     setupWindowEvents(window, controls) {
@@ -651,32 +303,22 @@ export default class WindowManager {
         
         if (titleBar) {
             this.makeDraggable(window, titleBar);
-            // Add double-click event to titlebar for maximize/restore
             titleBar.addEventListener('dblclick', () => this.toggleMaximize(window));
         }
         
-        // Enhanced window activation - capture in capture phase to ensure it fires first
-        window.addEventListener('mousedown', (e) => {
+        window.addEventListener('mousedown', () => {
             if (window !== this.activeWindow) {
                 this.bringToFront(window);
-                
-                // Don't stop propagation - we want other handlers to still work,
-                // but we do want to ensure this runs before other handlers
             }
-        }, true); // Using capture phase is important here
+        }, true);
         
-        // Handle clicks in iframe content by adding an overlay when window is inactive
         this.setupIframeOverlayForActivation(window);
     }
 
-    // Add new helper method to handle iframe activation
     setupIframeOverlayForActivation(window) {
-        // Find all iframes in the window
         const iframes = window.querySelectorAll('iframe');
         
         iframes.forEach(iframe => {
-            // Create an overlay div for each iframe that will capture clicks
-            // when the window is inactive
             const overlay = document.createElement('div');
             overlay.className = 'iframe-overlay';
             overlay.style.position = 'absolute';
@@ -687,12 +329,10 @@ export default class WindowManager {
             overlay.style.zIndex = '10';
             overlay.style.display = 'none';
             
-            // Position the overlay correctly relative to the iframe
             const iframeParent = iframe.parentElement;
             iframeParent.style.position = 'relative';
             iframeParent.appendChild(overlay);
             
-            // When the overlay is clicked, activate the window
             overlay.addEventListener('mousedown', (e) => {
                 if (window !== this.activeWindow) {
                     this.bringToFront(window);
@@ -701,32 +341,9 @@ export default class WindowManager {
                 e.stopPropagation();
             });
             
-            // Store reference to the overlay on the window
             if (!window.iframeOverlays) window.iframeOverlays = [];
             window.iframeOverlays.push(overlay);
         });
-        
-        // Update deactivateAllWindows to handle these overlays
-        const originalDeactivate = this.deactivateAllWindows;
-        this.deactivateAllWindows = (excludeWindow) => {
-            originalDeactivate.call(this, excludeWindow);
-            
-            // Show overlays for inactive windows
-            Object.values(this.windows).forEach(win => {
-                if (win.iframeOverlays && win !== excludeWindow) {
-                    win.iframeOverlays.forEach(overlay => {
-                        overlay.style.display = 'block';
-                    });
-                }
-                
-                // Hide overlays for active window
-                if (win === excludeWindow && win.iframeOverlays) {
-                    win.iframeOverlays.forEach(overlay => {
-                        overlay.style.display = 'none';
-                    });
-                }
-            });
-        };
     }
     
     createTaskbarItem(window, program) {
@@ -741,7 +358,7 @@ export default class WindowManager {
         `;
         
         taskbarItem.addEventListener('mousedown', () => {
-            this.eventBus.publish('taskbar:item:clicked', { windowId: window.id });
+            this.eventBus.publish(EVENTS.TASKBAR_ITEM_CLICKED, { windowId: window.id });
         });
         
         taskbarPrograms.appendChild(taskbarItem);
@@ -750,19 +367,16 @@ export default class WindowManager {
     }
     
     closeWindow(window) {
-        // Clean up observers
         if (window.responsiveObserver) {
             window.responsiveObserver.disconnect();
             window.responsiveObserver = null;
         }
         
-        // Clean up resize observer if it exists
         if (window.iframeResizeObserver) {
             window.iframeResizeObserver.disconnect();
             window.iframeResizeObserver = null;
         }
         
-        // For messenger window, completely remove it so we can recreate it later
         if (window.parentNode) {
             window.parentNode.removeChild(window);
         }
@@ -772,11 +386,12 @@ export default class WindowManager {
         );
         
         if (programName) {
+            // console.log(`[closeWindow] Setting this.programData[${programName}].isOpen = false`); // Removed log
             this.programData[programName].isOpen = false;
+            // console.log(`[closeWindow] Value of this.programData[${programName}].isOpen AFTER set:`, this.programData[programName]?.isOpen); // Removed log
         }
         
-        // Only remove from taskbar if it's not the music player (which doesn't have a taskbar item)
-        if (this.taskbarItems[window.id] && programName !== 'music-player') {
+        if (this.taskbarItems[window.id]) {
             this.taskbarItems[window.id].remove();
             delete this.taskbarItems[window.id];
         }
@@ -795,9 +410,7 @@ export default class WindowManager {
             }
         }
         
-        // Publish window closed event
-        this.eventBus.publish('window:closed', { windowId: window.id });
-        
+        this.eventBus.publish(EVENTS.WINDOW_CLOSED, { windowId: window.id });
         this.windowCount = Math.max(0, this.windowCount - 1);
     }
     
@@ -823,8 +436,7 @@ export default class WindowManager {
             }
         }
         
-        // Publish window minimized event
-        this.eventBus.publish('window:minimized', { windowId: window.id });
+        this.eventBus.publish(EVENTS.WINDOW_MINIMIZED, { windowId: window.id });
     }
     
     restoreWindow(window) {
@@ -833,15 +445,13 @@ export default class WindowManager {
         window.style.display = 'flex';
         this.bringToFront(window);
         
-        // Publish window restored event
-        this.eventBus.publish('window:restored', { windowId: window.id });
+        this.eventBus.publish(EVENTS.WINDOW_RESTORED, { windowId: window.id });
     }
     
     toggleMaximize(window) {
         const state = window.windowState;
         
         if (!state.isMaximized) {
-            // Store original dimensions before maximizing
             const rect = window.getBoundingClientRect();
             state.originalStyles = {
                 width: window.style.width || rect.width + 'px',
@@ -851,12 +461,10 @@ export default class WindowManager {
                 transform: window.style.transform || ''
             };
             
-            // Get EXACT viewport dimensions
             const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
             const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
             const taskbarHeight = 30;
             
-            // Apply EXACT position and dimensions
             window.style.position = 'absolute';
             window.style.top = '0';
             window.style.left = '0';
@@ -876,23 +484,19 @@ export default class WindowManager {
             state.isMaximized = true;
             window.classList.add('maximized');
             
-            // Update maximize button if it exists
             const maximizeBtn = window.querySelector('[aria-label="Maximize"]');
             if (maximizeBtn) {
                 maximizeBtn.classList.add('restore');
             }
             
-            // Publish window maximized event
-            this.eventBus.publish('window:maximized', { windowId: window.id });
+            this.eventBus.publish(EVENTS.WINDOW_MAXIMIZED, { windowId: window.id });
         } else {
-            // Restore to original dimensions
             window.style.width = state.originalStyles.width;
             window.style.height = state.originalStyles.height;
             window.style.top = state.originalStyles.top;
             window.style.left = state.originalStyles.left;
             window.style.transform = state.originalStyles.transform;
             
-            // Remove maximized styling
             window.style.margin = '';
             window.style.padding = '';
             window.style.border = '';
@@ -906,14 +510,12 @@ export default class WindowManager {
             state.isMaximized = false;
             window.classList.remove('maximized');
             
-            // Update maximize button if it exists
             const maximizeBtn = window.querySelector('[aria-label="Maximize"]');
             if (maximizeBtn) {
                 maximizeBtn.classList.remove('restore');
             }
             
-            // Publish window unmaximized event
-            this.eventBus.publish('window:unmaximized', { windowId: window.id });
+            this.eventBus.publish(EVENTS.WINDOW_UNMAXIMIZED, { windowId: window.id });
         }
     }
     
@@ -925,57 +527,58 @@ export default class WindowManager {
             return;
         }
         
-        // Pass the window we're activating to the deactivateAllWindows method
         this.deactivateAllWindows(window);
         
-        // Then activate the target window
         window.classList.add('active');
         this.activeWindow = window;
         
-        // Hide the inactive mask for the newly active window
         const inactiveMask = window.querySelector('.window-inactive-mask');
         if (inactiveMask) {
             inactiveMask.style.display = 'none';
         }
         
-        // Set the highest z-index for the active window
-        window.style.zIndex = '101';
+        // Get base z-index from CSS variable
+        const baseZIndex = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--z-window')) || 100;
+        
+        // Set z-index relative to base
+        window.style.zIndex = baseZIndex + 1;
         
         const taskbarItem = this.taskbarItems[window.id];
         if (taskbarItem) {
             taskbarItem.classList.add('active');
+            
+            // Update all other taskbar items to be inactive
+            Object.entries(this.taskbarItems).forEach(([id, item]) => {
+                if (id !== window.id) {
+                    item.classList.remove('active');
+                }
+            });
         }
         
-        // Handle any iframe overlay if present
-        if (window.iframeOverlay) {
-            window.iframeOverlay.style.display = 'none';
+        // Hide iframe overlays for the active window
+        if (window.iframeOverlays) {
+            window.iframeOverlays.forEach(overlay => overlay.style.display = 'none');
         }
-        
-        // Publish window focused event
-        this.eventBus.publish('window:focused', { 
-            windowId: window.id, 
-            programName: window.getAttribute('data-program'),
-            title: window.querySelector('.title-bar-text')?.textContent || ''
-        });
     }
     
     deactivateAllWindows(excludeWindow = null) {
-        // Loop through all windows and deactivate them
+        // Get base z-index from CSS variable
+        const baseZIndex = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--z-window')) || 100;
+        
         Object.values(this.windows).forEach(win => {
-            // Don't change z-index of the window being activated
             if (win !== excludeWindow) {
-                win.style.zIndex = '100';
+                // Set inactive windows to base z-index
+                win.style.zIndex = baseZIndex;
                 win.classList.remove('active');
                 
-                // Show inactive mask for all windows except the one being activated
                 const inactiveMask = win.querySelector('.window-inactive-mask');
                 if (inactiveMask) {
-                    inactiveMask.style.display = win !== excludeWindow ? 'block' : 'none';
+                    inactiveMask.style.display = 'block';
                 }
                 
-                // Show iframe overlay to catch clicks if present
-                if (win.iframeOverlay) {
-                    win.iframeOverlay.style.display = win !== excludeWindow ? 'block' : 'none';
+                // Show iframe overlays for inactive windows
+                if (win.iframeOverlays) {
+                    win.iframeOverlays.forEach(overlay => overlay.style.display = 'block');
                 }
                 
                 const taskbarItem = this.taskbarItems[win.id];
@@ -985,124 +588,71 @@ export default class WindowManager {
             }
         });
         
-        // Only clear active window reference if we're not activating another window
         if (!excludeWindow) {
             this.activeWindow = null;
         }
     }
     
-    makeDraggable(window, titleBar) {
-        // For music player, make the entire window draggable since there's no title bar
-        if (window.classList.contains('frameless-window') && window.getAttribute('data-program') === 'music-player') {
-            this.makeEntireWindowDraggable(window);
-            return;
-        }
-        
-        // Performance optimized dragging implementation for regular windows
+    makeDraggable(window, handleElement) {
         let isDragging = false;
-        let startX, startY;
-        let initialLeft, initialTop;
-        let lastX, lastY;
-        let animationFrameId = null;
+        let startX, startY, initialX, initialY;
+        let dragOffsetX = 0, dragOffsetY = 0;
         
-        // Store iframe references for performance optimization
-        const iframes = window.querySelectorAll('iframe');
-        
-        // Prepare window for hardware acceleration
         function prepareWindowForDrag() {
-            // Add dragging class to enable CSS optimizations
             window.classList.add('dragging-window');
             
-            // Disable pointer events in iframes during drag for massive performance boost
-            iframes.forEach(iframe => {
-                if (iframe.style.pointerEvents !== 'none') {
-                    iframe.style.pointerEvents = 'none';
-                }
-            });
-            
-            // Set will-change to hint browser to optimize for animation
-            window.style.willChange = 'transform';
-            
-            // Get dimensions once to avoid layout thrashing during drag
             const rect = window.getBoundingClientRect();
-            initialLeft = rect.left;
-            initialTop = rect.top;
+            initialX = rect.left;
+            initialY = rect.top;
             
-            // Set initial transform for performance
-            window.style.transform = 'translate3d(0px, 0px, 0px)';
+            const parentRect = window.offsetParent?.getBoundingClientRect() || { left: 0, top: 0 };
+            const currentStyle = window.currentStyle || window.getComputedStyle(window);
+            const currentLeft = parseFloat(currentStyle.left) || 0;
+            const currentTop = parseFloat(currentStyle.top) || 0;
+
+            dragOffsetX = rect.left - parentRect.left - currentLeft;
+            dragOffsetY = rect.top - parentRect.top - currentTop;            
+            
+            window.style.transform = `translate3d(0px, 0px, 0px)`; 
         }
         
-        // Clean up after drag ends
         function cleanupAfterDrag() {
-            // Re-enable iframe interaction
-            iframes.forEach(iframe => {
-                iframe.style.pointerEvents = '';
-            });
-            
-            // Remove performance optimizations
             window.classList.remove('dragging-window');
-            window.style.willChange = 'auto';
+            window.style.transform = 'none';
         }
         
-        // Optimized move handler using requestAnimationFrame
-        function updatePosition() {
-            if (!isDragging) return;
+        handleElement.addEventListener('mousedown', (e) => {
+            if (e.button !== 0 || e.target.tagName === 'BUTTON' || (window.windowState && window.windowState.isMaximized)) return;
             
-            // Calculate delta from start position
-            const deltaX = lastX - startX;
-            const deltaY = lastY - startY;
-            
-            // Apply transformation directly with 3D transform for GPU acceleration
-            window.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
-            
-            // Continue animation loop
-            animationFrameId = requestAnimationFrame(updatePosition);
-        }
-        
-        // Start dragging (mouse)
-        titleBar.addEventListener('mousedown', (e) => {
-            // Don't drag on buttons or double-clicks
-            if (e.detail > 1 || e.target.tagName === 'BUTTON' || window.windowState.isMaximized) return;
-            
-            // Capture starting point
             startX = e.clientX;
             startY = e.clientY;
-            lastX = e.clientX;
-            lastY = e.clientY;
             
-            // Activate window first if needed
             if (window !== this.activeWindow) {
                 this.bringToFront(window);
             }
             
-            // Begin drag operation
             isDragging = true;
             prepareWindowForDrag();
-            
-            // Start animation loop
-            animationFrameId = requestAnimationFrame(updatePosition);
             
             e.preventDefault();
         });
         
-        // Update position on mouse move (capturing latest position only)
         document.addEventListener('mousemove', (e) => {
             if (isDragging) {
-                lastX = e.clientX;
-                lastY = e.clientY;
-                e.preventDefault();
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                e.preventDefault(); 
+                
+                window.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
             }
         }, { passive: false });
         
-        // Touch support (mobile)
-        titleBar.addEventListener('touchstart', (e) => {
-            if (e.target.tagName === 'BUTTON' || window.windowState.isMaximized) return;
+        handleElement.addEventListener('touchstart', (e) => {
+            if (e.target.tagName === 'BUTTON' || (window.windowState && window.windowState.isMaximized)) return;
             
             const touch = e.touches[0];
             startX = touch.clientX;
             startY = touch.clientY;
-            lastX = touch.clientX;
-            lastY = touch.clientY;
             
             if (window !== this.activeWindow) {
                 this.bringToFront(window);
@@ -1111,47 +661,40 @@ export default class WindowManager {
             isDragging = true;
             prepareWindowForDrag();
             
-            animationFrameId = requestAnimationFrame(updatePosition);
-            
             e.preventDefault();
         }, { passive: false });
         
-        // Update position on touch move
         document.addEventListener('touchmove', (e) => {
             if (isDragging) {
                 const touch = e.touches[0];
-                lastX = touch.clientX;
-                lastY = touch.clientY;
+                const deltaX = touch.clientX - startX;
+                const deltaY = touch.clientY - startY;
                 e.preventDefault();
+                
+                window.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
             }
         }, { passive: false });
         
-        // End drag operation
-        const endDrag = () => {
+        const endDrag = (e) => {
             if (!isDragging) return;
+
+            const finalClientX = e.clientX ?? (e.changedTouches?.[0]?.clientX ?? startX);
+            const finalClientY = e.clientY ?? (e.changedTouches?.[0]?.clientY ?? startY);
+
+            const deltaX = finalClientX - startX;
+            const deltaY = finalClientY - startY;
             
-            // Cancel animation loop
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            
-            // Calculate final position by combining initial position with transform
-            const deltaX = lastX - startX;
-            const deltaY = lastY - startY;
-            const finalLeft = initialLeft + deltaX;
-            const finalTop = initialTop + deltaY;
-            
-            // Apply constraints to keep window visible
             const viewportWidth = document.documentElement.clientWidth;
             const viewportHeight = document.documentElement.clientHeight;
-            const taskbarHeight = 30;
+            const taskbarHeight = 30; 
             const windowWidth = window.offsetWidth;
             const windowHeight = window.offsetHeight;
+
+            const finalLeft = initialX + deltaX;
+            const finalTop = initialY + deltaY;
             
-            // Calculate constrained position
             const constrainedLeft = Math.max(
-                -windowWidth + 100, 
+                -windowWidth + 100,
                 Math.min(finalLeft, viewportWidth - 100)
             );
             const constrainedTop = Math.max(
@@ -1159,53 +702,36 @@ export default class WindowManager {
                 Math.min(finalTop, viewportHeight - taskbarHeight - 20)
             );
             
-            // Switch back to normal positioning without visible jump
-            window.style.transform = 'none';
             window.style.left = `${constrainedLeft}px`;
             window.style.top = `${constrainedTop}px`;
             
-            // Update window state
             if (window.windowState) {
                 window.windowState.originalStyles.left = window.style.left;
                 window.windowState.originalStyles.top = window.style.top;
+                window.windowState.originalStyles.transform = 'none';
             }
             
-            // Clean up performance optimizations
             cleanupAfterDrag();
             
             isDragging = false;
         };
         
-        // End events for both mouse and touch
         document.addEventListener('mouseup', endDrag);
         document.addEventListener('touchend', endDrag);
         document.addEventListener('touchcancel', endDrag);
-        
-        // Safety cleanup if pointer leaves document
-        document.addEventListener('mouseleave', () => {
-            if (isDragging) endDrag();
-        });
     }
     
-    /**
-     * Constrain window to viewport dimensions
-     * @param {HTMLElement} window - The window element
-     */
     constrainWindowToViewport(window) {
-        // Get viewport dimensions
         const viewportWidth = document.documentElement.clientWidth;
         const viewportHeight = document.documentElement.clientHeight;
-        const taskbarHeight = 30; // Standard taskbar height
+        const taskbarHeight = 30;
         
-        // Get window dimensions
         const windowWidth = parseInt(window.style.width) || 600;
         const windowHeight = parseInt(window.style.height) || 400;
         
-        // Get current window position
         let windowLeft = parseInt(window.style.left) || 0;
         let windowTop = parseInt(window.style.top) || 0;
         
-        // If window is using transform for centering, calculate actual position
         if (window.style.transform && window.style.transform.includes('translate')) {
             if (window.style.left === '50%') {
                 windowLeft = (viewportWidth - windowWidth) / 2;
@@ -1216,17 +742,14 @@ export default class WindowManager {
             window.style.transform = 'none';
         }
         
-        // Calculate maximum dimensions
         const maxWidth = viewportWidth - 20;
         const maxHeight = viewportHeight - taskbarHeight - 10;
         
-        // Calculate scale factor if window is too large
-        // This helps preserve aspect ratio
         let scale = 1;
         if (windowWidth > maxWidth || windowHeight > maxHeight) {
             const scaleX = maxWidth / windowWidth;
             const scaleY = maxHeight / windowHeight;
-            scale = Math.min(scaleX, scaleY, 1); // Never scale up, only down
+            scale = Math.min(scaleX, scaleY, 1);
         }
         
         let newWidth = windowWidth;
@@ -1236,7 +759,6 @@ export default class WindowManager {
             newHeight = Math.floor(windowHeight * scale);
         }
         
-        // Center window if it would be otherwise positioned offscreen
         if (windowLeft + newWidth > viewportWidth) {
             windowLeft = Math.max(0, (viewportWidth - newWidth) / 2);
         }
@@ -1244,7 +766,6 @@ export default class WindowManager {
             windowTop = Math.max(0, (viewportHeight - newHeight - taskbarHeight) / 2);
         }
         
-        // Apply constrained values
         if (scale < 1) {
             window.style.width = newWidth + 'px';
             window.style.height = newHeight + 'px';
@@ -1252,7 +773,6 @@ export default class WindowManager {
         window.style.left = `${windowLeft}px`;
         window.style.top = `${windowTop}px`;
         
-        // Update original styles for proper restore after maximize
         if (window.windowState) {
             if (scale < 1) {
                 window.windowState.originalStyles.width = window.style.width;
@@ -1264,215 +784,14 @@ export default class WindowManager {
         }
     }
     
-    // Add new method for responsive handling
     setupResponsiveHandling(window) {
-        // Create and store resize observer to adjust window on viewport changes
-        const resizeObserver = new ResizeObserver(entries => {
-            // Only proceed if the window is not maximized
+        const resizeObserver = new ResizeObserver(() => {
             if (window && !window.windowState.isMaximized && !window.windowState.isMinimized) {
                 this.constrainWindowToViewport(window);
             }
         });
         
-        // Observe the document body for size changes
         resizeObserver.observe(document.body);
-        
-        // Store the observer reference for cleanup
         window.responsiveObserver = resizeObserver;
-    }
-    
-    // Add new method to make entire window draggable for frameless windows
-    makeEntireWindowDraggable(window) {
-        let isDragging = false;
-        let startX, startY;
-        let initialLeft, initialTop;
-        let lastX, lastY;
-        let animationFrameId = null;
-        
-        // Store iframe references for performance optimization
-        const iframes = window.querySelectorAll('iframe');
-        
-        // Prepare window for hardware acceleration
-        function prepareWindowForDrag() {
-            // Add dragging class to enable CSS optimizations
-            window.classList.add('dragging-window');
-            
-            // Disable pointer events in iframes during drag for massive performance boost
-            iframes.forEach(iframe => {
-                iframe.style.pointerEvents = 'none';
-            });
-            
-            // Set will-change to hint browser to optimize for animation
-            window.style.willChange = 'transform';
-            
-            // Get dimensions once to avoid layout thrashing during drag
-            const rect = window.getBoundingClientRect();
-            initialLeft = rect.left;
-            initialTop = rect.top;
-            
-            // Set initial transform for performance
-            window.style.transform = 'translate3d(0px, 0px, 0px)';
-        }
-        
-        // Clean up after drag ends
-        function cleanupAfterDrag() {
-            // Re-enable iframe interaction
-            iframes.forEach(iframe => {
-                iframe.style.pointerEvents = 'auto';
-            });
-            
-            // Remove performance optimizations
-            window.classList.remove('dragging-window');
-            window.style.willChange = 'auto';
-        }
-        
-        // Optimized move handler using requestAnimationFrame
-        function updatePosition() {
-            if (!isDragging) return;
-            
-            // Calculate delta from start position
-            const deltaX = lastX - startX;
-            const deltaY = lastY - startY;
-            
-            // Apply transformation directly with 3D transform for GPU acceleration
-            window.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
-            
-            // Continue animation loop
-            animationFrameId = requestAnimationFrame(updatePosition);
-        }
-        
-        // Start dragging on mousedown
-        window.addEventListener('mousedown', (e) => {
-            // Don't start drag on buttons or player controls
-            if (e.target.tagName === 'BUTTON' || 
-                e.target.closest('.play-btn') || 
-                e.target.closest('.skip-left') || 
-                e.target.closest('.skip-right') || 
-                e.target.closest('.vol-up') || 
-                e.target.closest('.vol-down')) {
-                return;
-            }
-            
-            // Capture starting point
-            startX = e.clientX;
-            startY = e.clientY;
-            lastX = e.clientX;
-            lastY = e.clientY;
-            
-            // Activate window first if needed
-            if (window !== this.activeWindow) {
-                this.bringToFront(window);
-            }
-            
-            // Begin drag operation
-            isDragging = true;
-            prepareWindowForDrag();
-            
-            // Start animation loop
-            animationFrameId = requestAnimationFrame(updatePosition);
-            
-            e.preventDefault();
-        });
-        
-        // Update position on mouse move
-        document.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                lastX = e.clientX;
-                lastY = e.clientY;
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        // Touch support
-        window.addEventListener('touchstart', (e) => {
-            // Don't start drag on buttons or player controls
-            if (e.target.tagName === 'BUTTON' || 
-                e.target.closest('.play-btn') || 
-                e.target.closest('.skip-left') || 
-                e.target.closest('.skip-right') || 
-                e.target.closest('.vol-up') || 
-                e.target.closest('.vol-down')) {
-                return;
-            }
-            
-            const touch = e.touches[0];
-            startX = touch.clientX;
-            startY = touch.clientY;
-            lastX = touch.clientX;
-            lastY = touch.clientY;
-            
-            if (window !== this.activeWindow) {
-                this.bringToFront(window);
-            }
-            
-            isDragging = true;
-            prepareWindowForDrag();
-            
-            animationFrameId = requestAnimationFrame(updatePosition);
-            
-            e.preventDefault();
-        }, { passive: false });
-        
-        // Update position on touch move
-        document.addEventListener('touchmove', (e) => {
-            if (isDragging) {
-                const touch = e.touches[0];
-                lastX = touch.clientX;
-                lastY = touch.clientY;
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        // End drag operation
-        const endDrag = () => {
-            if (!isDragging) return;
-            
-            // Cancel animation loop
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            
-            // Calculate final position by combining initial position with transform
-            const deltaX = lastX - startX;
-            const deltaY = lastY - startY;
-            const finalLeft = initialLeft + deltaX;
-            const finalTop = initialTop + deltaY;
-            
-            // Apply constraints to keep window visible
-            const viewportWidth = document.documentElement.clientWidth;
-            const viewportHeight = document.documentElement.clientHeight;
-            const taskbarHeight = 30;
-            const windowWidth = window.offsetWidth;
-            const windowHeight = window.offsetHeight;
-            
-            // Calculate constrained position
-            const constrainedLeft = Math.max(
-                -windowWidth + 100, 
-                Math.min(finalLeft, viewportWidth - 100)
-            );
-            const constrainedTop = Math.max(
-                0,
-                Math.min(finalTop, viewportHeight - taskbarHeight - 20)
-            );
-            
-            // Apply final position
-            window.style.transform = 'none';
-            window.style.left = constrainedLeft + 'px';
-            window.style.top = constrainedTop + 'px';
-            
-            // Clean up performance optimizations
-            cleanupAfterDrag();
-            
-            isDragging = false;
-        };
-        
-        // End events for both mouse and touch
-        document.addEventListener('mouseup', endDrag);
-        document.addEventListener('touchend', endDrag);
-        document.addEventListener('touchcancel', endDrag);
-        
-        // Safety cleanup if pointer leaves document
-        document.addEventListener('mouseleave', endDrag);
     }
 }

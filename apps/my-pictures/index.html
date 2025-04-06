@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Pictures</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="my-pictures-app">
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-group control-group-left">
+                    <!-- <button id="rotate-left-btn" title="Rotate Left ↺"><img src="icons/rotate-left.png" alt="Rotate Left"></button> Removed -->
+                    <button id="rotate-btn" title="Rotate ↻"><img src="icons/rotate.png" alt="Rotate"></button>
+                    <button id="reset-view-btn" title="Actual Size"><img src="icons/actual-size.png" alt="Actual Size"></button>
+                </div>
+                <div class="control-separator"></div>
+                <div class="filename-display">
+                    <span id="image-filename"></span>
+                </div>
+                <div class="control-separator"></div>
+                <div class="control-group control-group-right">
+                    <button id="zoom-in-btn" title="Zoom In ⊕"><img src="icons/zoom-in.png" alt="Zoom In"></button>
+                    <button id="zoom-out-btn" title="Zoom Out ⊖"><img src="icons/zoom-out.png" alt="Zoom Out"></button>
+                </div>
+            </div>
+            <div class="image-display-area">
+                <img id="main-image" src="" alt="Selected Picture">
+                <button id="prev-btn" class="nav-button prev" title="Previous Picture"><img src="icons/prev-1g.png" alt="Previous"></button>
+                <button id="next-btn" class="nav-button next" title="Next Picture"><img src="icons/next-1g.png" alt="Next"></button>
+            </div>
+        </div>
+        <div class="thumbnail-strip">
+            <!-- Thumbnails will be populated by script.js -->
+        </div>
+    </div>
+    <div id="tooltip" class="tooltip" style="display: none;"></div>
+    <script type="module" src="script.js"></script>
+</body>
+</html> 

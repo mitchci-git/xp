@@ -8,20 +8,9 @@
     <title>Windows XP Simulation</title>
     <link rel="stylesheet" href="https://unpkg.com/xp.css@0.2.3/dist/XP.css" crossorigin="anonymous">
     <link rel="stylesheet" href="./styles/main.css">
-    <style>
-        /* Ensure tooltips stay below CRT effects */
-        [data-tooltip]::after {
-            z-index: 1000;
-        }
-        /* CRT effects need higher z-index than tooltips */
-        .crt, .crt-glow, .crt-vignette, .crt-noise, .crt-scanline, .crt-aberration, .crt-flicker, .crt-persistence {
-            z-index: 2000;
-        }
-    </style>
 </head>
 <body>
     <div class="desktop">
-        <!-- Desktop Icons -->
         <div class="desktop-icons">
             <div class="desktop-icon">
                 <img src="./assets/gui/desktop/internet-explorer.png" alt="Internet Explorer">
@@ -43,38 +32,14 @@
                 <img src="./assets/gui/desktop/email.png" alt="Email">
                 <span>Email</span>
             </div>
+            <div class="desktop-icon">
+                <img src="./assets/gui/desktop/command-prompt.png" alt="Command Prompt">
+                <span>Command Prompt</span>
+            </div>
         </div>
 
         <div id="windows-container"></div>
         
-        <!-- Start Menu -->
-        <div id="start-menu" class="start-menu hidden">
-            <div class="start-menu-middle">
-                <div class="middle-left">
-                    <ul class="menu-items">
-                        <!-- Internet Explorer item in the LEFT section -->
-                        <li class="menu-item" id="menu-internet">
-                            <img src="./assets/gui/desktop/internet-explorer.png" alt="Internet Explorer">
-                            <div class="item-content">
-                                <div class="item-title">Internet</div>
-                                <div class="item-description">Internet Explorer</div>
-                            </div>
-                        </li>
-                        <!-- ...existing code for other left items... -->
-                    </ul>
-                </div>
-                <div class="middle-right">
-                    <ul class="menu-items">
-                        <!-- ...existing code for right items... -->
-                    </ul>
-                </div>
-            </div>
-            <div class="start-menu-footer">
-                <!-- ...existing code... -->
-            </div>
-        </div>
-
-        <!-- Taskbar -->
         <div class="taskbar">
             <button class="start-button" id="start-button">
                 <img src="./assets/gui/taskbar/start-button.png" alt="Start">
@@ -105,7 +70,6 @@
     <div class="crt-flicker"></div>
     <div class="crt-persistence"></div>
 
-    <!-- Scripts -->
     <script type="module" src="./scripts/main.js"></script>
 </body>
 </html>

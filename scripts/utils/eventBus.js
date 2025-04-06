@@ -19,7 +19,6 @@ class EventBus {
         }
         this.events[event].push(callback);
         
-        // Return unsubscribe function for easier cleanup
         return () => this.unsubscribe(event, callback);
     }
 
@@ -55,13 +54,12 @@ class EventBus {
      */
     publish(event, data) {
         if (this.events[event]) {
-            // Create a copy of the subscribers array to avoid issues if callbacks modify subscriptions
             const subscribers = [...this.events[event]];
             subscribers.forEach(callback => callback(data));
         }
     }
 }
 
-// Create and export a singleton instance
+// Export singleton instance
 const eventBus = new EventBus();
 export default eventBus;

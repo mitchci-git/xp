@@ -2,6 +2,8 @@
  * Start Menu module for Windows XP simulation
  * Handles the start menu display, interaction, and submenus
  */
+import { EVENTS } from '../utils/constants.js';
+
 export default class StartMenu {
     constructor(eventBus) {
         this.eventBus = eventBus;
@@ -9,25 +11,21 @@ export default class StartMenu {
         this.startMenu = null;
         this.allProgramsMenu = null;
         
-        // Initialize components
         this.createStartMenuElement();
         this.setupEventListeners();
         
-        // Subscribe to toggle event
-        this.eventBus.subscribe('startmenu:toggle', () => this.toggleStartMenu());
+        this.eventBus.subscribe(EVENTS.STARTMENU_TOGGLE, () => this.toggleStartMenu());
     }
     
     /**
      * Create the start menu DOM element
      */
     createStartMenuElement() {
-        // Clean up any existing menu
         const existingMenu = document.querySelector('.startmenu');
         if (existingMenu) {
             existingMenu.parentNode.removeChild(existingMenu);
         }
         
-        // Create menu with proper initial hidden state
         const startMenu = document.createElement('div');
         startMenu.className = 'startmenu';
         startMenu.innerHTML = this.getMenuTemplate();
@@ -37,7 +35,6 @@ export default class StartMenu {
         document.body.appendChild(startMenu);
         this.startMenu = startMenu;
         
-        // Setup components
         this.setupMenuItems();
         this.createAllProgramsMenu();
     }
@@ -46,13 +43,11 @@ export default class StartMenu {
      * Create the All Programs submenu
      */
     createAllProgramsMenu() {
-        // Remove existing menu if present
         const existingMenu = document.querySelector('.all-programs-menu');
         if (existingMenu) {
             existingMenu.parentNode.removeChild(existingMenu);
         }
         
-        // Create new menu
         const allProgramsMenu = document.createElement('div');
         allProgramsMenu.className = 'all-programs-menu';
         allProgramsMenu.innerHTML = `
@@ -69,7 +64,6 @@ export default class StartMenu {
             </ul>
         `;
         
-        // Add to DOM initially hidden
         document.body.appendChild(allProgramsMenu);
         allProgramsMenu.style.display = 'none';
         this.allProgramsMenu = allProgramsMenu;
@@ -87,13 +81,6 @@ export default class StartMenu {
             <div class="start-menu-middle">
                 <div class="middle-section middle-left">
                     <ul class="menu-items">
-                        <li class="menu-item" id="menu-internet">
-                            <img src="./assets/gui/start-menu/internet.png" alt="Internet Explorer">
-                            <div class="item-content">
-                                <span class="item-title">Internet</span>
-                                <span class="item-description">Internet Explorer</span>
-                            </div>
-                        </li>
                         <li class="menu-item" id="menu-email">
                             <img src="./assets/gui/start-menu/email.png" alt="E-mail">
                             <div class="item-content">
@@ -101,11 +88,18 @@ export default class StartMenu {
                                 <span class="item-description">Outlook Express</span>
                             </div>
                         </li>
-                        <li class="menu-divider"><hr class="divider"></li>
-                        <li class="menu-item" id="menu-media-player">
-                            <img src="./assets/gui/desktop/music-player.png" alt="Media Player">
+                        <li class="menu-item" id="menu-messenger">
+                            <img src="./assets/gui/start-menu/messenger.png" alt="Windows Messenger">
                             <div class="item-content">
-                                <span class="item-title">Media Player</span>
+                                <span class="item-title">Messenger</span>
+                                <span class="item-description">Windows Live Messenger</span>
+                            </div>
+                        </li>
+                        <li class="menu-divider"><hr class="divider"></li>
+                        <li class="menu-item" id="menu-cmd-prompt">
+                            <img src="./assets/gui/start-menu/command-prompt.png" alt="Command Prompt">
+                            <div class="item-content">
+                                <span class="item-title">Command Prompt</span>
                             </div>
                         </li>
                         <li class="menu-item" id="menu-my-computer">
@@ -126,15 +120,15 @@ export default class StartMenu {
                                 <span class="item-title">My Pictures</span>
                             </div>
                         </li>
-                        <li class="menu-item" id="menu-paint">
-                            <img src="./assets/gui/start-menu/paint.png" alt="Paint">
+                        <li class="menu-item" id="menu-recycle-bin">
+                            <img src="./assets/gui/desktop/recycle-bin.png" alt="Recycle Bin">
                             <div class="item-content">
-                                <span class="item-title">Paint</span>
+                                <span class="item-title">Recycle Bin</span>
                             </div>
                         </li>
                     </ul>
                     <div class="all-programs-container">
-                        <hr class="divider">
+                        <li class="menu-divider"><hr class="divider"></li>
                         <div class="all-programs-button" id="menu-all-programs">
                             <span>All Programs</span>
                             <img src="./assets/gui/start-menu/arrow.ico" alt="All Programs">
@@ -183,40 +177,32 @@ export default class StartMenu {
      * Set up all necessary event listeners
      */
     setupEventListeners() {
-        // Close start menu when clicking outside - use capturing phase to catch all events
         document.addEventListener('mousedown', (e) => {
-            if (this.startMenu && 
-                this.startMenu.classList.contains('active') && 
+            if (this.startMenu?.classList.contains('active') && 
                 !this.startMenu.contains(e.target) && 
                 !this.startButton.contains(e.target) &&
                 (!this.allProgramsMenu || !this.allProgramsMenu.contains(e.target))) {
                 this.closeStartMenu();
             }
-        }, true); // Use capturing phase to catch events before they reach iframes or other handlers
+        }, true);
         
-        // ESC key closes start menu
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && 
-                this.startMenu && 
-                this.startMenu.classList.contains('active')) {
+            if (e.key === 'Escape' && this.startMenu?.classList.contains('active')) {
                 this.closeStartMenu();
             }
         });
         
-        // Handle iframe clicks specifically
         const handleIframeClick = () => {
-            if (this.startMenu && this.startMenu.classList.contains('active')) {
+            if (this.startMenu?.classList.contains('active')) {
                 this.closeStartMenu();
             }
         };
         
-        // Listen for iframe focus events
         window.addEventListener('iframe:focus', handleIframeClick);
         
-        // Also intercept message events which might come from iframes
         window.addEventListener('message', (e) => {
-            if (e.data && (e.data.type === 'iframe-clicked' || e.data.type === 'window-focus')) {
-                if (this.startMenu && this.startMenu.classList.contains('active')) {
+            if (e.data?.type === 'iframe-clicked' || e.data?.type === 'window-focus') {
+                if (this.startMenu?.classList.contains('active')) {
                     this.closeStartMenu();
                 }
             }
@@ -227,35 +213,33 @@ export default class StartMenu {
      * Set up menu items and their click handlers
      */
     setupMenuItems() {
-        // Program menu items
         const menuItemHandlers = {
-            'internet': () => this.openProgram('internet-explorer'),
-            'my-documents': () => this.openProgram('my-documents'),
-            'my-computer': () => this.openProgram('my-computer'),
-            'messenger': () => this.openProgram('messenger'),
-            'my-pictures': () => this.openProgram('my-pictures'),
-            'email': () => this.openProgram('email'),
-            'media-player': () => this.openProgram('music-player') // Updated to open music-player instead of media-player
+            'my-documents': () => { 
+                console.log('Handler called for my-documents');
+                this.openProgram('my-documents'); 
+                this.closeStartMenu(); 
+            },
+            'my-computer': () => { this.openProgram('my-computer'); this.closeStartMenu(); },
+            'messenger': () => { this.openProgram('messenger'); this.closeStartMenu(); },
+            'my-pictures': () => { this.openProgram('my-pictures'); this.closeStartMenu(); },
+            'email': () => { this.openProgram('email'); this.closeStartMenu(); },
+            'recycle-bin': () => { this.openProgram('recycle-bin'); this.closeStartMenu(); },
+            'cmd-prompt': () => { this.openProgram('cmd-prompt'); this.closeStartMenu(); }
         };
         
         Object.entries(menuItemHandlers).forEach(([id, handler]) => {
             const menuItem = this.startMenu.querySelector(`#menu-${id}`);
             if (menuItem) {
-                menuItem.addEventListener('click', () => {
-                    handler();
-                    this.closeStartMenu();
-                });
+                menuItem.addEventListener('click', handler);
             }
         });
         
-        // Social media links
         const socialItems = {
             'instagram': 'https://www.instagram.com',
             'github': 'https://github.com',
             'linkedin': 'https://www.linkedin.com'
         };
         
-        // Set up social media links
         Object.entries(socialItems).forEach(([platform, url]) => {
             const menuItem = this.startMenu.querySelector(`#menu-${platform}`);
             if (menuItem) {
@@ -266,25 +250,17 @@ export default class StartMenu {
             }
         });
 
-        // Set up Log Off and Shut Down buttons
         const logOffButton = this.startMenu.querySelector('#btn-log-off');
         const shutDownButton = this.startMenu.querySelector('#btn-shut-down');
         
         if (logOffButton) {
-            logOffButton.addEventListener('click', () => {
-                // TODO: Add actual log off functionality in the future
-                this.closeStartMenu();
-            });
+            logOffButton.addEventListener('click', () => this.closeStartMenu());
         }
         
         if (shutDownButton) {
-            shutDownButton.addEventListener('click', () => {
-                // TODO: Add actual shutdown functionality in the future
-                this.closeStartMenu();
-            });
+            shutDownButton.addEventListener('click', () => this.closeStartMenu());
         }
 
-        // Set up All Programs menu with slight delay to ensure DOM is ready
         setTimeout(() => this.setupAllProgramsMenu(), 100);
     }
 
@@ -295,16 +271,12 @@ export default class StartMenu {
         const allProgramsButton = document.getElementById('menu-all-programs');
         
         if (!allProgramsButton || !this.allProgramsMenu || !this.startMenu) {
-            return; // Exit early if elements don't exist
+            return;
         }
         
-        // Show menu on hover
         allProgramsButton.addEventListener('mouseenter', () => this.showAllProgramsMenu());
-        
-        // Hide menu on mouse leave
         this.allProgramsMenu.addEventListener('mouseleave', () => this.hideAllProgramsMenu());
         
-        // Hide when hovering other start menu elements
         const otherElements = this.startMenu.querySelectorAll(
             '.menu-item:not(#menu-all-programs), .menutopbar, .start-menu-footer, .middle-right'
         );
@@ -313,7 +285,6 @@ export default class StartMenu {
             element.addEventListener('mouseenter', () => this.hideAllProgramsMenu());
         });
         
-        // Set up click handlers for programs
         const programItems = this.allProgramsMenu.querySelectorAll('.all-programs-item:not(.category)');
         programItems.forEach(item => {
             item.addEventListener('click', () => {
@@ -329,20 +300,19 @@ export default class StartMenu {
      */
     showAllProgramsMenu() {
         if (!this.allProgramsMenu || !this.startMenu) {
-            return; // Exit early if elements don't exist
+            return;
         }
         
         const allProgramsButton = this.startMenu.querySelector('#menu-all-programs');
         const footerElement = this.startMenu.querySelector('.start-menu-footer');
         
         if (!allProgramsButton || !footerElement) {
-            return; // Exit early if elements don't exist
+            return;
         }
         
         const buttonRect = allProgramsButton.getBoundingClientRect();
         const footerRect = footerElement.getBoundingClientRect();
         
-        // Position menu next to All Programs button
         Object.assign(this.allProgramsMenu.style, {
             left: buttonRect.right + 'px',
             bottom: (window.innerHeight - footerRect.top) + 'px',
@@ -367,7 +337,7 @@ export default class StartMenu {
      * Open a program using the event bus
      */
     openProgram(programName) {
-        this.eventBus.publish('program:open', { programName });
+        this.eventBus.publish(EVENTS.PROGRAM_OPEN, { programName });
     }
     
     /**
@@ -375,19 +345,18 @@ export default class StartMenu {
      */
     toggleStartMenu() {
         if (!this.startMenu) {
-            return; // Exit early if menu doesn't exist
+            return;
         }
         
         const isCurrentlyActive = this.startMenu.classList.contains('active');
         
         if (!isCurrentlyActive) {
-            // Show menu
             this.startMenu.style.visibility = 'visible';
             this.startMenu.style.opacity = '1';
             this.startMenu.classList.add('active');
-            this.eventBus.publish('startmenu:opened');
+            this.eventBus.publish(EVENTS.STARTMENU_OPENED);
+            this.positionAllProgramsMenu();
         } else {
-            // Hide menu
             this.closeStartMenu();
         }
     }
@@ -395,20 +364,24 @@ export default class StartMenu {
     /**
      * Close the start menu
      */
-    closeStartMenu() {
-        if (!this.startMenu) return;
+    closeStartMenu(force = false) {
+        console.log('closeStartMenu called. Is active?', this.startMenu.classList.contains('active'));
+        if (!this.startMenu || (!this.startMenu.classList.contains('active') && !force)) {
+            console.log('closeStartMenu returning early.');
+            return;
+        }
         
-        // Hide the menu immediately without animation
         this.startMenu.classList.remove('active');
         this.hideAllProgramsMenu();
         
-        // Immediately hide without waiting
         this.startMenu.style.visibility = 'hidden';
         this.startMenu.style.opacity = '0';
+        console.log('closeStartMenu finished hiding.');
         
-        // Notify listeners that menu was closed
-        this.eventBus.publish('startmenu:closed');
-        
-        // Remove the timeout completely
+        this.eventBus.publish(EVENTS.STARTMENU_CLOSED);
+    }
+
+    positionAllProgramsMenu() {
+        // Implementation of positionAllProgramsMenu method
     }
 }

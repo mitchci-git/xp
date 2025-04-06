@@ -85,7 +85,7 @@
 
 .window-body {
     margin: 0;
-    padding: 15px;
+    padding: 0;
     border: none !important;
     box-sizing: border-box;
     background-color: #ECE9D8;
@@ -338,7 +338,7 @@
 }
 
 .window:has(.special-messenger-container) {
-    min-height: 453px;
+    min-height: 400px;
     overflow: hidden;
 }
 
@@ -346,48 +346,6 @@
     position: relative;
     z-index: 2;
     flex-shrink: 0;
-}
-
-/* Responsive styles */
-@media (max-width: 768px) {
-    .window {
-        min-width: 280px;
-        max-width: calc(100vw - 20px);
-        max-height: calc(100vh - 40px);
-        transform: none !important;
-    }
-    
-    .window-resize-handle {
-        width: 20px;
-        height: 20px;
-    }
-    
-    .window-body {
-        overflow-x: auto;
-    }
-}
-
-@media (max-width: 480px) {
-    .window {
-        width: calc(100vw - 10px) !important;
-        left: 5px !important;
-        top: 5px !important;
-    }
-    
-    .window:not(.active) {
-        box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-    }
-    
-    .sidebar {
-        width: 150px;
-        min-width: 150px;
-        max-width: 150px;
-    }
-    
-    .folder-view {
-        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-        grid-gap: 5px;
-    }
 }
 
 /* Image viewer specific styles */
@@ -428,6 +386,49 @@ iframe {
     pointer-events: auto !important;
 }
 
+/* Responsive styles */
+@media (max-width: 768px) {
+    .window {
+        min-width: 280px;
+        max-width: calc(100vw - 20px);
+        max-height: calc(100vh - 40px);
+        transform: none !important;
+    }
+    
+    /* Add any specific handle adjustments if needed */
+    .window-resize-handle {
+        width: 20px; 
+        height: 20px;
+    }
+    
+    .window-body {
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .window {
+        width: calc(100vw - 10px) !important;
+        left: 5px !important;
+        top: 5px !important;
+    }
+    
+    .window:not(.active) {
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .sidebar {
+        width: 150px;
+        min-width: 150px;
+        max-width: 150px;
+    }
+    
+    .folder-view {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        grid-gap: 5px;
+    }
+}
+
 /* Optimization for window dragging - consolidated */
 .dragging-window {
     will-change: transform;
@@ -446,101 +447,5 @@ iframe {
     cursor: move !important;
 }
 
-/* My Pictures specific styling */
+/* Redundant media queries removed */
 
-.window[data-program="my-pictures"] .window-body {
-    padding: 0 !important;
-    margin: 0 !important;
-    height: 100% !important;
-    overflow: hidden !important;
-}
-
-.window[data-program="my-pictures"] .status-bar {
-    display: none !important; /* Hide status bar completely */
-}
-
-/* Ensure content fills the entire window width */
-.window[data-program="my-pictures"] .content {
-    max-width: 100% !important;
-    flex: 1 !important;
-}
-
-/* Ensure folder view container expands properly */
-.window[data-program="my-pictures"] .folder-view {
-    display: block !important;
-    width: 100% !important;
-    padding: 0 !important;
-    overflow: auto !important;
-}
-
-/* Base thumbnail styling */
-.window[data-program="my-pictures"] .thumbnail-item {
-    width: 100px;
-    height: 110px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
-    padding: 5px;
-    position: relative;
-    border: 1px solid transparent;
-    user-select: none;
-}
-
-/* Add hover and selection effects */
-.window[data-program="my-pictures"] .thumbnail-item:hover:not(.selected) {
-    background-color: rgba(49, 106, 197, 0.1);
-    border: 1px solid rgba(49, 106, 197, 0.4);
-}
-
-.window[data-program="my-pictures"] .thumbnail-item.selected {
-    background-color: rgba(49, 106, 197, 0.2);
-    border: 1px solid rgba(49, 106, 197, 0.8);
-}
-
-.window[data-program="my-pictures"] .thumbnail-item.selected:hover {
-    background-color: rgba(49, 106, 197, 0.3);
-}
-
-/* Fix the thumbnails view to fill available width */
-.window[data-program="my-pictures"] .thumbnails-view {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 100px);
-    grid-gap: 10px;
-    padding: 10px;
-    width: 100% !important;
-    box-sizing: border-box;
-    overflow: visible !important;
-}
-
-/* Responsive grid for maximized window */
-.window.maximized[data-program="my-pictures"] .thumbnails-view,
-.window[data-program="my-pictures"][data-maximized="true"] .thumbnails-view {
-    grid-template-columns: repeat(auto-fill, 100px) !important;
-    grid-gap: 15px !important;
-    justify-content: start !important;
-    padding: 15px !important;
-    overflow: auto !important;
-}
-
-/* Thumbnail container styling */
-.window[data-program="my-pictures"] .thumbnail-container {
-    width: 80px;
-    height: 80px;
-    margin-bottom: 5px;
-    border: 1px solid #ddd;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    background: #f0f0f0;
-}
-
-.window[data-program="my-pictures"] .thumbnail-container img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important; /* Prevents distortion */
-    opacity: 1 !important;
-    visibility: visible !important;
-}

@@ -11,6 +11,7 @@
 :root {
   --z-base: 1;
   --z-window: 100;
+  --z-taskbar: 500;
   --z-tooltip: 1000;
   --z-startmenu: 1500;
   --z-crt: 20000;
@@ -33,13 +34,7 @@
   background-size: 10px 10px;
 }
 
-/* Program-specific window dimensions */
-.window[data-program="messenger"] {
-  width: 550px;
-  height: 453px;
-  min-width: 550px;
-  min-height: 453px;
-}
+/* Program-specific window dimensions removed - handled by default or program itself */
 
 /* Maximized state overrides */
 .window.maximized[data-program="messenger"] {
@@ -79,59 +74,10 @@
 }
 
 /* Tooltip styling - unified system */
-.taskbar-tooltip, .viewer-tooltip {
-  position: absolute;
-  background-color: #FFFECF;
-  border: 1px solid #7F7F7F;
-  padding: 4px 8px;
-  font-family: "Tahoma", Arial, sans-serif;
-  font-size: 11px;
-  box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-  z-index: var(--z-tooltip);
-  pointer-events: none;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-
-/* Start menu styling */
-.start-menu {
-  position: absolute;
-  bottom: 30px;
-  left: 0;
-  z-index: var(--z-startmenu);
-}
+/* .viewer-tooltip rule removed - unused */
 
 /* CRT effect z-index values */
 .crt, .crt-glow, .crt-vignette, .crt-noise, .crt-scanline, .crt-aberration, .crt-flicker, .crt-persistence {
   z-index: var(--z-crt);
   pointer-events: none;
-}
-
-/* Media Player Close Button */
-.media-player-window .window-header .close-button {
-    position: absolute;
-    right: 5px;
-    top: 4px;
-    width: 20px;
-    height: 20px;
-    background-color: #c13535;
-    color: white;
-    font-weight: bold;
-    font-family: Arial, sans-serif;
-    font-size: 12px;
-    cursor: pointer;
-    border: 1px solid #9c1c1c;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-}
-
-.media-player-window .window-header .close-button:hover {
-    background-color: #e04343;
-}
-
-.hidden {
-  display: none;
 }

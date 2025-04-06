@@ -2,32 +2,40 @@
  * Taskbar module for managing the start menu and system tray
  */
 import StartMenu from './startMenu.js';
+import { EVENTS } from '../utils/constants.js';
 
 export default class Taskbar {
     constructor(eventBus) {
         this.eventBus = eventBus;
         this.startButton = document.getElementById('start-button');
-        
-        // Initialize components
         this.startMenuComponent = new StartMenu(this.eventBus);
+        this.taskbarProgramsContainer = document.querySelector('.taskbar-programs');
+        this.systemTray = document.querySelector('.system-tray');
+        
         this.setupStartButtonEffects();
         this.setupTooltips();
-        
-        // Subscribe to events
         this.subscribeToEvents();
+        this.setupResponsiveTaskbar();
     }
     
     /**
      * Subscribe to event bus events
      */
     subscribeToEvents() {
-        // Start menu state changes
-        this.eventBus.subscribe('startmenu:opened', () => {
+        this.eventBus.subscribe(EVENTS.STARTMENU_OPENED, () => {
             this.startButton.classList.add('active');
         });
         
-        this.eventBus.subscribe('startmenu:closed', () => {
+        this.eventBus.subscribe(EVENTS.STARTMENU_CLOSED, () => {
             this.startButton.classList.remove('active');
+        });
+        
+        this.eventBus.subscribe(EVENTS.WINDOW_CREATED, () => {
+            this.updateTaskbarLayout();
+        });
+        
+        this.eventBus.subscribe(EVENTS.WINDOW_CLOSED, () => {
+            this.updateTaskbarLayout();
         });
     }
     
@@ -37,15 +45,7 @@ export default class Taskbar {
     setupStartButtonEffects() {
         this.startButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            this.eventBus.publish('startmenu:toggle');
-        });
-        
-        this.startButton.addEventListener('mouseleave', () => {
-            // Only remove active class if menu is not open
-            const startMenuElement = document.querySelector('.startmenu');
-            if (!startMenuElement) {
-                this.startButton.classList.remove('active');
-            }
+            this.eventBus.publish(EVENTS.STARTMENU_TOGGLE);
         });
     }
     
@@ -53,52 +53,38 @@ export default class Taskbar {
      * Set up tooltips for system tray icons
      */
     setupTooltips() {
-        // Remove any existing tooltips - only do this operation once
         const existingTooltips = document.querySelectorAll('.taskbar-tooltip');
         existingTooltips.forEach(tooltip => {
             tooltip.parentNode.removeChild(tooltip);
         });
         
-        // Setup event listeners for tray icons
         const trayIcons = document.querySelectorAll('.tray-status-icon, .tray-network-icon, .tray-volume-icon');
-        
-        // Track active tooltip for efficient cleanup
         let activeTooltip = null;
         
         trayIcons.forEach(icon => {
-            // Add mouseenter event listener to show tooltip
             icon.addEventListener('mouseenter', () => {
-                // Get tooltip text from data attribute
                 const tooltipText = icon.getAttribute('data-tooltip');
-                
                 if (!tooltipText) return;
                 
-                // Remove any existing tooltip
-                if (activeTooltip && activeTooltip.parentNode) {
+                if (activeTooltip?.parentNode) {
                     activeTooltip.parentNode.removeChild(activeTooltip);
                 }
                 
-                // Create tooltip element
                 const tooltip = document.createElement('div');
                 tooltip.className = 'taskbar-tooltip';
                 tooltip.textContent = tooltipText;
                 
-                // Position tooltip above the icon
                 const iconRect = icon.getBoundingClientRect();
                 tooltip.style.bottom = (window.innerHeight - iconRect.top + 5) + 'px';
                 
-                // Add tooltip to DOM first to calculate its actual width
                 document.body.appendChild(tooltip);
                 tooltip.style.left = (iconRect.left + (iconRect.width / 2) - (tooltip.offsetWidth / 2)) + 'px';
                 
-                // Track the tooltip
                 activeTooltip = tooltip;
             });
             
-            // Add mouseleave event listener to hide tooltip
             icon.addEventListener('mouseleave', () => {
-                // Remove active tooltip if it exists
-                if (activeTooltip && activeTooltip.parentNode) {
+                if (activeTooltip?.parentNode) {
                     activeTooltip.parentNode.removeChild(activeTooltip);
                     activeTooltip = null;
                 }
@@ -106,18 +92,58 @@ export default class Taskbar {
         });
     }
 
-    closeStartMenu() {
-        if (!this.startMenu) return;
+    /**
+     * Setup responsive taskbar that adjusts program item widths based on available space
+     */
+    setupResponsiveTaskbar() {
+        this.updateTaskbarLayout();
         
-        // Hide the menu immediately
-        this.startMenu.classList.remove('active');
-        this.hideAllProgramsMenu();
-        this.startMenu.style.visibility = 'hidden';
-        this.startMenu.style.opacity = '0';
+        window.addEventListener('resize', () => {
+            this.updateTaskbarLayout();
+        });
         
-        // Notify listeners that menu was closed
-        this.eventBus.publish('startmenu:closed');
+        const observer = new MutationObserver(() => {
+            this.updateTaskbarLayout();
+        });
         
-        // Remove the timeout - no animation delay
+        observer.observe(this.taskbarProgramsContainer, {
+            childList: true,
+            subtree: false
+        });
+    }
+    
+    /**
+     * Updates the taskbar layout, adjusting program item widths based on available space
+     */
+    updateTaskbarLayout() {
+        const taskbarItems = document.querySelectorAll('.taskbar-item');
+        if (taskbarItems.length === 0) return;
+        
+        const taskbarWidth = document.querySelector('.taskbar').offsetWidth;
+        const startButtonWidth = this.startButton.offsetWidth;
+        const quickLaunchWidth = document.querySelector('.quick-launch')?.offsetWidth || 0;
+        const systemTrayWidth = this.systemTray.offsetWidth;
+        
+        // Calculate available width, subtracting container elements and some padding/margin buffer (25px)
+        const availableWidth = taskbarWidth - startButtonWidth - quickLaunchWidth - systemTrayWidth - 25;
+        
+        const defaultWidth = 160;
+        const minWidth = 100;
+        
+        let itemWidth = defaultWidth;
+        
+        if (taskbarItems.length * defaultWidth > availableWidth) {
+            itemWidth = Math.max(minWidth, availableWidth / taskbarItems.length);
+        }
+        
+        taskbarItems.forEach(item => {
+            item.style.minWidth = `${itemWidth}px`;
+            item.style.maxWidth = `${itemWidth}px`;
+            item.style.width = `${itemWidth}px`;
+        });
+        
+        // flex-shrink and flex-grow are handled by CSS
+        // this.systemTray.style.flexShrink = '0';
+        // this.systemTray.style.flexGrow = '0';
     }
 }

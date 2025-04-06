@@ -2,6 +2,8 @@
  * Clock module for Windows XP taskbar
  * Manages the system clock display and time updates
  */
+import { EVENTS } from '../utils/constants.js';
+
 export default class Clock {
     constructor(selector, eventBus) {
         this.eventBus = eventBus;
@@ -9,7 +11,6 @@ export default class Clock {
         this.intervalId = null;
         this.initialTimeoutId = null;
         
-        // Validate required elements and dependencies
         if (!this.clockElement) {
             console.error(`Clock element not found with selector: ${selector}`);
             return;
@@ -22,23 +23,17 @@ export default class Clock {
         
         this.updateClock();
         this.setupClockUpdates();
-        
-        // Subscribe to time update requests
-        this.eventBusSubscription = this.eventBus.subscribe('clock:update', () => this.updateClock());
+        this.eventBusSubscription = this.eventBus.subscribe(EVENTS.CLOCK_UPDATE, () => this.updateClock());
     }
     
     setupClockUpdates() {
-        // Use RAF for first update to ensure synchronization with frame
         requestAnimationFrame(() => {
             this.updateClock();
             
-            // Calculate delay to align with start of next minute
             const now = new Date();
             const delay = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
             
-            // Initial timeout to align with the start of a minute
             this.initialTimeoutId = setTimeout(() => {
-                // Then update every minute
                 this.intervalId = setInterval(() => this.updateClock(), 60000);
             }, delay);
         });
@@ -57,9 +52,7 @@ export default class Clock {
         const formattedTime = `${displayHours}:${displayMinutes} ${ampm}`;
         this.clockElement.textContent = formattedTime;
         
-        if (this.eventBus) {
-            this.eventBus.publish('clock:time-changed', { formattedTime });
-        }
+        this.eventBus?.publish(EVENTS.CLOCK_TIME_CHANGED, { formattedTime });
     }
     
     destroy() {

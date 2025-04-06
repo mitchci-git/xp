@@ -1,27 +1,21 @@
 /**
- * Windows XP Simulation - Program Data Module
- * Provides centralized configuration for all program window data
- */
-
-/**
  * Program configuration for all available applications in the Windows XP simulation
  */
 const programData = {
     "my-computer": {
         id: "my-computer-window",
         title: "My Computer",
-        icon: "./assets/icons/desktop/my-computer.png",
+        icon: "./assets/gui/desktop/my-computer.png",
         template: "my-computer",
         dimensions: {
             width: 600,
             height: 400
-        },
-        position: "cascade" // Default positioning method
+        }
     },
     "my-documents": {
         id: "my-documents-window",
         title: "My Documents",
-        icon: "./assets/icons/desktop/my-documents.png",
+        icon: "./assets/gui/desktop/my-documents.png",
         template: "folder-view",
         dimensions: {
             width: 600,
@@ -31,28 +25,30 @@ const programData = {
     "recycle-bin": {
         id: "recycle-bin-window",
         title: "Recycle Bin",
-        icon: "./assets/icons/desktop/recycle-bin.png",
+        icon: "./assets/gui/desktop/recycle-bin.png",
         template: "folder-view",
         dimensions: {
             width: 600,
             height: 400
         }
     },
-    "internet-explorer": {
-        id: "internet-explorer-window",
-        title: "Internet Explorer",
-        icon: "./assets/icons/desktop/internet-explorer.png",
-        template: "browser",
-        dimensions: {
-            width: 800,
-            height: 600
-        }
-    },
+    // "internet-explorer": { // Renaming and repurposing for Projects
+    //     id: "internet-explorer-window",
+    //     title: "Internet Explorer", 
+    //     icon: "./assets/gui/desktop/internet-explorer.png",
+    //     template: "iframe-standard",
+    //     appPath: "./apps/internet-explorer/index.html",
+    //     dimensions: {
+    //         width: 800,
+    //         height: 600
+    //     }
+    // },
     "email": {
         id: "email-window",
         title: "New Message - Outlook Express",
-        icon: "./assets/icons/desktop/email.png",
-        template: "email",
+        icon: "./assets/gui/desktop/email.png",
+        template: "iframe-standard",
+        appPath: "./apps/email/index.html",
         dimensions: {
             width: 650,
             height: 500
@@ -61,48 +57,63 @@ const programData = {
     "messenger": {
         id: "messenger-window",
         title: "Windows Messenger",
-        icon: "./assets/icons/desktop/messenger.png",
-        template: "messenger",
-        dimensions: {
-            width: 550,
-            height: 453
-        },
-        position: "bottom-right", // Explicitly set bottom-right positioning
-        margin: {
-            right: 20,  // Right margin for consistent spacing
-            bottom: 20  // Equal spacing from bottom (taskbar will be added in calculation)
-        }
-    },
-    "my-pictures": {
-        id: "my-pictures-window",
-        title: "My Pictures",
-        icon: "./assets/icons/desktop/my-pictures.png",
-        template: "folder-view",
+        icon: "./assets/gui/desktop/messenger.png",
+        template: "iframe-standard",
+        appPath: "./apps/messenger/index.html",
         dimensions: {
             width: 600,
             height: 400
         }
     },
+    "my-pictures": {
+        id: "my-pictures-window",
+        title: "My Pictures",
+        icon: "./assets/gui/desktop/my-pictures.png",
+        template: "iframe-standard",
+        appPath: "apps/my-pictures/index.html",
+        dimensions: {
+            width: 900,
+            height: 700
+        }
+    },
     "image-viewer": {
         id: "image-viewer-window",
         title: "Windows Photo Viewer",
-        icon: "./assets/icons/desktop/image-viewer.png",
-        template: "image-viewer",
-        centerWindow: true
+        icon: "./assets/gui/desktop/image-viewer.png",
+        template: "iframe-standard",
+        appPath: "./apps/image-viewer/index.html"
     },
-    "music-player": {
-        id: "music-player-window",
-        title: "Windows Media Player",
-        icon: "./assets/icons/desktop/music-player.png",
-        template: "music-player",
+    "cmd-prompt": {
+        id: "cmd-prompt-window",
+        title: "Command Prompt",
+        icon: "./assets/gui/desktop/command-prompt.png",
+        template: "iframe-standard",
+        appPath: "./apps/cmd-prompt/index.html",
         dimensions: {
-            width: 348, // 50% of 697px
-            height: 186  // 50% of 372px
-        },
-        position: "top-right", // Explicitly set top-right positioning
-        margin: {
-            top: 20,    // Equal spacing from top as Messenger has from bottom
-            right: 20   // Consistent right margin
+            width: 600,
+            height: 400
+        }
+    },
+    "projects": { // New entry for Projects using IE concept
+        id: "projects-window",
+        title: "My Portfolio Projects", // Updated title
+        icon: "./assets/gui/desktop/internet-explorer.png", // Using IE icon
+        template: "iframe-standard",
+        appPath: "apps/projects/index.html", // Correct path
+        dimensions: {
+            width: 950, // Larger default size for projects
+            height: 720
+        }
+    },
+    "retro-os-details": { // New entry for the detail page
+        id: "retro-os-details-window",
+        title: "Project Details: Retro OS", 
+        icon: "./assets/gui/desktop/internet-explorer.png", // Reuse icon or use specific one
+        template: "iframe-standard",
+        appPath: "apps/projects/retro-os-details/index.html", // Path to the detail page HTML
+        dimensions: {
+            width: 950, 
+            height: 720
         }
     }
 };

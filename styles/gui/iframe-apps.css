@@ -406,213 +406,121 @@
     background: url(https://raw.githubusercontent.com/AndroidWG/WLMOnline/master/assets/chat-window/1450_multi.png) 13px 0;
 }
 
-/* Ensure main container fills the window body - keep this part */
+/* Ensure main container fills the window body */
 .special-iframe-container .window-body {
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  width: 100% !important;
-  height: 100% !important;
-  background-color: transparent !important;
-  border: none !important;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 /* Common styles for all iframe containers */
 .special-iframe-container,
 .special-messenger-container,
 .window-body.special-messenger-container {
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  width: 100% !important;
-  height: 100% !important;
-  background-color: transparent !important;
-  border: none !important;
-  position: relative !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+    position: relative;
 }
 
 /* Specific styles for messenger container */
 .special-messenger-container {
-  display: block !important;
+    overflow: hidden !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
 }
 
-/* Ensure iframes fill their containers */
-.special-iframe-container iframe,
+/* Base styles for iframe containers */
+.special-iframe-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: block; 
+}
+
 .special-messenger-container iframe {
-  width: 100% !important;
-  height: 100% !important;
-  border: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: block !important;
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
+    width: 100%;
+    height: 100%;
+    border: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: block; 
 }
 
 /* Add a custom shadow that doesn't affect layout */
 .special-iframe-container::after,
 .special-messenger-container::after,
 .window-body.special-messenger-container::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 5px;
-  pointer-events: none;
-  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 0;
+    z-index: 5;
 }
 
 /* Style for iframe overlay used during window drag operations */
 .iframe-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 5;
-  background-color: transparent;
-  display: none;
-  cursor: default;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: transparent;
+    z-index: 100;
+    display: none;
 }
 
 /* Fix for layout shift issue */
 html, body {
-  height: 100% !important;
-  overflow: hidden !important;
-  position: fixed !important;
-  width: 100% !important;
-  left: 0 !important;
-  top: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 /* Prevent iframe scroll from affecting parent */
 iframe {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  scrollbar-width: thin;
+    overflow: hidden;
+    scrollbar-width: thin;
 }
 
 /* Make sure iframe links don't cause layout shifts */
 iframe a {
-  scroll-behavior: auto;
+    scroll-behavior: auto;
 }
 
 /* Fixed positioning for desktop to prevent shifting */
 .desktop {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  overflow: hidden !important;
-}
-
-/* Specific override styles for music player iframe - scaled to 50% */
-.window[data-program="music-player"] .window-body,
-.window[data-program="music-player"] .special-iframe-container {
-  width: 348px !important; /* 50% of 697px */
-  height: 186px !important; /* 50% of 372px */
-  min-width: 348px !important;
-  min-height: 186px !important;
-  max-width: 348px !important;
-  max-height: 186px !important;
-  background: transparent !important;
-  background-color: transparent !important;
-  border: none !important;
-  border-width: 0 !important;
-  outline: none !important;
-  overflow: hidden !important;
-  border-radius: 21px !important; /* 50% of 43px */
-  margin: 0 !important;
-  padding: 0 !important;
-  display: block !important;
-}
-
-/* Special handling for the iframe inside the music player to scale content */
-.window[data-program="music-player"] iframe {
-  transform: scale(0.5) !important;
-  transform-origin: top left !important;
-  width: 200% !important; /* Double width to maintain aspect ratio after scaling */
-  height: 200% !important; /* Double height to maintain aspect ratio after scaling */
-  position: absolute !important;
-  overflow: hidden !important; 
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-  box-sizing: border-box !important;
-}
-
-/* Completely remove scrollbars in all browsers for music player */
-.window[data-program="music-player"] iframe {
-  -ms-overflow-style: none !important; /* IE and Edge */
-  scrollbar-width: none !important; /* Firefox */
-}
-
-.window[data-program="music-player"] iframe::-webkit-scrollbar {
-  width: 0px !important;
-  height: 0px !important;
-  display: none !important;
-  background: transparent !important;
-}
-
-/* Ensure the iframe HTML content has proper dimensions */
-.window[data-program="music-player"] iframe html,
-.window[data-program="music-player"] iframe body {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  overflow: hidden !important;
-}
-
-/* Add a scroll adjustment to the content container inside the iframe */
-.window[data-program="music-player"] iframe .content {
-  position: absolute !important;
-  width: 100% !important;
-  height: 100% !important;
-  overflow: hidden !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Fix the music player element dimensions */
-.window[data-program="music-player"] iframe .music-player {
-  width: 697px !important;
-  height: 372px !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-}
-
-/* Fix for layout shift issue */
-.window[data-program="music-player"] {
-  height: 186px !important; /* 50% of 372px */
-  width: 348px !important; /* 50% of 697px */
-  box-sizing: border-box !important;
-  position: absolute !important;
-  background: none !important;
-  background-color: transparent !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    overflow: hidden !important;
 }
 
 /* Fix for Firefox shadow DOM hidden scrollbar issue */
 @-moz-document url-prefix() {
-  .window[data-program="music-player"] {
-    scrollbar-width: none !important;
-  }
-  
-  .window[data-program="music-player"] iframe {
-    scrollbar-width: none !important;
-  }
-  
-  .window[data-program="music-player"] * {
-    scrollbar-width: none !important;
-  }
+    iframe {
+        scrollbar-width: none;
+    }
 }
+
+/* Make sure the iframe content is visible */

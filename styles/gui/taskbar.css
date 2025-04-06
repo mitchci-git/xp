@@ -9,6 +9,7 @@
     --taskbar-text-shadow: 1px 1px 1px rgba(0,0,0,0.6);
     --tray-spacing: 6.5px;
     --icon-size-small: 16px;
+    --system-tray-width: 154px;
 }
 
 /* Common font for UI elements */
@@ -25,7 +26,7 @@
     background-image: url('../../assets/gui/taskbar/taskbar-bg.png');
     background-repeat: repeat-x;
     background-size: auto 100%;
-    z-index: 1000;
+    z-index: var(--z-taskbar);
     display: flex;
     align-items: center;
     overflow: hidden;
@@ -46,6 +47,7 @@
     transition: filter 0.1s ease;
     -webkit-tap-highlight-color: transparent; /* Prevents tap highlight on mobile */
     user-select: none; /* Prevents selection */
+    flex-shrink: 0; /* Prevent shrinking */
 }
 
 .start-button:hover {
@@ -90,7 +92,7 @@
     margin-left: 0;
     margin-right: 10px;
     border: none;
-    flex-shrink: 0;
+    flex-shrink: 0; /* Prevent shrinking */
 }
 
 /* Programs area */
@@ -101,13 +103,15 @@
     align-items: center;
     padding: 0 2px;
     overflow: hidden;
+    min-width: 0; /* Allow container to shrink below content size */
 }
 
 /* Taskbar program buttons */
 .taskbar-item {
     height: var(--taskbar-item-height);
     min-width: 160px;
-    max-width: 200px;
+    max-width: 160px;
+    width: 160px;
     margin: 0 1px;
     padding: 0 8px;
     border-radius: 6px;
@@ -130,6 +134,9 @@
         inset -1px 0 0 rgba(0,0,0,0.1),
         1px 0 0 rgba(255,255,255,0.1),
         0 1px 0 rgba(255,255,255,0.1);
+    /* Added smooth transition for width changes */
+    transition: min-width 0.15s ease, max-width 0.15s ease, width 0.15s ease;
+    flex-shrink: 1; /* Allow items to shrink */
 }
 
 .taskbar-item:hover:not(.active) {
@@ -165,6 +172,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     position: relative;
+    min-width: 0; /* Allows text to shrink properly */
 }
 
 /* System tray */
@@ -174,7 +182,10 @@
     margin-left: auto;
     display: flex;
     align-items: center;
-    width: 154px;
+    width: var(--system-tray-width);
+    min-width: var(--system-tray-width);
+    flex-shrink: 0; /* Prevent system tray from shrinking */
+    flex-grow: 0; /* Prevent system tray from growing */
 }
 
 .system-tray img.system-tray-bg {
@@ -254,19 +265,19 @@
     margin-right: 0;
 }
 
-/* Start Menu */
-.start-menu {
-    position: absolute;
-    bottom: var(--taskbar-height);
-    left: 0;
-    width: 320px;
-    height: 480px;
-    background-image: url('../../assets/gui/start-menu/start-menu-bg.png');
-    display: none;
-    user-select: none;
-    cursor: default;
+/* Taskbar Tooltip */
+.taskbar-tooltip {
+  position: absolute; /* Positioned by JS */
+  background-color: #FFFECF;
+  border: 1px solid #7F7F7F;
+  padding: 4px 8px;
+  font-family: "Tahoma", Arial, sans-serif;
+  font-size: 11px;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  z-index: var(--z-tooltip);
+  pointer-events: none;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
-.start-menu.active {
-    display: block;
-}
+/* Start Menu styles moved to startmenu.css */

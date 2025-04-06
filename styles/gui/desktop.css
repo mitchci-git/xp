@@ -34,7 +34,7 @@
     background-color: var(--desktop-selection-color);
     border-radius: 3px;
     pointer-events: none;
-    z-index: 0;
+    z-index: 1; /* Ensure it's above the overlay but below icons */
 }
 
 /* When desktop icons are hovered by box (no border) */

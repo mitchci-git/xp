@@ -3,7 +3,7 @@
 /* Main Start Menu container */
 .startmenu {
   position: absolute;
-  bottom: 31px;
+  bottom: calc(var(--taskbar-height) + 1px); /* Updated to use variable */
   left: 0;
   width: 355px;
   height: 465px;
@@ -14,7 +14,7 @@
   border: 1px solid rgba(0, 0, 0, 0.3);
   box-shadow: 3px 4px 8px rgba(0, 0, 0, 0.65), 0 0 4px rgba(0, 0, 0, 0.4), 
               inset 0 0 55px rgba(255, 255, 255, 0.08); /* Reduced external shadow spread */
-  z-index: 1001;
+  z-index: var(--z-startmenu); /* Updated to use variable */
   overflow: hidden;
   visibility: hidden; /* Start hidden */
   opacity: 0;
@@ -118,8 +118,8 @@
   display: flex;
   flex-direction: column;
   background-color: white;
-  box-shadow: inset -2px 0 3px -1px rgba(0, 0, 0, 0.15), 
-              inset 0 3px 4px -3px rgba(0, 0, 0, 0.2); /* Stronger shadow */
+  box-shadow: inset -2px 0 3px -1px rgba(0, 0, 0, 0.15),
+              inset 0 3px 4px -3px rgba(0, 0, 0, 0.2);
 }
 
 /* Right section */
@@ -137,19 +137,18 @@
 .menu-items {
   list-style: none;
   padding: 0;
-  margin: 0;
-  width: 100%;
-  overflow-y: auto;
-  flex-grow: 1;
+  margin: 0; /* Keep basic resets */
+  width: 100%; /* Keep width */
 }
 
+/* Menu items list within the left section */
 .middle-left .menu-items {
-  /* Allow scrolling if needed but reserve space for All Programs */
-  flex: 1 1 auto;
-  overflow-y: visible; /* Prevents scrollbars while maintaining content flow */
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* Distribute items evenly */
+  /* Basic resets inherited from .menu-items */
+  flex: 1; /* Let list grow and shrink, basis 0 */
+  display: flex; /* Arrange children */
+  flex-direction: column; /* Stack children vertically */
+  /* Remove margin-bottom */
+  overflow: hidden; /* Prevent visual overflow */
 }
 
 /* Item styling - consolidated rules */
@@ -163,16 +162,19 @@
   transition: all 0.1s ease;
 }
 
-/* Left side menu items - standardized height */
+/* Left side menu items - allow them to grow equally */
 .middle-left .menu-item {
   padding: 6px 7.5px 6px 9px;
-  min-height: 47px; /* Standard height for all left items */
+  flex: 1; /* Allow items to share space equally */
+  min-height: 0; /* Prevent content imposing min size */
+  display: flex;
+  align-items: center;
+  /* Ensure no explicit height */
 }
 
-/* Right side menu items - smaller than left side but keep text consistent */
+/* Right side menu items - Adjusting height */
 .middle-right .menu-item {
-  padding: 6px 7.5px 6px 9px;
-  min-height: 41px; /* Smaller height than left side */
+  padding: 8px 7.5px 8px 9px; /* Set top/bottom padding to 8px */
   display: flex;
   align-items: center; /* Ensure vertical centering */
 }
@@ -206,7 +208,6 @@
 .item-content {
   display: flex;
   flex-direction: column;
-  min-height: 27px; /* Reduced from 28px */
   justify-content: center;
 }
 
@@ -219,8 +220,8 @@
 }
 
 /* Apply bold only to specific items - using ID selectors for reliability */
-#menu-internet .item-title,
 #menu-email .item-title,
+#menu-messenger .item-title,
 .middle-right .item-title,
 .all-programs-button {
   font-weight: 600;
@@ -277,9 +278,19 @@
   padding: 0;
 }
 
-/* All Programs section - explicitly set as non-flexible */
+/* Left side menu items - use fixed height */
+.middle-left .menu-divider {
+  list-style: none;
+  padding: 0;
+  margin: 2px 0;
+  height: 1px;
+  flex: 0 0 auto; /* Keep non-growing */
+}
+
+/* All Programs section - Fixed height flex item */
 .all-programs-container {
-  flex: 0 0 auto;
+  flex: 0 0 35px; /* Fixed height, no grow/shrink */
+  /* Remove position, bottom, left, right, margin-top, background */
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -413,7 +424,7 @@
   border: 1px solid #7B9EBD;
   border-radius: 2px;
   box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.3);
-  z-index: 1002; /* Ensure this is higher than the startmenu z-index */
+  z-index: calc(var(--z-startmenu) + 1); /* Updated to use variable + 1 */
   display: none;
   overflow: visible;
   padding: 0; /* Remove all padding to allow highlight to reach edges */
