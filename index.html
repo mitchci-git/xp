@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="./styles/main.css">
 </head>
 <body>
+    <button id="goButton"></button>
+
     <div class="desktop">
         <div class="desktop-icons">
             <div class="desktop-icon">
@@ -35,6 +37,10 @@
             <div class="desktop-icon">
                 <img src="./assets/gui/desktop/command-prompt.png" alt="Command Prompt">
                 <span>Command Prompt</span>
+            </div>
+            <div class="desktop-icon">
+                <img src="./assets/gui/desktop/notepad.png" alt="Notepad">
+                <span>Notepad</span>
             </div>
         </div>
 
@@ -68,7 +74,10 @@
     <div class="crt-scanline"></div>
     <div class="crt-aberration"></div>
     <div class="crt-flicker"></div>
-    <div class="crt-persistence"></div>
+
+    <div id="boot-screen">
+        <!-- ... existing code ... -->
+    </div>
 
     <script type="module" src="./scripts/main.js"></script>
 </body>

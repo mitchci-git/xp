@@ -1,5 +1,8 @@
 import { setupIframeActivation } from '../../scripts/utils/iframeComm.js';
 
+// REMOVE listener
+// document.addEventListener('mousedown', () => { ... }, true);
+
 document.addEventListener('DOMContentLoaded', () => {
     // Try to activate parent communication (for focus handling)
     setupIframeActivation();

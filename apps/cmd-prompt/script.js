@@ -1,3 +1,6 @@
+// REMOVE listener
+// document.addEventListener('mousedown', () => { ... }, true);
+
 const history = document.getElementById('history');
 const input = document.getElementById('input');
 const ps1 = document.getElementById('ps1');
@@ -6,25 +9,26 @@ const body = document.querySelector('body');
 
 body.classList.add('dos');
 
-let buffer = "";
-var command = "";
-var driveLetter = "C";
-var blinkTimer = null;
-var commandHistory = new Array();
-var path = new Array();
-var tmpCommand = "";
-var historyPos = 0;
+let command = "";
+let driveLetter = "C";
+const commandHistory = [];
+let path = [];
+let historyPos = 0;
 
 function processCommand(text) {
-    if (text.indexOf(" ") != -1) {
-        var actualCommand = text.substring(0, text.indexOf(" "));
-        var parameters = text.substring(text.indexOf(" ") + 1, text.length).split(" ");
+    let actualCommand;
+    let parameters;
+    
+    if (text.indexOf(" ") !== -1) {
+        actualCommand = text.substring(0, text.indexOf(" "));
+        parameters = text.substring(text.indexOf(" ") + 1, text.length).split(" ");
     } else {
-        var actualCommand = text;
-        var parameters = new Array();
+        actualCommand = text;
+        parameters = [];
     }
+    
     try {
-        if ((actualCommand.indexOf(":") == 1) && (actualCommand.length == 2)) {
+        if ((actualCommand.indexOf(":") === 1) && (actualCommand.length === 2)) {
             driveLetter = actualCommand.charAt(0).toUpperCase();
             return "";
         }
@@ -41,10 +45,11 @@ function processCommand(text) {
                 return "Windows not invented yet\n\n";
             case "set":
             case "eval":
-                return eval(parameters.join(" ")) + "\n";
+                return "Command disabled for security reasons\n";
             case "clear":
             case "cls":
                 history.innerHTML = "";
+                return "";
             case "cd":
                 return processDirectoryChange(parameters[0]);
             case "cd\\":
@@ -60,62 +65,49 @@ function processCommand(text) {
                 return printHelp();
             case "exit":
                 return init();
-        }
-        try {
-            var output = eval(text);
-
-            // check command returned some output
-            // (if it failed we move to the catch block, so this is only
-            // for valid javascript that doesn't return anything)
-
-            if (output != undefined)
-                return output + "<br>";
-            else
-                // If eval returns undefined, treat as unrecognized
+            default:
+                // Command not recognized
                 return `'${text}' is not recognized as an internal or external command,<br>operable program or batch file.<br>`;
-        } catch (err) {
-            // If eval fails, it's an unrecognized command
-            return `'${text}' is not recognized as an internal or external command,<br>operable program or batch file.<br>`;
         }
     } catch (err) {
         return "Command caused an error [" + err + "]<br>";
     }
-    // Default fallback for unrecognized commands
-    return `'${text}' is not recognized as an internal or external command,<br>operable program or batch file.<br>`;
 }
 
 function processDirectoryChange(dirs) {
-    if (dirs == undefined)
+    if (dirs === undefined) {
         return "";
-    else if (dirs.charAt(1) == ":") {
+    } else if (dirs.charAt(1) === ":") {
         driveLetter = dirs.charAt(0);
         path = dirs.substring(3, dirs.length).split("\\");
         return "";
     }
     dirs = dirs.replace(/\//g, "\\");
-    dirArray = dirs.split("\\");
-    for (var dir in dirArray) {
+    const dirArray = dirs.split("\\");
+    for (const dir in dirArray) {
         changeDirectory(dirArray[dir]);
     }
     return "";
 }
 
 function changeDirectory(dir) {
-    if ((dir == ".") || (dir == ""))
+    if ((dir === ".") || (dir === "")) {
         return;
-    else if (dir == "..")
+    } else if (dir === "..") {
         path.pop();
-    else if (dir == "\\")
-        path = new Array();
-    else
+    } else if (dir === "\\") {
+        path = [];
+    } else {
         path.push(dir);
+    }
     return "";
 }
 
 function processDir(dir) {
-    if (dir == undefined)
+    if (dir === undefined) {
         dir = driveLetter + ":\\" + path.join("\\");
-    var output = "";
+    }
+    let output = "";
     output += " Volume in drive " + driveLetter + " has no label.<br />";
     output += " Volume Serial Number is 98B1-B33F\n";
     output += "\n";
@@ -130,7 +122,7 @@ function processDir(dir) {
 }
 
 function printHelp() {
-    var output = "";
+    let output = "";
     output += "Supported commands are:\n";
     output += " help\n";
     output += " ver\n";
@@ -139,15 +131,13 @@ function printHelp() {
     output += " echo [text]\n";
     output += " cls\n";
     output += " dir\n";
-    output += " cd [directory]\n";
-    output += " eval [javascript code]\n\n";
+    output += " cd [directory]\n\n";
 
     return output;
 }
 
 function println(text) {
   const line = document.createElement('div');
-  //let output = text.replace(/\n/g, "<br />");
   line.innerHTML = `${text}`;
 
   history.appendChild(line);
@@ -155,7 +145,6 @@ function println(text) {
 
 function init() {
     println("Microsoft Windows XP [Version 5.1.2600]<br>(C) Copyright 1985-2001 Microsoft Corp.");
-    // println("(C) Copyright 1985-2001 Microsoft Corp."); // Combined into one call
 }
 
 
@@ -202,10 +191,6 @@ input.addEventListener('input', () => {
     const lines = input.innerText.replace(/\n$/, '').split('\n');
     const lastLine = lines[lines.length - 1];
     
-    for (let i = 0; i <= lines.length - 2; ++i) {
-      // handleCommand(lines[i]);
-    }
-  
     input.textContent = lastLine;
     
     focusAndMoveCursorToTheEnd();
@@ -254,19 +239,25 @@ function defrag() {
     const CLUSTERSPERBLOCK = ~~(TOTALCLUSTERS / TOTAL_BLOCKS);
 
     // DOM
-    const modals = document.querySelectorAll('#defrag.testing.dialog, #defrag.reading.dialog, #defrag.analyzing.dialog, #defrag.finished.dialog');
-    const screens = document.querySelectorAll('#defrag.surface, #defrag.info');
-    const surface = document.querySelector('#defrag.surface');
-    const currentCluster = document.querySelector('#defrag.currentcluster');
-    const percent = document.querySelector('#defrag.percent');
-    const fill = document.querySelector('#defrag.fill');
-    const elapsedTime = document.querySelector('#defrag.elapsedtime');
-    const screen = document.querySelector('#defrag');
+    const modals = document.querySelectorAll('#defrag-testing.dialog, #defrag-reading.dialog, #defrag-analyzing.dialog, #defrag-finished.dialog');
+    const screens = document.querySelectorAll('#defrag-surface, #defrag-info');
+    const surface = document.querySelector('#defrag-surface');
+    const currentCluster = document.querySelector('#defrag-currentcluster');
+    const percent = document.querySelector('#defrag-percent');
+    const fill = document.querySelector('#defrag-fill');
+    const elapsedTime = document.querySelector('#defrag-elapsedtime');
+    const screen = document.querySelector('#defrag-container');
     const history = document.getElementById('history');
     const input = document.getElementById('input');
     const ps1 = document.getElementById('ps1');
     const caret = document.getElementById('caret');
     const body = document.querySelector('body');
+    
+    // Initialize variables
+    let currentBlock = 0;
+    let timer;
+    let blocks;
+    let totalBlocks;
     
     history.hidden = true;
     caret.classList.add('off');
@@ -279,14 +270,17 @@ function defrag() {
     const genBlock = () => {
       const num = ~~(Math.random() * 500);
 
-      if (num < 1)
-      return 'bad';
-      if (num < 2)
-      return 'unmovable';
-      if (num < 175)
-      return 'used frag';else
-
-      return 'unused';
+      if (num < 1) {
+        return 'bad';
+      }
+      if (num < 2) {
+        return 'unmovable';
+      }
+      if (num < 175) {
+        return 'used frag';
+      } else {
+        return 'unused';
+      }
     };
 
     // Generate surface
@@ -296,7 +290,12 @@ function defrag() {
       surface.appendChild(span);
     }
 
-    document.querySelector('.clustersperblock').textContent = CLUSTERSPERBLOCK.toLocaleString('en');
+    // After generating surface, initialize blocks and totalBlocks
+    blocks = document.querySelectorAll('.block');
+    totalBlocks = document.querySelectorAll('.used.frag').length;
+    const folders = document.querySelector('#defrag-folders');
+
+    document.querySelector('#defrag-clustersperblock').textContent = CLUSTERSPERBLOCK.toLocaleString('en');
 
     // Time Counter
     let time = 0;
@@ -315,15 +314,13 @@ function defrag() {
     const readBlock = () => {
       currentCluster.textContent = CLUSTERSPERBLOCK * currentBlock;
       if (blocks[currentBlock].classList.contains('frag')) {
-        console.log(currentBlock, 'fragment detected');
         blocks[currentBlock].classList.remove('frag');
-      } else
-      if (blocks[currentBlock].classList.contains('unused')) {
+      } else if (blocks[currentBlock].classList.contains('unused')) {
         const fragments = document.querySelectorAll('.used.frag');
         const p = ~~(currentBlock * 100 / totalBlocks);
         percent.textContent = p;
         fill.style.setProperty('width', `${p}%`);
-        if (fragments.length == 0) {
+        if (fragments.length === 0) {
           endDefrag();
           return;
         }
@@ -333,26 +330,23 @@ function defrag() {
         setTimeout(() => fragments[num].classList.remove('reading'), 200 + ~~(Math.random() * 800));
         blocks[currentBlock].classList.remove('unused');
         blocks[currentBlock].classList.add('used');
-      } else
-
+      } 
+      
       currentBlock++;
-
+      
       setTimeout(readBlock, 50 + ~~(Math.random() * 50) + [0, 0, 0, 50, 200][~~(Math.random() * 5)]);
     };
-
-    let currentBlock = 0;
-    const totalBlocks = document.querySelectorAll('.used.frag').length;
-    const blocks = document.querySelectorAll('.block');
-    const folders = document.querySelector('.folders');
 
     const startDefrag = () => {
       timer = setInterval(updateTime, 1000);
       setTimeout(readBlock, 500);
     };
 
-    const TAGS = ['GAMES', 'DOS', 'WINDOWS', 'AUTODESK', 'EMM386', 'PCSHELL',
-    'ZIP', 'RAR', 'PORN', 'COREL', 'WOLF3D', 'TRACKERS', 'WORM',
-    'NORTON', 'DOSHELL', 'INDY', 'MONKEY', 'SIMON', 'WORKS', '2DISK'];
+    const TAGS = [
+      'GAMES', 'DOS', 'WINDOWS', 'AUTODESK', 'EMM386', 'PCSHELL',
+      'ZIP', 'RAR', 'PORN', 'COREL', 'WOLF3D', 'TRACKERS', 'WORM',
+      'NORTON', 'DOSHELL', 'INDY', 'MONKEY', 'SIMON', 'WORKS', '2DISK'
+    ];
 
     const startDialogs = () => {
       setTimeout(() => {
@@ -375,41 +369,32 @@ function defrag() {
     };
 
     const extractTags = tags => {
-      if (tags.length > 0)
-      setTimeout(() => {
-        folders.textContent = tags.shift();
-        extractTags(tags);
-      }, 100);
+      if (tags.length > 0) {
+        setTimeout(() => {
+          folders.textContent = tags.shift();
+          extractTags(tags);
+        }, 100);
+      }
     };
 
     startDialogs();
     
     document.getElementById('exitDefrag').addEventListener('click', function () {
-        const screen = document.querySelector('#defrag.screen');
-        const history = document.getElementById('history');
-        const input = document.getElementById('input');
-        const ps1 = document.getElementById('ps1');
-        const body = document.querySelector('body');
-        const caret = document.getElementById('caret');
-
+        screen.hidden = true;
         history.hidden = false;
         caret.classList.remove('off');
         input.hidden = false;
         ps1.hidden = false;
-        screen.hidden = true;
         body.setAttribute("class", "dos");
     });
 
     document.addEventListener('keydown', function (e) {
-      const help = document.querySelector(".help.dialog");
-      if (e.altKey || e.code == 'F10') {
-          //help.hidden = false;
-      }
-      if (e.code == 'F1') {
+      const help = document.querySelector("#defrag-help-dialog");
+      if (e.code === 'F1') {
           e.preventDefault();
           help.hidden = false;
       }
-      if (e.code == 'Escape') {
+      if (e.code === 'Escape') {
           e.preventDefault();
           help.hidden = true;
       }
@@ -423,10 +408,10 @@ function defrag() {
 
 function scandisk() {
 
-    const stages = document.querySelectorAll('.list span[data-status]');
-    const progressbar = document.querySelector('.fillbar');
-    const statusbar = document.querySelector('span[data-count]');
-    const screen = document.querySelector('#scandisk');
+    const stages = document.querySelectorAll('#scandisk-list span[data-status]');
+    const progressbar = document.querySelector('#scandisk-fillbar');
+    const statusbar = document.querySelector('#scandisk-status-bar span[data-count]');
+    const screen = document.querySelector('#scandisk-container');
     const history = document.getElementById('history');
     const input = document.getElementById('input');
     const ps1 = document.getElementById('ps1');
@@ -442,6 +427,9 @@ function scandisk() {
 
     const NUM_BLOCKS = 518;
     let currentStage = 0;
+    let blocks;
+    let currentBlock = 0;
+    let badclusters = 0;
 
     // *** First screen (check disk)
     const random = (min = 1, max = 6) => min + ~~(Math.random() * max);
@@ -450,25 +438,25 @@ function scandisk() {
     const nextStage = () => {
         if (currentStage > 0) {
             const randomFail = random(1, 6);
-            stages[currentStage - 1].dataset.status = randomFail == 4 ? 'fixed' : 'correct';
+            stages[currentStage - 1].dataset.status = randomFail === 4 ? 'fixed' : 'correct';
         }
 
         if (currentStage < stages.length) {
             stages[currentStage++].dataset.status = 'current';
             incProgress();
             setTimeout(nextStage, random(500, 2000));
-        } else
-
+        } else {
             setTimeout(finishStage, random(500, 2000));
+        }
     };
 
     // last Stage from first screen
     const finishStage = () => {
-        const screen = document.querySelectorAll('.screen-1, .screen-2');
+        const screen = document.querySelectorAll('#scandisk-screen-1, #scandisk-screen-2');
         screen[0].classList.add('off');
         screen[1].classList.remove('off');
         setProgress(0);
-        blocks = document.querySelectorAll('.surface-scan .block');
+        blocks = document.querySelectorAll('#scandisk-surface-scan .block');
         readBlock();
     };
 
@@ -484,17 +472,13 @@ function scandisk() {
     };
 
     // *** Second screen (surface disk)
-    const surface = document.querySelector('.surface-scan');
-    const totalClusters = document.querySelector('.data .total span');
-    const readClusters = document.querySelector('.data .examined span');
-    const badClusters = document.querySelector('.data .badc span');
-    const clustersPerBlock = document.querySelector('.legend var');
+    const surface = document.querySelector('#scandisk-surface-scan');
+    const totalClusters = document.querySelector('#scandisk-total span');
+    const readClusters = document.querySelector('#scandisk-examined span');
+    const badClusters = document.querySelector('#scandisk-badc span');
+    const clustersPerBlock = document.querySelector('#scandisk-legend var');
     const clusters = ~~(Math.random() * 100000) + 500000;
     const cpb = ~~(clusters / NUM_BLOCKS);
-
-    let badclusters = 0;
-    let currentBlock = 0;
-    let blocks;
 
     const genSurface = () => {
         totalClusters.textContent = clusters.toLocaleString();
@@ -509,36 +493,39 @@ function scandisk() {
 
     const readBlock = () => {
         let time = 0;
-        if (blocks[currentBlock].classList.contains('unused'))
+        if (blocks[currentBlock].classList.contains('unused')) {
             time += random(0, 150);
-        if (blocks[currentBlock].classList.contains('used'))
+        }
+        if (blocks[currentBlock].classList.contains('used')) {
             time += random(50, 500);
-        if (blocks[currentBlock].classList.contains('full'))
+        }
+        if (blocks[currentBlock].classList.contains('full')) {
             time += random(50, 1000);
+        }
         time += possibleBadBlock();
-        if (currentBlock < NUM_BLOCKS)
-            setTimeout(readBlock, time);else
-
-                finishReadBlock();
+        if (currentBlock < NUM_BLOCKS) {
+            setTimeout(readBlock, time);
+        } else {
+            finishReadBlock();
+        }
         setProgress(~~(currentBlock / NUM_BLOCKS * 100));
         readClusters.textContent = (currentBlock * cpb).toLocaleString();
     };
 
     const finishReadBlock = () => {
         readClusters.textContent = clusters.toLocaleString();
-        document.querySelector('.screen-2').classList.add('off');
-        document.querySelector('.screen-3').classList.remove('off');
+        document.querySelector('#scandisk-screen-2').classList.add('off');
+        document.querySelector('#scandisk-screen-3').classList.remove('off');
     };
 
     const possibleBadBlock = () => {
-        if (random(1, 150) == 1) {
+        if (random(1, 150) === 1) {
             blocks[currentBlock++].classList.add('bad');
             badClusters.textContent = ++badclusters;
             return random(2000, 4000);
-        } else
-
+        } else {
             blocks[currentBlock++].classList.add('read');
-
+        }
         return 0;
     };
 
@@ -546,18 +533,11 @@ function scandisk() {
     nextStage();
 
     document.getElementById('exitScandisk').addEventListener('click', function () {
-        const screen = document.querySelector('#scandisk.screen');
-        const history = document.getElementById('history');
-        const input = document.getElementById('input');
-        const ps1 = document.getElementById('ps1');
-        const body = document.querySelector('body');
-        const caret = document.getElementById('caret');
-
+        screen.hidden = true;
         history.hidden = false;
         caret.classList.remove('off');
         input.hidden = false;
         ps1.hidden = false;
-        screen.hidden = true;
         body.setAttribute("class", "dos");
     });
     

@@ -475,6 +475,10 @@
   min-height: 20px;
   width: 100%;
   box-sizing: border-box;
+  user-select: none; /* Standard */
+  -webkit-user-select: none; /* Safari/Chrome */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE/Edge */
 }
 
 /* Menu item hover effect - ensure it extends fully left */

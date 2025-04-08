@@ -81,3 +81,63 @@
   z-index: var(--z-crt);
   pointer-events: none;
 }
+
+.window {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.taskbar-program {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.taskbar-program span {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Add styles here to override or supplement xp.css */
+
+/* Ensure body fills viewport for absolute positioning */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevent scrollbars on body */
+}
+
+/* Go Button Styling */
+#goButton {
+    position: absolute;
+    bottom: 50px; /* Position above taskbar */
+    left: 20px;  
+    width: 50px; 
+    height: 50px;
+    background-color: #4CAF50; /* Green */
+    border-radius: 50%;
+    border: 2px solid #367c39;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 10000;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+#goButton:hover {
+    background-color: #45a049;
+}
+
+#goButton:active {
+    transform: scale(0.95);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.desktop {
+  /* ... existing code ... */
+}

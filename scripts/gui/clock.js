@@ -2,7 +2,6 @@
  * Clock module for Windows XP taskbar
  * Manages the system clock display and time updates
  */
-import { EVENTS } from '../utils/constants.js';
 
 export default class Clock {
     constructor(selector, eventBus) {
@@ -23,7 +22,6 @@ export default class Clock {
         
         this.updateClock();
         this.setupClockUpdates();
-        this.eventBusSubscription = this.eventBus.subscribe(EVENTS.CLOCK_UPDATE, () => this.updateClock());
     }
     
     setupClockUpdates() {
@@ -51,8 +49,6 @@ export default class Clock {
         
         const formattedTime = `${displayHours}:${displayMinutes} ${ampm}`;
         this.clockElement.textContent = formattedTime;
-        
-        this.eventBus?.publish(EVENTS.CLOCK_TIME_CHANGED, { formattedTime });
     }
     
     destroy() {
@@ -64,11 +60,6 @@ export default class Clock {
         if (this.intervalId) {
             clearInterval(this.intervalId);
             this.intervalId = null;
-        }
-        
-        if (this.eventBus && this.eventBusSubscription) {
-            this.eventBus.unsubscribe(this.eventBusSubscription);
-            this.eventBusSubscription = null;
         }
     }
 }

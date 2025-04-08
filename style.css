@@ -1,0 +1,31 @@
+/* Go Button Styling */
+#goButton {
+    position: absolute;
+    bottom: 20px; /* Adjust as needed */
+    left: 20px;  /* Adjust as needed */
+    width: 50px;  /* Size of the circle */
+    height: 50px; /* Size of the circle */
+    background-color: #4CAF50; /* Green */
+    border-radius: 50%; /* Makes it a circle */
+    border: 2px solid #367c39; /* Darker green border */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    cursor: pointer;
+    z-index: 10000; /* Ensure it's above other elements */
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+#goButton:hover {
+    background-color: #45a049; /* Slightly darker green on hover */
+}
+
+#goButton:active {
+    transform: scale(0.95); /* Slight shrink effect on click */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); /* Smaller shadow on click */
+}
+
+/* Optional: Ensure body/html have height for absolute positioning if needed */
+/* html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+} */ 

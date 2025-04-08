@@ -12,24 +12,19 @@ export const EVENTS = {
     WINDOW_MAXIMIZED: 'window:maximized',
     WINDOW_UNMAXIMIZED: 'window:unmaximized',
     WINDOW_RESTORED: 'window:restored',
-    WINDOW_RESIZE: 'window:resize', // Potentially useful later
 
     // Taskbar/Start Menu
     TASKBAR_ITEM_CLICKED: 'taskbar:item:clicked',
     STARTMENU_TOGGLE: 'startmenu:toggle',
     STARTMENU_OPENED: 'startmenu:opened',
     STARTMENU_CLOSED: 'startmenu:closed',
+    STARTMENU_CLOSE_REQUEST: 'startmenu:close-request',
     
     // Desktop
-    DESKTOP_CLICKED: 'desktop:clicked', // Potentially useful later
 
     // Effects
     CRT_TOGGLE: 'crt:toggle',
     CRT_UPDATE_SETTINGS: 'crt:update-settings',
-
-    // Clock
-    CLOCK_UPDATE: 'clock:update',
-    CLOCK_TIME_CHANGED: 'clock:time-changed',
     
     // Inter-app/Iframe Communication (Example)
     IFRAME_CLICKED: 'iframe-clicked',

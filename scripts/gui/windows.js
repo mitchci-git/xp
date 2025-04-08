@@ -44,21 +44,52 @@ export default class WindowManager {
 
         // Handle iframe messages for window activation
         window.addEventListener('message', (event) => {
-            if (event.data?.type === EVENTS.IFRAME_CLICKED) {
-                const windowId = event.data.windowId;
-                if (windowId) {
-                    const baseWindowId = windowId.split('?')[0];
-                    const targetWindow = document.getElementById(baseWindowId);
-                    
-                    if (targetWindow) {
-                        this.bringToFront(targetWindow);
-                        event.stopPropagation();
-                    }
+            // REMOVE direct handling - this is now handled via main.js -> eventBus
+            // if (event.data?.type === EVENTS.IFRAME_CLICKED) { 
+            //     const windowId = event.data.windowId;
+            //     if (windowId) {
+            //         const baseWindowId = windowId.split('?')[0];
+            //         const targetWindow = document.getElementById(baseWindowId);
+            //         
+            //         if (targetWindow) {
+            //             this.bringToFront(targetWindow);
+            //             event.stopPropagation();
+            //         }
+            //     }
+            // } else 
+            // --- Handle Project Hub message (KEEP THIS) --- 
+            if (event.data?.type === 'openProject') { // Note: Removed the 'else' here
+                const hubProjectId = event.data.id;
+                // ... rest of project hub logic ... 
+            } 
+            // --- Handle other message types (KEEP THESE) ---
+            else if (event.data?.type === 'minimize-window') {
+                // Find the parent window using the helper
+                const window = this._getWindowFromIframeSource(event.source);
+                
+                if (window) {
+                    this.minimizeWindow(window);
+                }
+            } else if (event.data?.type === 'close-window') {
+                // Find the parent window of the iframe that sent this message
+                const window = this._getWindowFromIframeSource(event.source);
+                
+                if (window) {
+                    this.closeWindow(window);
                 }
             }
         }, true);
     }
     
+    // --- Private Helper Method ---
+    _getWindowFromIframeSource(eventSource) {
+        const iframe = Array.from(document.querySelectorAll('iframe')).find(
+            iframe => iframe.contentWindow === eventSource
+        );
+        return iframe ? iframe.closest('.window') : null;
+    }
+    // --- End Helper Method ---
+
     subscribeToEvents() {
         this.eventBus.subscribe(EVENTS.PROGRAM_OPEN, data => {
             this.openProgram(data.programName);
@@ -144,9 +175,9 @@ export default class WindowManager {
         
         // Reset isOpen flag just in case it was stuck (good practice)
         if (program.isOpen) {
-             // console.warn(`[openProgram] Resetting stale isOpen flag for ${programName} because window element was missing.`); // Keep warn?
-             this.programData[programName].isOpen = false; 
-        }
+                 // console.warn(`[openProgram] Resetting stale isOpen flag for ${programName} because window element was missing.`); // Keep warn?
+                 this.programData[programName].isOpen = false;
+            }
 
         const window = this.createWindowFromTemplate(program);
         if (!window) return;
@@ -165,8 +196,15 @@ export default class WindowManager {
             title: program.title,
             icon: program.icon
         });
-        
-        this.bringToFront(window); // Bring the newly created window to front
+
+        // Check for startMinimized flag AFTER registering and creating taskbar item
+        if (program.startMinimized) {
+            console.log(`[WindowManager] Start minimized requested for ${programName}. Minimizing.`);
+            this.minimizeWindow(window); // Minimize if flagged
+        } else {
+            // Only bring to front if NOT starting minimized
+            this.bringToFront(window); // Bring normal windows to front
+        }
     }
     
     createWindowFromTemplate(program) {
@@ -175,6 +213,7 @@ export default class WindowManager {
         window.className = 'window';
         window.setAttribute('data-program', program.id.replace('-window', ''));
         
+        // Standard window with title bar
         window.innerHTML = `
             <div class="title-bar">
                 <div class="title-bar-left">
@@ -195,27 +234,74 @@ export default class WindowManager {
         const content = WindowTemplates.getTemplate(program.template, program);
         window.appendChild(content);
         
-        const statusBar = document.createElement('div');
-        statusBar.className = 'status-bar';
-        statusBar.innerHTML = '<p class="status-bar-field">Ready</p>';
-        window.appendChild(statusBar);
+        // Add the Start Menu interaction overlay INSIDE the content area
+        const startMenuOverlay = document.createElement('div');
+        startMenuOverlay.className = 'start-menu-content-click-overlay';
+        // Ensure it's appended to the content body, not the main window div
+        // If content is the iframe container, append it there.
+        if (content.classList.contains('window-body')) { 
+             content.style.position = 'relative'; // Ensure parent is positioned
+             content.appendChild(startMenuOverlay);
+        } else {
+             // Fallback: append to window itself, might not cover correctly
+             console.warn('Could not find .window-body to append start menu overlay');
+             window.appendChild(startMenuOverlay);
+        }
         
-        // Use dimensions from program data, with fallbacks
+        // Don't add status bar for the messenger window
+        if (program.id !== 'messenger-window') {
+            const statusBar = document.createElement('div');
+            statusBar.className = 'status-bar';
+            statusBar.innerHTML = '<p class="status-bar-field">Ready</p>';
+            window.appendChild(statusBar);
+        }
+        
         const defaultWidth = 600;
         const defaultHeight = 400;
         window.style.width = `${program.dimensions?.width || defaultWidth}px`; 
         window.style.height = `${program.dimensions?.height || defaultHeight}px`;
         
-        // Initial position centered - cascade/constrain happens later
+        // Set initial position but don't center if custom positioning will be used
         window.style.position = 'absolute';
-        window.style.left = '50%';
-        window.style.top = '50%';
-        window.style.transform = 'translate(-50%, -50%)';
+        
+        // Only apply centered position if not using custom positioning
+        if (!program.position || program.position.type !== "custom") {
+            window.style.left = '50%';
+            window.style.top = '50%';
+            window.style.transform = 'translate(-50%, -50%)';
+        }
         
         return window;
     }
     
     positionWindowCascade(window) {
+        const programName = window.getAttribute('data-program');
+        const program = this.programData[programName];
+        const desktop = document.querySelector('.desktop');
+        const taskbarHeight = document.querySelector('.taskbar')?.offsetHeight || 30;
+        const desktopBounds = desktop.getBoundingClientRect();
+        const availableWidth = desktopBounds.width;
+        const availableHeight = desktopBounds.height - taskbarHeight;
+
+        let width = program?.dimensions?.width || 600;
+        let height = program?.dimensions?.height || 400;
+
+        // Adjust height for messenger specifically to account for removed status bar
+        if (programName === 'messenger') {
+            const statusBarHeight = 22; // From styles/gui/windows.css
+            height -= statusBarHeight;
+        }
+
+        // Ensure window fits within bounds
+        width = Math.min(width, availableWidth);
+        
+        // Check if custom positioning is defined for this program
+        if (program && program.position && program.position.type === "custom") {
+            this.positionWindowCustom(window, program.position);
+            return;
+        }
+        
+        // Default cascade positioning behavior
         const viewportWidth = document.documentElement.clientWidth;
         const viewportHeight = document.documentElement.clientHeight;
         
@@ -240,6 +326,106 @@ export default class WindowManager {
         }
         
         this.constrainWindowToViewport(window);
+    }
+    
+    // New method to handle custom window positioning
+    positionWindowCustom(window, posConfig) {
+        const programName = window.getAttribute('data-program');
+        const program = this.programData[programName];
+        
+        const viewportWidth = document.documentElement.clientWidth;
+        const viewportHeight = document.documentElement.clientHeight;
+        
+        // Get dimensions from program data if available, otherwise use style or defaults
+        const windowWidth = program?.dimensions?.width || 
+                           parseInt(window.style.width) || 600;
+        const windowHeight = program?.dimensions?.height || 
+                            parseInt(window.style.height) || 400;
+        
+        // Calculate taskbar height (to avoid positioning windows under taskbar)
+        const taskbarHeight = document.querySelector('.taskbar')?.offsetHeight || 40;
+        const adjustedViewportHeight = viewportHeight - taskbarHeight;
+        
+        // Define safe margins - ensure windows are never off-screen
+        const safeMarginX = 20; // Minimum distance from screen edge
+        const safeMarginY = 20; // Minimum distance from screen edge
+        
+        // Calculate maximum possible positions that keep the window on screen
+        const maxLeftPos = viewportWidth - windowWidth - safeMarginX;
+        const maxTopPos = adjustedViewportHeight - windowHeight - safeMarginY;
+        
+        let leftPos = 0;
+        let topPos = 0;
+        
+        // Position based on alignment
+        switch (posConfig.align) {
+            case "bottom-right":
+                leftPos = viewportWidth - windowWidth - (posConfig.offsetX || 0);
+                topPos = adjustedViewportHeight - windowHeight - (posConfig.offsetY || 0);
+                break;
+            case "center-right":
+                leftPos = viewportWidth - windowWidth - (posConfig.offsetX || 0);
+                topPos = Math.max(0, (adjustedViewportHeight - windowHeight) / 2);
+                break;
+            case "left-of-browser":
+                // Calculate shifted browser position (projects window)
+                const browserWidth = 1000; // From programData
+                const browserHeight = 850; // From programData
+                const browserShiftOffset = 175; // Calculated offset to center the group
+                const browserLeft = (viewportWidth / 2) - browserShiftOffset;
+                const browserTop = Math.max(0, (adjustedViewportHeight - browserHeight) / 2);
+                const browserBottom = browserTop + browserHeight;
+
+                // Position notepad to the left of browser with bottom edges aligned
+                leftPos = browserLeft - windowWidth - (posConfig.offsetX || 0); // offsetX still used for spacing
+                topPos = browserBottom - windowHeight;
+                break;
+            case "left-of-browser-top":
+                // Calculate shifted browser position (projects window)
+                const browserWidthTop = 1000; // From programData
+                const browserHeightTop = 850; // From programData
+                const browserShiftOffsetTop = 175; // Calculated offset to center the group
+                const browserLeftTop = (viewportWidth / 2) - browserShiftOffsetTop;
+                const browserTopTop = Math.max(0, (adjustedViewportHeight - browserHeightTop) / 2);
+
+                // Position CMD to the left of browser with top edges aligned
+                leftPos = browserLeftTop - windowWidth - (posConfig.offsetX || 0); // offsetX still used for spacing
+                topPos = browserTopTop + (posConfig.offsetY || 0); // Use offsetY if needed for vertical tweak
+                break;
+            case "bottom-left":
+                leftPos = posConfig.offsetX || 0;
+                topPos = adjustedViewportHeight - windowHeight - (posConfig.offsetY || 0);
+                break;
+            case "top-right":
+                leftPos = viewportWidth - windowWidth - (posConfig.offsetX || 0);
+                topPos = posConfig.offsetY || 0;
+                break;
+            case "top-left":
+                leftPos = posConfig.offsetX || 0;
+                topPos = posConfig.offsetY || 0;
+                break;
+            case "center":
+                // Adjusted center: Shift left by calculated offset to center the visual group
+                const centerShiftOffset = 175; // Calculated offset to center the group
+                leftPos = (viewportWidth / 2) - centerShiftOffset;
+                topPos = (adjustedViewportHeight - windowHeight) / 2;
+                break;
+            default:
+                // Default to cascade if alignment is unknown
+                return this.positionWindowCascade(window);
+        }
+        
+        // Enforce safe boundaries - ensure window is never off-screen
+        leftPos = Math.max(safeMarginX, Math.min(leftPos, maxLeftPos));
+        topPos = Math.max(safeMarginY, Math.min(topPos, maxTopPos));
+        
+        // Apply position
+        window.style.position = 'absolute';
+        window.style.left = `${leftPos}px`;
+        window.style.top = `${topPos}px`;
+        window.style.transform = 'none';
+        
+        // No need to call constrainWindowToViewport since we've already handled boundaries
     }
     
     registerWindow(window) {
@@ -275,6 +461,24 @@ export default class WindowManager {
         };
         
         this.setupWindowEvents(window, controls);
+
+        // Add the Start Menu overlay click listener ONCE here
+        const startMenuOverlay = window.querySelector('.start-menu-content-click-overlay');
+        if (startMenuOverlay && this.eventBus) { // Check eventBus exists
+            startMenuOverlay.addEventListener('mousedown', (e) => {
+                // This listener is always active, but overlay is usually hidden.
+                // If clicked (meaning it's visible), tell StartMenu to close.
+                console.log('[Overlay Mousedown] Detected on overlay for window:', window.id);
+                e.stopPropagation(); // Stop click from going further
+                e.preventDefault();
+                this.eventBus.publish(EVENTS.STARTMENU_CLOSE_REQUEST); // New event
+            });
+        } else if (!startMenuOverlay) {
+             console.error('Could not find .start-menu-content-click-overlay during registration for:', window.id);
+        } else if (!this.eventBus) {
+             console.error('WindowManager cannot add overlay listener: eventBus not available.');
+        }
+
         this.bringToFront(window);
         this.constrainWindowToViewport(window);
         this.setupResponsiveHandling(window);
@@ -283,14 +487,11 @@ export default class WindowManager {
     
     setupWindowEvents(window, controls) {
         const { minimizeBtn, maximizeBtn, closeBtn, titleBar } = controls;
+        const programName = window.getAttribute('data-program');
+        const program = this.programData[programName];
         
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.closeWindow(window));
-        }
-        
-        const okButton = window.querySelector('#ok-button');
-        if (okButton) {
-            okButton.addEventListener('click', () => this.closeWindow(window));
         }
         
         if (minimizeBtn) {
@@ -301,6 +502,7 @@ export default class WindowManager {
             maximizeBtn.addEventListener('click', () => this.toggleMaximize(window));
         }
         
+        // For standard windows, make the title bar draggable
         if (titleBar) {
             this.makeDraggable(window, titleBar);
             titleBar.addEventListener('dblclick', () => this.toggleMaximize(window));
@@ -444,8 +646,6 @@ export default class WindowManager {
         window.windowState.isMinimized = false;
         window.style.display = 'flex';
         this.bringToFront(window);
-        
-        this.eventBus.publish(EVENTS.WINDOW_RESTORED, { windowId: window.id });
     }
     
     toggleMaximize(window) {
@@ -543,6 +743,14 @@ export default class WindowManager {
         // Set z-index relative to base
         window.style.zIndex = baseZIndex + 1;
         
+        // If this is the Messenger window, ensure it stays active
+        if (window.getAttribute('data-program') === 'messenger') {
+            window.classList.add('active');
+            if (inactiveMask) {
+                inactiveMask.style.display = 'none';
+            }
+        }
+        
         const taskbarItem = this.taskbarItems[window.id];
         if (taskbarItem) {
             taskbarItem.classList.add('active');
@@ -566,7 +774,8 @@ export default class WindowManager {
         const baseZIndex = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--z-window')) || 100;
         
         Object.values(this.windows).forEach(win => {
-            if (win !== excludeWindow) {
+            // Skip the excludeWindow and the Messenger window
+            if (win !== excludeWindow && win.getAttribute('data-program') !== 'messenger') {
                 // Set inactive windows to base z-index
                 win.style.zIndex = baseZIndex;
                 win.classList.remove('active');
@@ -597,84 +806,7 @@ export default class WindowManager {
         let isDragging = false;
         let startX, startY, initialX, initialY;
         let dragOffsetX = 0, dragOffsetY = 0;
-        
-        function prepareWindowForDrag() {
-            window.classList.add('dragging-window');
-            
-            const rect = window.getBoundingClientRect();
-            initialX = rect.left;
-            initialY = rect.top;
-            
-            const parentRect = window.offsetParent?.getBoundingClientRect() || { left: 0, top: 0 };
-            const currentStyle = window.currentStyle || window.getComputedStyle(window);
-            const currentLeft = parseFloat(currentStyle.left) || 0;
-            const currentTop = parseFloat(currentStyle.top) || 0;
 
-            dragOffsetX = rect.left - parentRect.left - currentLeft;
-            dragOffsetY = rect.top - parentRect.top - currentTop;            
-            
-            window.style.transform = `translate3d(0px, 0px, 0px)`; 
-        }
-        
-        function cleanupAfterDrag() {
-            window.classList.remove('dragging-window');
-            window.style.transform = 'none';
-        }
-        
-        handleElement.addEventListener('mousedown', (e) => {
-            if (e.button !== 0 || e.target.tagName === 'BUTTON' || (window.windowState && window.windowState.isMaximized)) return;
-            
-            startX = e.clientX;
-            startY = e.clientY;
-            
-            if (window !== this.activeWindow) {
-                this.bringToFront(window);
-            }
-            
-            isDragging = true;
-            prepareWindowForDrag();
-            
-            e.preventDefault();
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const deltaX = e.clientX - startX;
-                const deltaY = e.clientY - startY;
-                e.preventDefault(); 
-                
-                window.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
-            }
-        }, { passive: false });
-        
-        handleElement.addEventListener('touchstart', (e) => {
-            if (e.target.tagName === 'BUTTON' || (window.windowState && window.windowState.isMaximized)) return;
-            
-            const touch = e.touches[0];
-            startX = touch.clientX;
-            startY = touch.clientY;
-            
-            if (window !== this.activeWindow) {
-                this.bringToFront(window);
-            }
-            
-            isDragging = true;
-            prepareWindowForDrag();
-            
-            e.preventDefault();
-        }, { passive: false });
-        
-        document.addEventListener('touchmove', (e) => {
-            if (isDragging) {
-                const touch = e.touches[0];
-                const deltaX = touch.clientX - startX;
-                const deltaY = touch.clientY - startY;
-                e.preventDefault();
-                
-                window.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
-            }
-        }, { passive: false });
-        
         const endDrag = (e) => {
             if (!isDragging) return;
 
@@ -715,7 +847,77 @@ export default class WindowManager {
             
             isDragging = false;
         };
+
+        function prepareWindowForDrag() {
+            window.classList.add('dragging-window');
+            
+            const rect = window.getBoundingClientRect();
+            initialX = rect.left;
+            initialY = rect.top;
+            
+            const parentRect = window.offsetParent?.getBoundingClientRect() || { left: 0, top: 0 };
+            const currentStyle = window.currentStyle || window.getComputedStyle(window);
+            const currentLeft = parseFloat(currentStyle.left) || 0;
+            const currentTop = parseFloat(currentStyle.top) || 0;
+
+            dragOffsetX = rect.left - parentRect.left - currentLeft;
+            dragOffsetY = rect.top - parentRect.top - currentTop;            
+            
+            window.style.transform = `translate3d(0px, 0px, 0px)`; 
+        }
         
+        function cleanupAfterDrag() {
+            window.classList.remove('dragging-window');
+            window.style.transform = 'none';
+        }
+        
+        handleElement.addEventListener('mousedown', (e) => {
+            if (e.button !== 0 || e.target.tagName === 'BUTTON' || (window.windowState && window.windowState.isMaximized)) return;
+            
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            isDragging = true;
+            prepareWindowForDrag();
+
+            e.preventDefault();
+        });
+        
+        handleElement.addEventListener('touchstart', (e) => {
+            if (e.target.tagName === 'BUTTON' || (window.windowState && window.windowState.isMaximized)) return;
+            
+            const touch = e.touches[0];
+            startX = touch.clientX;
+            startY = touch.clientY;
+            
+            isDragging = true;
+            prepareWindowForDrag();
+
+            e.preventDefault();
+        }, { passive: false });
+
+        // Original global listeners within makeDraggable scope
+        document.addEventListener('mousemove', (e) => {
+             if (isDragging) {
+                 const deltaX = e.clientX - startX;
+                 const deltaY = e.clientY - startY;
+                 e.preventDefault(); 
+                 
+                 window.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+             }
+         }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+             if (isDragging) {
+                 const touch = e.touches[0];
+                 const deltaX = touch.clientX - startX;
+                 const deltaY = touch.clientY - startY;
+                 e.preventDefault();
+                 
+                 window.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+             }
+         }, { passive: false });
+
         document.addEventListener('mouseup', endDrag);
         document.addEventListener('touchend', endDrag);
         document.addEventListener('touchcancel', endDrag);

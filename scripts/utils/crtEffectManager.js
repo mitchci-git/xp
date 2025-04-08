@@ -36,6 +36,10 @@ export default class CrtEffectManager {
         }
         
         this.updateCrtEffects();
+
+        if (this.crtEnabled && this.boundHandleResize) {
+            window.addEventListener('resize', this.boundHandleResize);
+        }
     }
     
     subscribeToEvents() {
@@ -48,7 +52,6 @@ export default class CrtEffectManager {
         this.eventBus.subscribe(EVENTS.CRT_UPDATE_SETTINGS, settings => this.updateSettings(settings));
         
         this.boundHandleResize = this.handleResize.bind(this);
-        window.addEventListener('resize', this.boundHandleResize);
     }
     
     handleResize() {
@@ -70,14 +73,25 @@ export default class CrtEffectManager {
     }
     
     toggleCrtEffects() {
+        const previousState = this.crtEnabled;
         this.crtEnabled = !this.crtEnabled;
         this.updateCrtEffects();
         this.saveSettings();
+
+        if (this.crtEnabled && !previousState && this.boundHandleResize) {
+            window.addEventListener('resize', this.boundHandleResize);
+        } else if (!this.crtEnabled && previousState && this.boundHandleResize) {
+            window.removeEventListener('resize', this.boundHandleResize);
+        }
     }
     
     disableCrtEffects() {
+        const previousState = this.crtEnabled;
         this.crtEnabled = false;
         this.updateCrtEffects();
+        if (previousState && this.boundHandleResize) {
+            window.removeEventListener('resize', this.boundHandleResize);
+        }
     }
     
     updateCrtEffects() {
@@ -152,26 +166,9 @@ export default class CrtEffectManager {
                     this.vignetteOpacity = settings.vignetteOpacity;
                     root.style.setProperty('--crt-vignette-opacity', settings.vignetteOpacity);
                 }
-            } else {
-                const savedEnabled = localStorage.getItem('crt-enabled');
-                if (savedEnabled !== null) {
-                    this.crtEnabled = savedEnabled === 'true';
-                }
             }
         } catch (e) {
             console.warn('Could not load CRT settings from localStorage');
-        }
-    }
-    
-    cleanup() {
-        if (this.resizeTimeout) {
-            clearTimeout(this.resizeTimeout);
-            this.resizeTimeout = null;
-        }
-        
-        if (this.boundHandleResize) {
-            window.removeEventListener('resize', this.boundHandleResize);
-            this.boundHandleResize = null;
         }
     }
 }

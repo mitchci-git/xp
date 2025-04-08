@@ -10,11 +10,26 @@ export default class StartMenu {
         this.startButton = document.getElementById('start-button');
         this.startMenu = null;
         this.allProgramsMenu = null;
+        this.activeWindowOverlay = null; // Keep track of which overlay is active
         
         this.createStartMenuElement();
         this.setupEventListeners();
         
         this.eventBus.subscribe(EVENTS.STARTMENU_TOGGLE, () => this.toggleStartMenu());
+        this.eventBus.subscribe(EVENTS.STARTMENU_CLOSE_REQUEST, () => {
+            if (this.startMenu?.classList.contains('active')) {
+                console.log('[StartMenu] Received STARTMENU_CLOSE_REQUEST. Closing.');
+                this.closeStartMenu();
+            }
+        });
+        // Listen for window focus changes
+        this.eventBus.subscribe(EVENTS.WINDOW_FOCUSED, (data) => {
+            // REMOVE check for menu being active. Always update overlay state on focus change.
+            // if (this.startMenu?.classList.contains('active')) { 
+            console.log(`[StartMenu] Window focused (menu active state irrelevant for overlay): ${data?.windowId}`);
+            this.updateContentOverlay(data?.windowId);
+            // }
+        });
     }
     
     /**
@@ -53,13 +68,13 @@ export default class StartMenu {
         allProgramsMenu.innerHTML = `
             <ul class="all-programs-items">
                 <li class="all-programs-separator"></li>
-                <li class="all-programs-item category">
-                    <img src="./assets/gui/windows/folder.png" alt="Folder">
-                    Windows Accessories
+                <li class="all-programs-item" data-program-name="notepad">
+                    <img src="./assets/gui/desktop/notepad.png" alt="Notepad">
+                    Notepad
                 </li>
-                <li class="all-programs-item category">
-                    <img src="./assets/gui/windows/folder.png" alt="Folder">
-                    Games
+                <li class="all-programs-item" data-program-name="cmd-prompt">
+                    <img src="./assets/gui/desktop/command-prompt.png" alt="Command Prompt">
+                    Command Prompt
                 </li>
             </ul>
         `;
@@ -177,36 +192,44 @@ export default class StartMenu {
      * Set up all necessary event listeners
      */
     setupEventListeners() {
-        document.addEventListener('mousedown', (e) => {
-            if (this.startMenu?.classList.contains('active') && 
-                !this.startMenu.contains(e.target) && 
-                !this.startButton.contains(e.target) &&
-                (!this.allProgramsMenu || !this.allProgramsMenu.contains(e.target))) {
+        // RESTORE global listener for clicks outside menu/button
+        window.addEventListener('mousedown', (e) => {
+            // Only act if the menu is actually active
+            if (!this.startMenu?.classList.contains('active')) {
+                return;
+            }
+            const target = e.target;
+            
+            // IMPORTANT: If the target is the overlay we added, 
+            // let its own listener handle it (via eventBus).
+            // Also ignore clicks on iframes directly (should be covered by overlay).
+            if (target.classList.contains('start-menu-content-click-overlay') || target.tagName === 'IFRAME') {
+                 console.log('[StartMenu Global Mousedown] Ignoring click on overlay or iframe element itself.');
+                 return; 
+            }
+
+            const clickedOnMenu = this.startMenu.contains(target);
+            const clickedOnButton = this.startButton.contains(target);
+            const clickedOnAllPrograms = this.allProgramsMenu?.contains(target);
+
+            // If the click was NOT on menu/button/submenu AND not the overlay/iframe, close.
+            if (!clickedOnMenu && !clickedOnButton && !clickedOnAllPrograms) {
+                console.log('[StartMenu Global Mousedown] Click truly outside detected. Closing.');
+                e.stopPropagation();
+                e.preventDefault(); 
+                // Explicitly hide All Programs submenu first
+                this.hideAllProgramsMenu(); 
+                // Then close the main menu
                 this.closeStartMenu();
             }
-        }, true);
-        
+        }, true); // Use capture phase
+
+        // Keep ONLY Escape key listener
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.startMenu?.classList.contains('active')) {
                 this.closeStartMenu();
             }
         });
-        
-        const handleIframeClick = () => {
-            if (this.startMenu?.classList.contains('active')) {
-                this.closeStartMenu();
-            }
-        };
-        
-        window.addEventListener('iframe:focus', handleIframeClick);
-        
-        window.addEventListener('message', (e) => {
-            if (e.data?.type === 'iframe-clicked' || e.data?.type === 'window-focus') {
-                if (this.startMenu?.classList.contains('active')) {
-                    this.closeStartMenu();
-                }
-            }
-        }, true);
     }
     
     /**
@@ -288,9 +311,14 @@ export default class StartMenu {
         const programItems = this.allProgramsMenu.querySelectorAll('.all-programs-item:not(.category)');
         programItems.forEach(item => {
             item.addEventListener('click', () => {
-                const programName = item.textContent.trim().toLowerCase().replace(/\s+/g, '-');
-                this.openProgram(programName);
-                this.closeStartMenu();
+                const programName = item.dataset.programName;
+                if (programName) {
+                    console.log(`[StartMenu All Programs] Clicked: ${programName}`);
+                    this.openProgram(programName);
+                    this.closeStartMenu();
+                } else {
+                    console.warn('[StartMenu All Programs] Clicked item missing data-program-name:', item);
+                }
             });
         });
     }
@@ -344,20 +372,27 @@ export default class StartMenu {
      * Toggle the start menu visibility
      */
     toggleStartMenu() {
+        console.log(`[StartMenu] toggleStartMenu called.`);
         if (!this.startMenu) {
+            console.log(`[StartMenu] toggleStartMenu: No startMenu element found.`);
             return;
         }
         
         const isCurrentlyActive = this.startMenu.classList.contains('active');
         
         if (!isCurrentlyActive) {
+            console.log(`[StartMenu] toggleStartMenu: Menu is not active, opening.`);
             this.startMenu.style.visibility = 'visible';
             this.startMenu.style.opacity = '1';
             this.startMenu.classList.add('active');
             this.eventBus.publish(EVENTS.STARTMENU_OPENED);
-            this.positionAllProgramsMenu();
-        } else {
-            this.closeStartMenu();
+
+            // Activate overlay on the window that is active *at this moment*
+            const currentActiveWindow = document.querySelector('.window.active');
+            this.updateContentOverlay(currentActiveWindow?.id);
+        } else { 
+            console.log(`[StartMenu] toggleStartMenu: Menu is active, calling closeStartMenu.`);
+            this.closeStartMenu(); // This will hide the overlay
         }
     }
     
@@ -365,23 +400,67 @@ export default class StartMenu {
      * Close the start menu
      */
     closeStartMenu(force = false) {
-        console.log('closeStartMenu called. Is active?', this.startMenu.classList.contains('active'));
-        if (!this.startMenu || (!this.startMenu.classList.contains('active') && !force)) {
+        const isActive = this.startMenu?.classList.contains('active');
+        console.log(`closeStartMenu called. Is active? ${isActive}. Force: ${force}`);
+        
+        if (!this.startMenu || (!isActive && !force)) {
             console.log('closeStartMenu returning early.');
             return;
         }
         
+        console.log('closeStartMenu proceeding to hide.');
         this.startMenu.classList.remove('active');
+        console.log(`closeStartMenu: Removed 'active' class. Class list: ${this.startMenu.classList}`);
+        
         this.hideAllProgramsMenu();
         
-        this.startMenu.style.visibility = 'hidden';
-        this.startMenu.style.opacity = '0';
-        console.log('closeStartMenu finished hiding.');
+        // Deactivate overlay state immediately after removing .active class
+        this.updateContentOverlay(null); 
+
+        // Apply style changes in the next frame
+        requestAnimationFrame(() => {
+            this.startMenu.style.visibility = 'hidden';
+            this.startMenu.style.opacity = '0';
+            console.log(`closeStartMenu (RAF): Set visibility=${this.startMenu.style.visibility}, opacity=${this.startMenu.style.opacity}`);
+        });
+
+        // Keep console log outside RAF to confirm function completion
+        console.log('closeStartMenu finished hiding actions. Styles applied in next frame.');
         
         this.eventBus.publish(EVENTS.STARTMENU_CLOSED);
     }
 
-    positionAllProgramsMenu() {
-        // Implementation of positionAllProgramsMenu method
+    // New helper method to manage overlay activation
+    updateContentOverlay(activeWindowId) {
+        // Deactivate previously active overlay (if any)
+        if (this.activeWindowOverlay) {
+            console.log('[StartMenu] Deactivating previous overlay:', this.activeWindowOverlay);
+            this.activeWindowOverlay.style.display = 'none';
+            this.activeWindowOverlay.style.pointerEvents = 'none';
+            this.activeWindowOverlay = null;
+        }
+
+        // Find the potential new overlay target
+        let targetOverlay = null;
+        if (activeWindowId) {
+            const activeWindow = document.getElementById(activeWindowId);
+            if (activeWindow) {
+                targetOverlay = activeWindow.querySelector('.start-menu-content-click-overlay');
+            } else {
+                console.warn(`[StartMenu] Could not find newly focused window element: ${activeWindowId}`);
+            }
+        }
+
+        // ONLY Activate the target overlay IF the menu is currently active
+        if (targetOverlay && this.startMenu?.classList.contains('active')) {
+            console.log(`[StartMenu] Activating overlay for window: ${activeWindowId}`);
+            targetOverlay.style.display = 'block';
+            targetOverlay.style.pointerEvents = 'auto';
+            this.activeWindowOverlay = targetOverlay; // Track the currently active overlay
+        } else if (targetOverlay) {
+            console.log(`[StartMenu] Menu not active, ensuring overlay is disabled for window: ${activeWindowId}`);
+            targetOverlay.style.display = 'none';
+            targetOverlay.style.pointerEvents = 'none';
+        }
     }
 }

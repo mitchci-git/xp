@@ -51,30 +51,33 @@
 }
 
 .title-bar-text {
-    white-space: nowrap;
+    font-weight: bold;
+    color: white;
+    padding: 3px 5px;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-grow: 1;
+    user-select: none; /* Prevent selection */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
-.title-bar-controls button {
-    position: relative;
-    z-index: 5; /* Ensure buttons are above other elements */
-    min-width: 16px;
-    min-height: 16px;
-    width: 24px; /* Slightly larger clickable area */
-    height: 24px; /* Slightly larger clickable area */
-    margin-left: 1px; /* Add slight spacing between buttons */
+.title-bar-controls {
     display: flex;
-    justify-content: center;
     align-items: center;
 }
 
-.title-bar-controls button:hover {
-    background-color: rgba(255, 255, 255, 0.1); /* Subtle hover effect */
-}
+.title-bar-controls button {
+    /* Reset to allow xp.css to style the buttons */
+    /* Removing custom width, height, background, border, shadow, etc. */
 
-.title-bar-controls button:active {
-    background-color: rgba(0, 0, 0, 0.1); /* Subtle press effect */
+    /* Keep only the user-select properties */
+    user-select: none; /* Prevent selection */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 /* Disabled buttons should appear grayed out */
@@ -89,11 +92,13 @@
     border: none !important;
     box-sizing: border-box;
     background-color: #ECE9D8;
-    overflow: hidden;
+    /* overflow: hidden; */
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: auto;
+    min-height: 0; /* Keep this */
+    position: relative;
 }
 
 .window-content {
@@ -288,6 +293,16 @@
     display: block;
 }
 
+/* Messenger window never shows inactive state */
+.window[data-program="messenger"] .window-inactive-mask {
+    display: none !important;
+}
+
+.window[data-program="messenger"]:not(.active) {
+    border-color: #0055EA;
+    box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.5);
+}
+
 /* Iframe handling */
 .iframe-overlay {
     position: absolute;
@@ -298,54 +313,6 @@
     z-index: 5;
     background-color: transparent;
     display: none;
-}
-
-/* Special handling for iframe-based applications */
-.special-messenger-container {
-    padding: 0 !important;
-    margin: 0 !important;
-    height: 100% !important;
-    width: 100% !important;
-    overflow: hidden !important;
-    background-color: transparent !important;
-    display: block !important;
-    position: relative !important;
-    border: none !important;
-}
-
-.special-messenger-container iframe {
-    width: 100% !important;
-    height: 100% !important;
-    border: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block !important;
-    overflow: hidden !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-}
-
-/* Window body with iframe content */
-.window-body.special-messenger-container {
-    overflow: hidden !important;
-    padding: 0 !important;
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-.window:has(.special-messenger-container) {
-    min-height: 400px;
-    overflow: hidden;
-}
-
-.window:has(.special-messenger-container) .status-bar {
-    position: relative;
-    z-index: 2;
-    flex-shrink: 0;
 }
 
 /* Image viewer specific styles */
@@ -448,4 +415,64 @@ iframe {
 }
 
 /* Redundant media queries removed */
+
+/* Special handling for iframe-based applications */
+.special-iframe-container { 
+    padding: 0 !important;
+    margin: 0 !important;
+    /* height: 100% !important; */ /* Keep removed */
+    width: 100% !important;
+    /* overflow: hidden !important; */ /* Remove this as well */
+    background-color: transparent !important;
+    /* display: block !important; */ /* Keep commented */
+    position: relative !important;
+    border: none !important;
+}
+
+.special-iframe-container iframe {
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    /* overflow: hidden !important; */ /* Remove this */
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+}
+
+/* Window body with iframe content */
+.window-body.special-iframe-container {
+    /* overflow: hidden !important; */ /* Keep removed */
+    padding: 0 !important;
+    flex: 1; /* Keep !important removed */
+    display: flex; /* Keep !important removed */
+    flex-direction: column; /* Remove !important */
+}
+
+.window:has(.special-iframe-container) {
+    min-height: 400px;
+    /* overflow: hidden; */ /* Remove this */
+}
+
+.window:has(.special-iframe-container) .status-bar {
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+/* New overlay for capturing clicks over content when Start Menu is open */
+.start-menu-content-click-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; 
+    background-color: rgba(0,0,0,0); /* Transparent */
+    z-index: 50; /* Above window content, below title bar */
+    display: none; /* Hidden by default */
+    pointer-events: none; /* Non-clickable by default */
+}
 

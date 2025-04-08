@@ -13,22 +13,11 @@ export function setupIframeActivation() {
         return false;
     }
     
-    // Get parent window ID from URL if available
-    const urlParams = new URLSearchParams(window.location.search);
-    let windowId = urlParams.get('windowId');
-    
-    // Listen for initialization message from parent
-    window.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'init-parent-comm') {
-            windowId = event.data.windowId || windowId;
-        }
-    });
-    
     // Add click handler to activate parent window
     document.addEventListener('mousedown', () => {
         window.parent.postMessage({
             type: 'iframe-clicked',
-            windowId: windowId,
+            windowId: null,
             timestamp: Date.now()
         }, '*');
     }, true); // Use capture phase for earliest handling

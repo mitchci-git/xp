@@ -9,73 +9,73 @@
 <body>
     <pre id="history"></pre>
     <span id="ps1">C:\Users\portfolio></span>
-    <div id="input" contenteditable="true"></div><button id="caret" for="input">&nbsp;</button>
+    <div id="input" contenteditable="true"></div><button id="caret">&nbsp;</button>
 
 
-    <div id="defrag" class="screen" hidden>
-      <div id="defrag" class="menu-top">
+    <div id="defrag-container" class="screen" hidden>
+      <div id="defrag-menu-top" class="menu-top">
         <div>Optimize</div>
-        <div id="defrag" class="help">F1=Help</div>
+        <div id="defrag-help" class="help">F1=Help</div>
       </div>
       
-      <div id="defrag" class="surface off">
+      <div id="defrag-surface" class="surface off">
       </div>
       
-      <div id="defrag" class="info off">
+      <div id="defrag-info" class="info off">
         <fieldset>
           <legend>Status</legend>
           <p class="sb">
-            <span>Cluster <var id="defrag" class="currentcluster"></var></span>
-            <span><var id="defrag" class="percent">0</var>%</span>
+            <span>Cluster <var id="defrag-currentcluster" class="currentcluster"></var></span>
+            <span><var id="defrag-percent" class="percent">0</var>%</span>
           </p>
-          <div id="defrag" class="progress">
-            <div id="defrag" class="fill"></div>
+          <div id="defrag-progress" class="progress">
+            <div id="defrag-fill" class="fill"></div>
           </div>
-          <p class="center">Elapsed Time: <time id="defrag" class="elapsedtime">00:00:00</time></p>
+          <p class="center">Elapsed Time: <time id="defrag-elapsedtime" class="elapsedtime">00:00:00</time></p>
           <div class="center">Full Optimization</div>
         </fieldset>
         
         <fieldset>
           <legend>Legend</legend>
-          <div id="defrag" class="grid2x2">
-            <div><span id="defrag" class="block used"></span> - Used</div>
-            <div><span id="defrag" class="block unused"></span> - Unused</div>
-            <div><span id="defrag" class="block reading"></span> - Reading</div>
-            <div><span id="defrag" class="block writing"></span> - Writing</div>
-            <div><span id="defrag" class="block bad"></span> - Bad</div>
-            <div><span id="defrag" class="block unmovable"></span> - Unmovable</div>
+          <div id="defrag-grid" class="grid2x2">
+            <div><span id="defrag-block-used" class="block used"></span> - Used</div>
+            <div><span id="defrag-block-unused" class="block unused"></span> - Unused</div>
+            <div><span id="defrag-block-reading" class="block reading"></span> - Reading</div>
+            <div><span id="defrag-block-writing" class="block writing"></span> - Writing</div>
+            <div><span id="defrag-block-bad" class="block bad"></span> - Bad</div>
+            <div><span id="defrag-block-unmovable" class="block unmovable"></span> - Unmovable</div>
           </div>
-          <p>Drive C:    1 block = <var id="defrag" class="clustersperblock"></var> clusters</p>      
+          <p>Drive C:    1 block = <var id="defrag-clustersperblock" class="clustersperblock"></var> clusters</p>      
         </fieldset>
       </div>
       
-      <div id="defrag" class="menu-bottom">
+      <div id="defrag-menu-bottom" class="menu-bottom">
         <div><span>Press</span> Alt <span>or</span> F10 <span>to activate help</span></div>
         <div>| <span>Microsoft Defrag</span></div>
       </div>  
 
-      <section id="defrag" class="modals">
-        <div id="defrag" class="testing dialog">
+      <section id="defrag-modals" class="modals">
+        <div id="defrag-testing" class="testing dialog">
           <p>Testing system memory...</p>
         </div>
 
-        <div id="defrag" class="reading dialog" hidden>
+        <div id="defrag-reading" class="reading dialog" hidden>
           <p>Reading disk information...</p>
         </div>
 
-        <div id="defrag" class="analyzing dialog" hidden>
+        <div id="defrag-analyzing" class="analyzing dialog" hidden>
           <p>Analyzing disk information...</p>
-          <p id="defrag" class="folders center">GAMES</p>
+          <p id="defrag-folders" class="folders center">GAMES</p>
         </div>
           
-        <div id="defrag" class="help dialog" hidden>
+        <div id="defrag-help-dialog" class="help dialog" hidden>
           <p>MSDOS Defrag [Version 1.0.13528.2345]</p>
           <div>
               <p class="center">Press <em>ESC</em> to exit this menu.</p>
           </div>
         </div>
         
-        <div id="defrag" class="finished dialog" hidden>
+        <div id="defrag-finished" class="finished dialog" hidden>
           <p class="center">Optimization for Drive C: Complete</p>
           <div>
             <p class="center">You may optimize another drive or reconfigure optimization for the current drive.</p>
@@ -88,12 +88,12 @@
       </section>
     </div>
 
-    <div id="scandisk" class="screen" hidden>
-      <div id="scandisk" class="screen-1">
-        <p id="scandisk" class="title">Microsoft ScanDisk</p>
+    <div id="scandisk-container" class="screen" hidden>
+      <div id="scandisk-screen-1" class="screen-1">
+        <p id="scandisk-title-1" class="title">Microsoft ScanDisk</p>
         <hr>
         <p>ScanDisk is now checking the following areas of drive C:</p>
-        <div id="scandisk" class="list">
+        <div id="scandisk-list" class="list">
           <span data-status></span> <span>Media descriptor</span>
           <span data-status></span> <span>File allocation tables</span>
           <span data-status></span> <span>Directory structure</span>
@@ -101,22 +101,22 @@
           <span data-status></span> <span>Free space</span>
           <span data-status></span> <span>Surface scan</span>
         </div>
-        <div id="scandisk" class="button-panel">
+        <div id="scandisk-button-panel-1" class="button-panel">
           <a href="#">Pause</a>
           <a href="" target="_parent">More info</a>
           <a href="#">Exit</a>
         </div>
       </div>
-      <div id="scandisk" class="screen-2 off">
-        <div id="scandisk" class="surface-scan"></div>
-        <div id="scandisk" class="drive-info">
+      <div id="scandisk-screen-2" class="screen-2 off">
+        <div id="scandisk-surface-scan" class="surface-scan"></div>
+        <div id="scandisk-drive-info" class="drive-info">
           <p>Drive C:</p>
-          <ul id="scandisk" class="data">
-            <li id="scandisk" class="total"><span></span> clusters</li>
-            <li id="scandisk" class="examined"><span>0</span> examined</li>
-            <li id="scandisk" class="badc"><span>0</span> found bad</li>
+          <ul id="scandisk-data" class="data">
+            <li id="scandisk-total" class="total"><span></span> clusters</li>
+            <li id="scandisk-examined" class="examined"><span>0</span> examined</li>
+            <li id="scandisk-badc" class="badc"><span>0</span> found bad</li>
           </ul>
-          <ul id="scandisk" class="legend">
+          <ul id="scandisk-legend" class="legend">
             <li><span class="block unused"></span> = <var></var> clusters</li>
             <li><span class="block unused"></span> unused clusters</li>
             <li><span class="block used"></span> some used clusters</li>
@@ -124,25 +124,25 @@
             <li><span class="block bad"></span> some bad clusters</li>
           </ul>
         </div>
-        <div id="scandisk" class="buttons-dialog">
+        <div id="scandisk-buttons-dialog" class="buttons-dialog">
           <a href="" target="_parent">More info</a>
           <a href="#">Exit</a>
         </div>
       </div>
-      <div id="scandisk" class="screen-3 off">
-        <p id="scandisk" class="title">Microsoft ScanDisk</p>
+      <div id="scandisk-screen-3" class="screen-3 off">
+        <p id="scandisk-title-3" class="title">Microsoft ScanDisk</p>
         <hr>
         <p>ScanDisk found and fixed <span></span> problems on drive C.</p>
-        <div id="scandisk" class="button-panel">
+        <div id="scandisk-button-panel-3" class="button-panel">
           <a href="" target="_parent">More info</a>
           <a id="exitScandisk" href="#">Exit</a>
         </div>
       </div>
       <hr>
-      <div id="scandisk" class="status-bar">
+      <div id="scandisk-status-bar" class="status-bar">
         <span data-count="0">% completed</span>
-        <div id="scandisk" class="progressbar">
-          <div id="scandisk" class="fillbar"></div>
+        <div id="scandisk-progressbar" class="progressbar">
+          <div id="scandisk-fillbar" class="fillbar"></div>
         </div>
       </div>
     </div>

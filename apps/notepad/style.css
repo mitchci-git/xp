@@ -1,0 +1,202 @@
+/* Windows XP Notepad Exact Replica */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Tahoma', 'Segoe UI', sans-serif;
+}
+
+body, html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #ffffff;
+}
+
+.notepad-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background: #ffffff;
+    position: relative;
+}
+
+/* Menu Bar */
+.menu-bar {
+    display: flex;
+    background-color: #f0f0f0;
+    border-bottom: 1px solid #d7d7d7;
+    padding: 2px 0;
+    user-select: none;
+    font-size: 12px;
+}
+
+.menu-item {
+    padding: 2px 8px;
+    cursor: pointer;
+    position: relative;
+}
+
+.menu-item:hover {
+    background-color: #e5f3ff;
+}
+
+.menu-item.active {
+    background-color: #cce8ff;
+}
+
+/* Dropdown Menus */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 24px;
+    background-color: #ffffff;
+    border: 1px solid #d7d7d7;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    min-width: 150px;
+    font-size: 11px;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.menu-option {
+    padding: 4px 20px 4px 30px;
+    cursor: pointer;
+    position: relative;
+    white-space: nowrap;
+}
+
+.menu-option:hover {
+    background-color: #e5f3ff;
+}
+
+.menu-separator {
+    height: 1px;
+    background-color: #d7d7d7;
+    margin: 4px 0;
+}
+
+/* Fresh approach for Notepad content area */
+
+/* Container for the text */
+.content-area {
+    flex: 1; /* Allow it to fill available vertical space */
+    width: 100%;
+    overflow-y: auto; /* Add scrollbar if needed */
+    padding: 10px 10px 10px 10px; /* Set padding: top=10px, right=10px, bottom=10px, left=10px */
+    background-color: #ffffff;
+    user-select: none; /* Keep user selection disabled for static content */
+    /* Removed word-wrap from here */
+}
+
+/* The div holding the actual text */
+#static-content {
+    font-family: 'Segoe UI', 'Tahoma', sans-serif;
+    font-size: 14px;
+    color: #000000;
+    display: block;
+    padding: 0;
+    margin: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    hyphens: none;
+}
+
+/* Prevent line breaks within specific hyphenated words */
+.no-break-hyphen {
+    display: inline-block;
+}
+
+/* Styling for the strong tag (header) */
+#static-content strong {
+    display: block;
+    font-size: 27px;
+    font-weight: bold;
+    margin: 0;
+    padding: 0;
+    line-height: normal;
+}
+
+/* Restore default-like margins for paragraphs inside static-content */
+#static-content p {
+    margin-block-start: 1em; /* Equivalent to margin-top */
+    margin-block-end: 1em;   /* Equivalent to margin-bottom */
+    font-size: 13.75px;      /* Set specific font size (14px - 0.25px) */
+}
+
+/* Remove top margin specifically from the first paragraph */
+#static-content p:first-of-type {
+    margin-block-start: 0;
+}
+
+/* Blinking Cursor */
+.cursor-blink {
+    display: inline-block;
+    width: 1px;
+    height: calc(1em - 1px);
+    background-color: #000;
+    vertical-align: text-bottom;
+    animation: cursor-blink 1s step-end infinite;
+    position: relative;
+    top: -2px;
+}
+
+@keyframes cursor-blink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+}
+
+/* Status Bar */
+.status-bar {
+    display: flex;
+    background-color: #f0f0f0;
+    border-top: 1px solid #d7d7d7;
+    padding: 2px 0;
+    font-size: 11px;
+    justify-content: flex-end;
+    user-select: none;
+    height: 22px;
+}
+
+.status-item {
+    padding: 0 8px;
+    border-right: 1px solid #d7d7d7;
+    display: flex;
+    align-items: center;
+}
+
+.status-item:last-child {
+    border-right: none;
+}
+
+/* Menu Positioning */
+#file-menu {
+    left: 0;
+}
+
+#edit-menu {
+    left: 40px;
+}
+
+#format-menu {
+    left: 80px;
+}
+
+#view-menu {
+    left: 130px;
+}
+
+#help-menu {
+    left: 180px;
+} 

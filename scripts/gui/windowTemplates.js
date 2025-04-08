@@ -16,8 +16,6 @@ class WindowTemplates {
         if (templateName === 'iframe-standard' && programConfig?.appPath) {
              content = this.createIframeContainer(programConfig.appPath);
         }
-        // Removed specific handling for my-computer and folder-view
-        // They will now fall into the default/error case below
         
         // Default fallback
         else {
