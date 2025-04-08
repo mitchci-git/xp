@@ -66,7 +66,7 @@ const programData = {
         title: "My Pictures",
         icon: "./assets/gui/desktop/my-pictures.png",
         template: "iframe-standard",
-        appPath: "apps/my-pictures/index.html",
+        appPath: "./apps/my-pictures/index.html",
         dimensions: {
             width: 900,
             height: 700
@@ -95,7 +95,7 @@ const programData = {
         title: "Projects Hub - Internet Explorer", // Updated title
         icon: "./assets/gui/desktop/internet-explorer.png", // Using IE icon
         template: "iframe-standard",
-        appPath: "apps/internet-explorer/index.html", // Correct path
+        appPath: "./apps/internet-explorer/index.html", // Correct path
         dimensions: {
             width: 1000, // Updated width
             height: 850 // Changed from 950px to 850px
@@ -112,7 +112,7 @@ const programData = {
         title: "Project Details: Retro OS", 
         icon: "./assets/gui/desktop/internet-explorer.png", // Reuse icon or use specific one
         template: "iframe-standard",
-        appPath: "apps/internet-explorer/retro-os-details/index.html", // Path to the detail page HTML
+        appPath: "./apps/internet-explorer/retro-os-details/index.html", // Path to the detail page HTML
         dimensions: {
             width: 950, 
             height: 720
@@ -122,7 +122,7 @@ const programData = {
         title: "Project Hub",
         icon: "./assets/gui/icons/my-documents.png", // Example icon
         isApp: true,
-        appPath: "apps/internet-explorer/index.html", // Correct path
+        appPath: "./apps/internet-explorer/index.html", // Correct path
         canMaximize: true,
         canMinimize: true,
         canClose: true,
@@ -134,7 +134,7 @@ const programData = {
         title: "Videos",
         icon: "./assets/gui/icons/video.png", // Specific icon
         isApp: false, // It's content loaded into a window
-        appPath: "apps/internet-explorer/videos/index.html",
+        appPath: "./apps/internet-explorer/videos/index.html",
         canMaximize: true,
         canMinimize: true,
         canClose: true,
@@ -143,7 +143,7 @@ const programData = {
         title: "Image Gallery",
         icon: "./assets/gui/icons/images.png", // Specific icon
         isApp: false,
-        appPath: "apps/internet-explorer/images/index.html",
+        appPath: "./apps/internet-explorer/images/index.html",
         canMaximize: true,
         canMinimize: true,
         canClose: true,
@@ -152,7 +152,7 @@ const programData = {
         title: "Code Repos",
         icon: "./assets/gui/icons/code.png", // Specific icon
         isApp: false,
-        appPath: "apps/internet-explorer/code/index.html",
+        appPath: "./apps/internet-explorer/code/index.html",
         canMaximize: true,
         canMinimize: true,
         canClose: true,
