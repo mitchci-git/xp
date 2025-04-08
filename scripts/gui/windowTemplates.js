@@ -48,7 +48,7 @@ class WindowTemplates {
         const iframe = document.createElement('iframe');
         iframe.setAttribute('frameborder', '0');
         iframe.setAttribute('allowtransparency', 'true');
-        iframe.setAttribute('src', src.startsWith('/') ? src : '/' + src);
+        iframe.setAttribute('src', src);
         
         content.appendChild(iframe);
         return content;
