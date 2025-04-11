@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Command Prompt</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <pre id="history"></pre>
@@ -86,65 +86,6 @@
           </div>
         </div>    
       </section>
-    </div>
-
-    <div id="scandisk-container" class="screen" hidden>
-      <div id="scandisk-screen-1" class="screen-1">
-        <p id="scandisk-title-1" class="title">Microsoft ScanDisk</p>
-        <hr>
-        <p>ScanDisk is now checking the following areas of drive C:</p>
-        <div id="scandisk-list" class="list">
-          <span data-status></span> <span>Media descriptor</span>
-          <span data-status></span> <span>File allocation tables</span>
-          <span data-status></span> <span>Directory structure</span>
-          <span data-status></span> <span>File system</span>
-          <span data-status></span> <span>Free space</span>
-          <span data-status></span> <span>Surface scan</span>
-        </div>
-        <div id="scandisk-button-panel-1" class="button-panel">
-          <a href="#">Pause</a>
-          <a href="" target="_parent">More info</a>
-          <a href="#">Exit</a>
-        </div>
-      </div>
-      <div id="scandisk-screen-2" class="screen-2 off">
-        <div id="scandisk-surface-scan" class="surface-scan"></div>
-        <div id="scandisk-drive-info" class="drive-info">
-          <p>Drive C:</p>
-          <ul id="scandisk-data" class="data">
-            <li id="scandisk-total" class="total"><span></span> clusters</li>
-            <li id="scandisk-examined" class="examined"><span>0</span> examined</li>
-            <li id="scandisk-badc" class="badc"><span>0</span> found bad</li>
-          </ul>
-          <ul id="scandisk-legend" class="legend">
-            <li><span class="block unused"></span> = <var></var> clusters</li>
-            <li><span class="block unused"></span> unused clusters</li>
-            <li><span class="block used"></span> some used clusters</li>
-            <li><span class="block full"></span> used clusters</li>
-            <li><span class="block bad"></span> some bad clusters</li>
-          </ul>
-        </div>
-        <div id="scandisk-buttons-dialog" class="buttons-dialog">
-          <a href="" target="_parent">More info</a>
-          <a href="#">Exit</a>
-        </div>
-      </div>
-      <div id="scandisk-screen-3" class="screen-3 off">
-        <p id="scandisk-title-3" class="title">Microsoft ScanDisk</p>
-        <hr>
-        <p>ScanDisk found and fixed <span></span> problems on drive C.</p>
-        <div id="scandisk-button-panel-3" class="button-panel">
-          <a href="" target="_parent">More info</a>
-          <a id="exitScandisk" href="#">Exit</a>
-        </div>
-      </div>
-      <hr>
-      <div id="scandisk-status-bar" class="status-bar">
-        <span data-count="0">% completed</span>
-        <div id="scandisk-progressbar" class="progressbar">
-          <div id="scandisk-fillbar" class="fillbar"></div>
-        </div>
-      </div>
     </div>
 
     <script src="script.js"></script>

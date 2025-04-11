@@ -1,0 +1,620 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f0f0f0;
+  color: #000;
+  font-size: 15px;
+  line-height: 1.5;
+  user-select: none; /* Prevent text selection */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE 10+ */
+}
+
+a {
+  color: #262626;
+  text-decoration: none;
+}
+
+ul {
+  list-style: none;
+}
+
+.container {
+  width: 90%;
+  max-width: 1100px;
+  margin: auto;
+  position: relative;
+}
+
+/* Nav */
+.main-nav {
+  height: 80px;
+  font-size: 13px;
+  background-color: #ffffff;
+}
+
+/* Apply flex properties to the inner container */
+.main-nav > .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%; /* Ensure container fills height */
+}
+
+/* Vertical Divider in Header */
+.header-divider {
+  height: 25px;
+  width: 1px;
+  background-color: #ccc;
+  margin: 0 1rem;
+}
+
+/* Restore styling for the logo image */
+.main-nav .logo {
+  height: 30px;
+  width: auto;
+  margin-right: 2rem;
+}
+
+/* New Header Title Text Style */
+.header-title-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #444;
+  margin: 0 1rem;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Main Menu Styles */
+.main-nav ul {
+  display: flex;
+}
+
+.main-nav ul li {
+  padding: 0 15px;
+}
+
+.main-nav ul li a {
+  padding-bottom: 2px;
+  position: relative;
+  transition: opacity 0.2s ease;
+  font-size: 1rem;
+  user-select: none; /* Prevent selection */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.main-nav ul li a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: #262626;
+  transition: width 0.3s ease;
+}
+
+.main-nav ul li a:hover {
+  opacity: 0.7;
+}
+
+.main-nav ul li a:hover::after {
+  width: 100%;
+}
+
+.main-nav ul.main-menu {
+  display: flex;
+}
+
+.menu-btn {
+  cursor: pointer;
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  z-index: 2;
+  display: none;
+}
+
+.btn {
+  cursor: pointer;
+  display: inline-block;
+  border: 0;
+  font-weight: bold;
+  padding: 10px 20px;
+  background: #262626;
+  color: #fff;
+  font-size: 15px;;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+/* Showcase */
+.showcase {
+  width: 100%;
+  height: 400px;
+  background: url('https://i.ibb.co/zGSDGCL/slide1.webp') no-repeat center center/cover;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 35px;
+  border-radius: 10px;
+}
+
+/* New Showcase Overlay */
+.showcase-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.showcase:hover .showcase-overlay {
+  opacity: 1;
+}
+
+/* Style elements inside overlay */
+.showcase-overlay > * {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.showcase:hover .showcase-overlay > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delays */
+.showcase:hover .showcase-overlay h2 { transition-delay: 0.05s; }
+.showcase:hover .showcase-overlay p { transition-delay: 0.1s; }
+.showcase:hover .showcase-overlay .btn { transition-delay: 0.15s; }
+
+/* Adjust original rules if needed */
+.showcase h2, .showcase p {
+  margin-bottom: 10px;
+}
+
+.showcase .btn {
+  margin-top: 20px;
+}
+
+/* Home Cards - Keep 3 column grid */
+.home-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+/* Style individual cards like showcase */
+.card-item {
+  width: 100%;
+  height: 350px;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+/* Set background images for each card */
+#card-1 {
+  background-image: url('images/p1i1.webp'); /* Video background */
+}
+#card-2 {
+  background-image: url('images/p1i2.webp'); /* Image background */
+}
+#card-3 {
+  background-image: url('images/p1i3.webp'); /* Code background */
+}
+
+.card-item h3 {
+  margin-bottom: 5px;
+}
+
+.card-item p {
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+/* Keep .btn styling from showcase */
+.card-item .btn {
+}
+
+/* New Card Overlay Styles */
+.card-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  border-radius: 10px;
+}
+
+.card-item:hover .card-overlay {
+  opacity: 1;
+}
+
+/* Styles for elements inside card overlay */
+.card-overlay > * {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.card-item:hover .card-overlay > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delays for card overlay elements */
+.card-item:hover .card-overlay h3 { transition-delay: 0.05s; }
+.card-item:hover .card-overlay p { transition-delay: 0.1s; }
+.card-item:hover .card-overlay .btn { transition-delay: 0.15s; }
+
+/* Footer */
+.footer {
+  background: #ffffff;
+  color: #616161;
+  font-size: 12px;
+  padding: 20px 0;
+}
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer div {
+  display: flex;
+  align-items: center;
+}
+
+.footer div i {
+  margin-right: 10px;
+}
+
+.footer ul {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.footer li {
+  margin-right: 30px;
+}
+
+@media(max-width: 700px) {
+  .menu-btn {
+    display: block;
+  }
+
+  .menu-btn:hover {
+    opacity: 0.5;
+  }
+
+  .main-nav ul.right-menu {
+    margin-right: 50px;
+  }
+
+  .main-nav ul.main-menu {
+    display: block;
+    position: absolute;
+    top:0;
+    left: 0;
+    background: #f2f2f2;
+    width: 50%;
+    height: 100%;
+    border-right: #ccc 1px solid;
+    opacity: 0.9;
+    padding: 30px;
+    transform: translateX(-500px);
+    transition: transform 0.5s ease-in-out;
+  }
+
+  .main-nav ul.main-menu li {
+    padding: 10px;
+    border-bottom: #ccc solid 1px;
+    font-size: 14px;
+  }
+
+  .main-nav ul.main-menu li:last-child {
+    border-bottom: 0;
+  }
+
+  .main-nav ul.main-menu.show {
+    transform: translateX(-20px);
+  }
+
+  .home-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .xbox .content p {
+    display: none;
+  }
+
+  .xbox .content h2 {
+    margin-bottom: 20px;
+  }
+
+  .carbon .content {
+    width: 85%;
+  }
+
+  .links .links-inner {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media(max-width: 500px) {
+  .home-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .links .links-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .links .links-inner ul {
+    margin-bottom: 20px;
+  }
+}
+
+/* New Icon Menu Styles */
+.icon-menu {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* Icon Link Style */
+.icon-link {
+  color: inherit;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.icon-link i {
+  transition: transform 0.2s ease-in-out;
+  font-size: 22px;
+}
+
+.icon-link:hover i {
+  transform: scale(1.15);
+}
+
+/* Increase icon size */
+.icon-menu i {
+  font-size: 1.5rem;
+}
+
+/* Icon Menu Styles */
+.icon-menu a, .icon-menu i {
+  user-select: none; /* Prevent selection */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* --- In-Flow Lightbox Styles --- */
+.lightbox-inflow-container {
+  display: none; /* Hidden by default */
+  background-color: #fff; /* Optional: white background */
+  padding: 30px;
+  margin-top: 35px; /* Match showcase top margin */
+  margin-bottom: 20px; /* Space from footer */
+  border: 1px solid #ddd; /* Optional border */
+  border-radius: 4px;
+}
+
+/* When lightbox is active, hide normal content and show lightbox */
+.container.lightbox-active .showcase,
+.container.lightbox-active .home-cards {
+  display: none;
+}
+
+.container.lightbox-active .lightbox-inflow-container {
+  display: block;
+}
+
+/* Styles for the content within the lightbox (reusing some from previous attempt) */
+.lightbox-inflow-container .lightbox-content {
+  position: relative; /* Needed for absolute positioning of close button */
+}
+
+/* Description and Tools below Title */
+.lightbox-description {
+  margin-top: 10px;
+  font-style: italic;
+  color: #555;
+}
+
+.lightbox-tools {
+  margin-top: 10px;
+  margin-bottom: 25px; /* Standardize space below */
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.lightbox-tools strong {
+  margin-right: 8px;
+}
+
+.lightbox-tools span {
+  margin: 0 4px; 
+  padding: 2px 5px;
+  background-color: #eee;
+  border-radius: 3px;
+  display: inline-block; /* Ensure background covers text */
+}
+
+/* --- New Gallery Styles --- */
+.lightbox-gallery {
+  margin-bottom: 30px; 
+}
+
+/* --- Carousel Styles --- */
+.image-carousel-container {
+  width: 100%;
+  /* overflow: hidden; <-- Keep this? Maybe not needed if using flex basis */
+  position: relative;
+  padding: 10px 0; /* Adjust vertical space */
+}
+
+.image-carousel {
+  display: flex;
+  width: 100%; 
+  aspect-ratio: 16 / 7; /* Adjust ratio as desired (e.g., 16/9, 2/1) */
+  max-height: 450px; /* Prevent excessive height */
+}
+
+.carousel-item {
+  /* width: 50px; */ /* Replaced by flex */
+  flex-grow: 0.5; /* Moderate grow factor for slivers */
+  height: 100%;
+  object-fit: cover; 
+  border-radius: 10px;
+  border: 2px solid #fff;
+  margin: 0 1px; /* Reduced horizontal margin */
+  transition: flex-grow 0.4s ease-out; /* Transition flex-grow */
+  cursor: pointer;
+  overflow: hidden; 
+  flex-shrink: 0; /* Still prevent shrinking below implicit minimum */
+  /* Base needed for flex calculation */
+  flex-basis: 30px; /* Restore slightly larger base width */
+}
+
+/* Style for the selected item (applies when NOT hovering the gallery) */
+.carousel-item.active-item {
+  /* width: 400px; */ /* Replaced by flex */
+  flex-grow: 5; /* Keep expanded grow factor */
+}
+
+/* When gallery container IS hovered, force ALL items small initially */
+.image-carousel:hover .carousel-item {
+  /* width: 50px; */ /* Replaced by flex */
+  flex-grow: 0.5; /* Match moderate grow factor */
+}
+
+/* When gallery container IS hovered AND a specific item IS hovered, make IT large */
+.image-carousel:hover .carousel-item:hover {
+  /* width: 400px; */ /* Replaced by flex */
+  flex-grow: 5; /* Keep expanded grow factor */
+}
+
+/* Adjust spacing for items adjacent to active (optional) */
+
+/* --- Text Content Styles --- */
+.lightbox-text-content {
+  margin-top: 25px; /* Add margin matching space above */
+}
+
+/* Add space above subsequent headings */
+.lightbox-text-content h3 + h3 {
+  margin-top: 25px;
+}
+
+/* Standardize space below paragraphs and lists */
+.lightbox-text-content p,
+.lightbox-text-content ul {
+  margin-bottom: 15px;
+}
+
+/* Keep button spacing */
+.lightbox-text-content .btn {
+  margin-top: 15px;
+}
+
+/* --- Single Row Image Styles --- */
+.lightbox-image-row {
+  display: flex;
+  gap: 10px; /* Space between images */
+  margin-bottom: 25px; /* Space below row */
+  justify-content: space-between; /* Distribute space */
+  align-items: flex-start; /* Align tops */
+}
+
+.lightbox-row-image {
+  width: calc(25% - 8px); /* Adjust width considering gap (approx) */
+  height: auto; /* Maintain aspect ratio */
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  display: block; 
+}
+
+.lightbox-inflow-container .lightbox-close {
+  position: absolute;
+  top: -15px; /* Adjust position relative to content box */
+  right: -10px;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #888;
+  cursor: pointer;
+  line-height: 1;
+  padding: 5px;
+}
+
+.lightbox-inflow-container .lightbox-close:hover {
+  color: #000;
+}
+
+/* --- Media Query for Wider Screens --- */
+@media (min-width: 1200px) { 
+  #main-content-container.container { 
+    max-width: 1400px; /* Reduce max-width for wider screens */
+    /* Alternatively, use max-width: none; or a percentage like 95% */
+  }
+
+  .image-carousel {
+    aspect-ratio: 16 / 9; /* Make gallery proportionally taller */
+    /* max-height might need adjustment if this gets too tall */
+  }
+
+  /* Increase base width (sliver size) on wider screens */
+  .carousel-item {
+    flex-basis: 100px;
+  }
+
+  /* Active/hovered items still use flex-grow: 5 */
+}

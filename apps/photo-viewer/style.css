@@ -1,0 +1,246 @@
+/* General App Styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Tahoma", sans-serif;
+    font-size: 8pt;
+    background-color: #ECE9D8; /* XP background color */
+    overflow: hidden; /* Prevent body scrollbars */
+    height: 100vh;
+    display: flex;
+    /* Prevent text selection */
+    user-select: none;
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+}
+
+.photo-viewer-app {
+    display: flex;
+    flex-direction: column; /* Stack vertically */
+    width: 100%;
+    height: 100%;
+    border: 1px solid #ACA899;
+    background-color: #FFFFFF;
+}
+
+/* Thumbnail Strip at Bottom */
+.thumbnail-strip { /* Renamed from .thumbnail-sidebar */
+    height: 105px; /* Increased height from 96px */
+    width: 100%;
+    overflow-x: auto; /* Horizontal scroll */
+    overflow-y: hidden;
+    background-color: #F5F5F5; /* Light background */
+    border-top: 2px solid #ACA899; /* Enhanced border */
+    padding: 12px 18px; /* Reverted vertical padding, kept horizontal */
+    box-sizing: border-box;
+    display: flex; /* Use flex for horizontal layout */
+    flex-direction: row; /* Align items horizontally */
+    gap: 8px; 
+    align-items: center; /* Center items vertically */
+    flex-shrink: 0; /* Prevent strip from shrinking */
+}
+
+.thumbnail-item {
+    cursor: default;
+    border: 1px solid transparent;
+    padding: 4px;
+    display: flex;
+    flex-direction: column; 
+    align-items: center; 
+    text-align: center;
+    border-radius: 3px;
+    width: 65px; /* Fixed width for horizontal items */
+    justify-content: center; /* Center content vertically */
+    flex-shrink: 0; /* Prevent items shrinking */
+    min-height: 70px; /* Optional: Ensure a minimum height */
+}
+
+.thumbnail-item img {
+    width: 48px; 
+    height: 48px;
+    object-fit: cover;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.thumbnail-item span {
+    font-size: 8pt;
+    color: #000000;
+    line-height: 1.1; 
+    white-space: normal;
+    word-break: break-word;
+    width: 100%; 
+    text-align: center;
+}
+
+.thumbnail-item:hover {
+    background-color: var(--icon-hover-bg, rgba(49, 106, 197, 0.12)); 
+}
+
+.thumbnail-item.active {
+    border-color: transparent; 
+    background-color: var(--icon-selected-bg, rgba(49, 106, 197, 0.40)); 
+}
+
+.thumbnail-item.active span {
+     color: #000000; /* Changed from #FFFFFF */
+}
+
+/* Main Content Area */
+.main-content {
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+    min-height: 0; 
+}
+
+/* Controls Bar at Top */
+.controls {
+    order: -1; 
+    height: 38px; 
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Push groups apart */
+    background-color: #ECE9D8; 
+    border-bottom: 1px solid #ACA899; 
+    padding: 0 8px; 
+    gap: 4px; 
+    flex-shrink: 0;
+}
+
+/* New Separator Style */
+.control-separator {
+    height: 22px; /* Match button height area */
+    border-left: 1px solid #ACA899; /* Vertical line */
+    margin: 0 6px; /* Spacing around separator */
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 4px; 
+}
+
+.filename-display {
+    flex-grow: 1; /* Take up space in middle */
+    text-align: center;
+    font-size: 9pt; /* Increased font size */
+    color: #000000; /* Darker color */
+    font-weight: 600; /* Slightly bolder */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 10px;
+}
+
+.controls button {
+    font-family: "Tahoma", sans-serif;
+    font-size: 8pt;
+    border: 1px solid transparent; 
+    background-color: transparent;
+    box-shadow: none;
+    cursor: default;
+    width: 28px; 
+    height: 28px; 
+    padding: 3px; 
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+    border-radius: 3px;
+}
+
+.controls button img {
+    width: 18px; /* Increased icon size */
+    height: 18px; /* Increased icon size */
+    display: block;
+}
+
+.controls button:hover {
+    border-color: #ACA899; /* Add border on hover */
+    background-color: #E0EDFB;
+}
+
+.controls button:active {
+    background-color: #C1D9F2;
+    border-color: #ACA899;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Tooltip Styling */
+.tooltip {
+    position: absolute;
+    background-color: #FFFFE1; /* Standard tooltip yellow */
+    border: 1px solid #000000;
+    padding: 2px 5px;
+    font-size: 8pt;
+    white-space: nowrap;
+    z-index: 10000; /* Ensure it's on top */
+    pointer-events: none; /* Don't interfere with mouse */
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+}
+
+.image-display-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; 
+    background-color: #E0E0E0; 
+    padding: 10px;
+    box-sizing: border-box;
+    position: relative; /* Context for nav buttons */
+}
+
+#main-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.2s ease; 
+    cursor: default;
+}
+
+#main-image:active {
+    cursor: default;
+}
+
+/* Navigation Buttons (Prev/Next) */
+.nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent background */
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: default;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    z-index: 10; /* Above image */
+}
+
+.nav-button img {
+     width: 24px;
+     height: 24px;
+     filter: brightness(0) invert(1); /* Make icons white */
+}
+
+.image-display-area:hover .nav-button {
+    opacity: 1; /* Show on hover over image area */
+}
+
+.nav-button:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.nav-button.prev {
+    left: 15px;
+}
+
+.nav-button.next {
+    right: 15px;
+} 

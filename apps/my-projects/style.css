@@ -1,0 +1,139 @@
+/* General Styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Tahoma", sans-serif;
+    font-size: 8pt;
+    background-color: #FFF; /* IE default background */
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+}
+
+.projects-browser-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background-color: #ECE9D8; /* Set base background */
+}
+
+/* Browser Chrome (Combined Bar) */
+.browser-chrome {
+    background-color: #ECE9D8;
+    padding: 3px 5px;
+    border-bottom: 1px solid #ACA899;
+    flex-shrink: 0;
+    display: flex; /* Arrange items horizontally */
+    align-items: center; /* Center items vertically */
+    gap: 4px; /* Default gap */
+    height: 30px; /* Fixed height for single bar */
+    user-select: none; /* Prevent selection */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Styles for items directly inside .browser-chrome */
+.browser-chrome > button {
+    background: none;
+    border: 1px solid transparent;
+    padding: 2px;
+    border-radius: 3px;
+    cursor: pointer;
+    flex-shrink: 0; /* Prevent buttons shrinking */
+}
+
+.browser-chrome > button:hover:not(:disabled) {
+    border-color: #ACA899;
+    background-color: #E0EDFB;
+}
+
+.browser-chrome > button:active:not(:disabled) {
+    background-color: #C1D9F2;
+    border-color: #ACA899;
+}
+
+.browser-chrome > button img {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+.browser-chrome > button:disabled img {
+    opacity: 0.5;
+}
+
+.chrome-separator {
+    height: 22px; 
+    border-left: 1px solid #ACA899; 
+    margin: 0 4px; 
+    flex-shrink: 0;
+}
+
+.browser-chrome > label {
+    font-size: 8pt;
+    color: #777;
+    margin: 0 5px 0 2px;
+    cursor: default;
+    flex-shrink: 0;
+}
+
+.browser-chrome > input[type="text"] {
+    flex-grow: 1; /* Take remaining space */
+    border: 1px solid #7F9DB9; /* Add border directly */
+    padding: 3px 5px;
+    font-family: "Tahoma", sans-serif;
+    font-size: 8.5pt;
+    outline: none;
+    background-color: white; /* White background */
+    height: 24px; /* Match button heights approx */
+    box-sizing: border-box;
+}
+
+/* Tab Bar Styles Removed */
+
+/* Content Area - Holds the iframe */
+.content-area {
+    flex-grow: 1;
+    overflow: hidden; /* Hide overflow, iframe handles scroll */
+    background-color: #FFF; /* White background behind iframe */
+    padding: 0; /* No padding around iframe */
+    position: relative; 
+    z-index: 1; 
+    border: none; /* Remove border */
+    margin: 0; /* Remove margin */
+    box-shadow: none; /* Remove shadow */
+}
+
+#project-frame {
+    width: 100%;
+    height: 100%;
+    border: none; /* Remove iframe default border */
+    display: block;
+}
+
+/* .project-content a { ... } */
+
+.tab-button { 
+    font-family: "Tahoma", sans-serif;
+    font-size: 8.5pt; 
+    font-weight: normal; 
+    border: 1px solid #9DB7D6;
+    border-bottom: none; 
+    background: linear-gradient(to bottom, #F0F4F9, #E0E8F1); 
+    color: #555; 
+    padding: 4px 12px; 
+    margin-right: 3px;
+    cursor: pointer;
+    border-radius: 5px 5px 0 0; 
+    position: relative; 
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); 
+    flex-shrink: 0; /* Prevent individual tabs shrinking weirdly */
+    display: flex; /* Use flex to position title and close button */
+    align-items: center;
+    padding-right: 8px; /* Reduce right padding for close button */
+    gap: 8px; /* Space between title and close button */
+} 

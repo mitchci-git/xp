@@ -1,5 +1,4 @@
-// REMOVE listener
-// document.addEventListener('mousedown', () => { ... }, true);
+import { setupIframeActivation } from '../../scripts/utils/iframeManager.js'; // Import standard helper
 
 document.addEventListener('DOMContentLoaded', function() {
     const staticContent = document.getElementById('static-content');
@@ -15,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateStatusBar();
     
     // Setup inter-frame communication with parent window
-    setupIframeComm();
+    setupIframeActivation(); // Use standard activation helper
     
     // Position cursor at the end of the text
     positionCursorAtEnd();
@@ -121,11 +120,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             case 'Exit':
                 if (window.parent && window.parent !== window) {
+                    // Get windowId from URL query parameters
+                    const params = new URLSearchParams(window.location.search);
+                    const windowId = params.get('windowId');
                     window.parent.postMessage({
                         type: 'close-window',
-                        windowId: null,
+                        windowId: windowId, // Include windowId
+                        payload: null,
                         timestamp: Date.now()
-                    }, '*');
+                    }, window.origin); // Use specific origin
                 }
                 break;
                 
@@ -140,18 +143,5 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 break;
         }
-    }
-    
-    function setupIframeComm() {
-        // Notify parent window when the iframe is clicked (for window focus)
-        document.addEventListener('mousedown', () => {
-            if (window.parent && window.parent !== window) {
-                window.parent.postMessage({
-                    type: 'focus-window',
-                    windowId: null,
-                    timestamp: Date.now()
-                }, '*');
-            }
-        }, true); // Use capture phase for earliest handling
     }
 }); 

@@ -1,6 +1,3 @@
-// REMOVE listener
-// document.addEventListener('mousedown', () => { ... }, true);
-
 const history = document.getElementById('history');
 const input = document.getElementById('input');
 const ps1 = document.getElementById('ps1');
@@ -38,7 +35,7 @@ function processCommand(text) {
             case "defrag":
                 return defrag();
             case "scandisk":
-                return scandisk();
+                return "Command not found\n\n";
             case "ver":
                 return "JSDOS v0.1.442024\n\n";
             case "win":
@@ -127,7 +124,6 @@ function printHelp() {
     output += " help\n";
     output += " ver\n";
     output += " defrag\n";
-    output += " scandisk\n";
     output += " echo [text]\n";
     output += " cls\n";
     output += " dir\n";
@@ -400,145 +396,4 @@ function defrag() {
       }
     });
 
-}
-
-//
-// ScanDisk
-///////////////
-
-function scandisk() {
-
-    const stages = document.querySelectorAll('#scandisk-list span[data-status]');
-    const progressbar = document.querySelector('#scandisk-fillbar');
-    const statusbar = document.querySelector('#scandisk-status-bar span[data-count]');
-    const screen = document.querySelector('#scandisk-container');
-    const history = document.getElementById('history');
-    const input = document.getElementById('input');
-    const ps1 = document.getElementById('ps1');
-    const caret = document.getElementById('caret');
-    const body = document.querySelector('body');
-    
-    history.hidden = true;
-    caret.classList.add('off');
-    input.hidden = true;
-    ps1.hidden = true;
-    body.setAttribute("class", "scandisk");
-    screen.hidden = false;
-
-    const NUM_BLOCKS = 518;
-    let currentStage = 0;
-    let blocks;
-    let currentBlock = 0;
-    let badclusters = 0;
-
-    // *** First screen (check disk)
-    const random = (min = 1, max = 6) => min + ~~(Math.random() * max);
-
-    // Every stage of first screen
-    const nextStage = () => {
-        if (currentStage > 0) {
-            const randomFail = random(1, 6);
-            stages[currentStage - 1].dataset.status = randomFail === 4 ? 'fixed' : 'correct';
-        }
-
-        if (currentStage < stages.length) {
-            stages[currentStage++].dataset.status = 'current';
-            incProgress();
-            setTimeout(nextStage, random(500, 2000));
-        } else {
-            setTimeout(finishStage, random(500, 2000));
-        }
-    };
-
-    // last Stage from first screen
-    const finishStage = () => {
-        const screen = document.querySelectorAll('#scandisk-screen-1, #scandisk-screen-2');
-        screen[0].classList.add('off');
-        screen[1].classList.remove('off');
-        setProgress(0);
-        blocks = document.querySelectorAll('#scandisk-surface-scan .block');
-        readBlock();
-    };
-
-    // Progress bar update
-    const setProgress = value => {
-        statusbar.dataset.count = value;
-        progressbar.style.width = `${value}%`;
-    };
-
-    const incProgress = (step = 15) => {
-        const value = Math.min(100, parseInt(statusbar.dataset.count) + step);
-        setProgress(value);
-    };
-
-    // *** Second screen (surface disk)
-    const surface = document.querySelector('#scandisk-surface-scan');
-    const totalClusters = document.querySelector('#scandisk-total span');
-    const readClusters = document.querySelector('#scandisk-examined span');
-    const badClusters = document.querySelector('#scandisk-badc span');
-    const clustersPerBlock = document.querySelector('#scandisk-legend var');
-    const clusters = ~~(Math.random() * 100000) + 500000;
-    const cpb = ~~(clusters / NUM_BLOCKS);
-
-    const genSurface = () => {
-        totalClusters.textContent = clusters.toLocaleString();
-        clustersPerBlock.textContent = cpb.toLocaleString();
-        for (let i = 0; i < NUM_BLOCKS; i++) {
-            const span = document.createElement('span');
-            const type = ['unused', 'unused', 'unused', 'used', 'full'][~~(Math.random() * 5)];
-            span.className = `block ${type}`;
-            surface.appendChild(span);
-        }
-    };
-
-    const readBlock = () => {
-        let time = 0;
-        if (blocks[currentBlock].classList.contains('unused')) {
-            time += random(0, 150);
-        }
-        if (blocks[currentBlock].classList.contains('used')) {
-            time += random(50, 500);
-        }
-        if (blocks[currentBlock].classList.contains('full')) {
-            time += random(50, 1000);
-        }
-        time += possibleBadBlock();
-        if (currentBlock < NUM_BLOCKS) {
-            setTimeout(readBlock, time);
-        } else {
-            finishReadBlock();
-        }
-        setProgress(~~(currentBlock / NUM_BLOCKS * 100));
-        readClusters.textContent = (currentBlock * cpb).toLocaleString();
-    };
-
-    const finishReadBlock = () => {
-        readClusters.textContent = clusters.toLocaleString();
-        document.querySelector('#scandisk-screen-2').classList.add('off');
-        document.querySelector('#scandisk-screen-3').classList.remove('off');
-    };
-
-    const possibleBadBlock = () => {
-        if (random(1, 150) === 1) {
-            blocks[currentBlock++].classList.add('bad');
-            badClusters.textContent = ++badclusters;
-            return random(2000, 4000);
-        } else {
-            blocks[currentBlock++].classList.add('read');
-        }
-        return 0;
-    };
-
-    genSurface();
-    nextStage();
-
-    document.getElementById('exitScandisk').addEventListener('click', function () {
-        screen.hidden = true;
-        history.hidden = false;
-        caret.classList.remove('off');
-        input.hidden = false;
-        ps1.hidden = false;
-        body.setAttribute("class", "dos");
-    });
-    
 }

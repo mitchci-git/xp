@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Viewer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="photo-viewer-app">
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-group control-group-left">
+                    <button id="rotate-btn" data-tooltip="Rotate"><img src="icons/rotate.webp" alt="Rotate"></button>
+                    <button id="reset-view-btn" data-tooltip="Actual Size"><img src="icons/actual-size.webp" alt="Actual Size"></button>
+                </div>
+                <div class="control-separator"></div>
+                <div class="filename-display">
+                    <span id="image-filename"></span>
+                </div>
+                <div class="control-separator"></div>
+                <div class="control-group control-group-right">
+                    <button id="zoom-in-btn" data-tooltip="Zoom In"><img src="icons/zoom-in.webp" alt="Zoom In"></button>
+                    <button id="zoom-out-btn" data-tooltip="Zoom Out"><img src="icons/zoom-out.webp" alt="Zoom Out"></button>
+                </div>
+            </div>
+            <div class="image-display-area">
+                <img id="main-image" src="" alt="Selected Picture">
+                <button id="prev-btn" class="nav-button prev" data-tooltip="Previous Picture"><img src="icons/prev-1g.webp" alt="Previous"></button>
+                <button id="next-btn" class="nav-button next" data-tooltip="Next Picture"><img src="icons/next-1g.webp" alt="Next"></button>
+            </div>
+        </div>
+        <div class="thumbnail-strip">
+            <!-- Thumbnails will be populated by script.js -->
+        </div>
+    </div>
+    
+    <script type="module" src="script.js"></script>
+</body>
+</html> 

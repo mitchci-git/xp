@@ -1,7 +1,41 @@
 /**
- * EventBus - Communication system for Windows XP simulation components
- * Implements a publish-subscribe pattern for decoupled communication
+ * EventBus - Communication system implementing a publish-subscribe pattern
+ * for decoupled interaction between components of the XP simulation
  */
+
+/**
+ * Centralized event names for the application
+ */
+export const EVENTS = {
+    // Window Management Events
+    PROGRAM_OPEN: 'program:open',
+    PROGRAM_CLOSE: 'program:close',
+    PROGRAM_MINIMIZE: 'programMinimize',
+    PROGRAM_MAXIMIZE: 'programMaximize',
+    PROGRAM_UNMAXIMIZE: 'programUnmaximize',
+    WINDOW_CREATED: 'window:created',
+    WINDOW_CLOSED: 'window:closed',
+    WINDOW_FOCUSED: 'window:focused',
+    WINDOW_MINIMIZED: 'window:minimized',
+    WINDOW_MAXIMIZED: 'window:maximized',
+    WINDOW_UNMAXIMIZED: 'window:unmaximized',
+    WINDOW_RESTORED: 'window:restored',
+    WINDOW_DRAG_START: 'window:drag:start',
+    WINDOW_RESIZE_START: 'window:resize:start',
+
+    // UI Control Events
+    TASKBAR_ITEM_CLICKED: 'taskbar:item:clicked',
+    TASKBAR_UPDATE: 'taskbar:update',
+    STARTMENU_TOGGLE: 'startmenu:toggle',
+    STARTMENU_OPENED: 'startmenu:opened',
+    STARTMENU_CLOSED: 'startmenu:closed',
+    STARTMENU_CLOSE_REQUEST: 'startmenu:close-request',
+    LOG_OFF_REQUESTED: 'logoff:requested',
+    
+    // Cross-frame Communication
+    IFRAME_CLICKED: 'iframe-clicked',
+};
+
 class EventBus {
     constructor() {
         this.events = {};
@@ -11,19 +45,15 @@ class EventBus {
      * Subscribe to an event
      * @param {string} event - Event name
      * @param {function} callback - Function to call when event is triggered
-     * @returns {function} Unsubscribe function
+     * @returns {function} Unsubscribe function for easy cleanup
      */
     subscribe(event, callback) {
-        if (!this.events[event]) {
-            this.events[event] = [];
-        }
-        this.events[event].push(callback);
-        
+        (this.events[event] ??= []).push(callback);
         return () => this.unsubscribe(event, callback);
     }
 
     /**
-     * Subscribe to an event only once
+     * Subscribe to an event and automatically unsubscribe after first trigger
      * @param {string} event - Event name  
      * @param {function} callback - Function to call when event is triggered
      */
@@ -32,7 +62,6 @@ class EventBus {
             this.unsubscribe(event, onceCallback);
             callback(...args);
         };
-        
         this.subscribe(event, onceCallback);
     }
 
@@ -42,24 +71,19 @@ class EventBus {
      * @param {function} callback - Function to unsubscribe
      */
     unsubscribe(event, callback) {
-        if (this.events[event]) {
-            this.events[event] = this.events[event].filter(cb => cb !== callback);
-        }
+        this.events[event]?.length && 
+        (this.events[event] = this.events[event].filter(cb => cb !== callback));
     }
 
     /**
-     * Publish an event
+     * Publish an event to all subscribers
      * @param {string} event - Event name
      * @param {any} data - Data to pass to subscribers
      */
     publish(event, data) {
-        if (this.events[event]) {
-            const subscribers = [...this.events[event]];
-            subscribers.forEach(callback => callback(data));
-        }
+        this.events[event]?.forEach(callback => callback(data));
     }
 }
 
-// Export singleton instance
-const eventBus = new EventBus();
-export default eventBus;
+// Create and export a singleton instance
+export const eventBus = new EventBus();

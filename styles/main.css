@@ -1,11 +1,11 @@
 @import 'utils/reset.css';
+@import 'gui/window.css';
+@import 'gui/taskbar.css';
+@import 'gui/startMenu.css';
 @import 'gui/desktop.css';
 @import 'gui/icons.css';
-@import 'gui/windows.css';
-@import 'gui/taskbar.css';
-@import 'gui/startmenu.css';
-@import 'gui/iframe-apps.css';
-@import 'utils/crt-effect.css';
+@import 'gui/iframeApp.css';
+@import 'utils/crt.css';
 
 /* Z-index hierarchy */
 :root {
@@ -14,7 +14,6 @@
   --z-taskbar: 500;
   --z-tooltip: 1000;
   --z-startmenu: 1500;
-  --z-crt: 20000;
 }
 
 /* Window states */
@@ -23,85 +22,28 @@
   border-radius: 0;
   border-width: 0;
   overflow: hidden;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  max-height: none !important;
+  min-height: 0 !important;
 }
 
 .window.maximized .title-bar {
   border-radius: 0;
 }
 
+/* Prevent internal scrollbars when maximized */
+.window.maximized .window-body {
+    overflow: hidden !important;
+}
+
 .window-maximize.restore {
-  background-image: url('../assets/gui/desktop/restore.png');
+  background-image: url('../assets/gui/desktop/restore.webp');
   background-size: 10px 10px;
 }
 
-/* Program-specific window dimensions removed - handled by default or program itself */
-
-/* Maximized state overrides */
-.window.maximized[data-program="messenger"] {
-  width: 100%;
-  height: calc(100vh - 30px);
-  max-width: none;
-  min-width: 0;
-}
-
-/* Mobile responsive adjustments */
-@media (max-width: 768px) {
-  .window[data-program="messenger"] {
-    min-width: 280px;
-    max-width: calc(100vw - 20px);
-    width: calc(100vw - 20px);
-    height: auto;
-  }
-  
-  .taskbar {
-    overflow-x: auto;
-  }
-  
-  .taskbar-item {
-    min-width: 120px;
-    max-width: 150px;
-  }
-}
-
-@media (max-width: 480px) {
-  .taskbar-item {
-    min-width: 100px;
-  }
-  
-  .system-tray {
-    width: 120px;
-  }
-}
-
-/* Tooltip styling - unified system */
-/* .viewer-tooltip rule removed - unused */
-
-/* CRT effect z-index values */
-.crt, .crt-glow, .crt-vignette, .crt-noise, .crt-scanline, .crt-aberration, .crt-flicker, .crt-persistence {
-  z-index: var(--z-crt);
-  pointer-events: none;
-}
-
-.window {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.taskbar-program {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.taskbar-program span {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
 
 /* Add styles here to override or supplement xp.css */
 
@@ -113,31 +55,5 @@ html, body {
     overflow: hidden; /* Prevent scrollbars on body */
 }
 
-/* Go Button Styling */
-#goButton {
-    position: absolute;
-    bottom: 50px; /* Position above taskbar */
-    left: 20px;  
-    width: 50px; 
-    height: 50px;
-    background-color: #4CAF50; /* Green */
-    border-radius: 50%;
-    border: 2px solid #367c39;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    z-index: 10000;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-#goButton:hover {
-    background-color: #45a049;
-}
-
-#goButton:active {
-    transform: scale(0.95);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
 .desktop {
-  /* ... existing code ... */
 }

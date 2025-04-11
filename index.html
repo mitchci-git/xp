@@ -4,43 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
     <title>Windows XP Simulation</title>
     <link rel="stylesheet" href="https://unpkg.com/xp.css@0.2.3/dist/XP.css" crossorigin="anonymous">
     <link rel="stylesheet" href="./styles/main.css">
+    <link rel="stylesheet" href="./styles/boot.css">
 </head>
 <body>
-    <button id="goButton"></button>
+    <!-- Boot Screen -->
+    <div id="boot-screen">
+        <div class="loading-container">
+            <img id="boot-logo" src="./assets/gui/boot/loading.webp" alt="Windows XP Loading">
+            <div class="container">
+                <div class="box"></div>
+                <div class="box"></div>
+                <div class="box"></div>
+            </div>
+        </div>
+
+        <!-- Bottom Left Text -->
+        <div class="boot-bottom-left">
+            <span>Portfolio &copy; 2025</span>
+            <span>Mitchell Ivin Design</span>
+        </div>
+
+        <!-- Bottom Right Image -->
+        <div class="boot-bottom-right">
+            <img src="./assets/gui/boot/boot-wordmark.webp" alt="Boot Wordmark">
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <iframe id="login-iframe" src="./apps/login/index.html" frameborder="0"></iframe>
+    </div>
 
     <div class="desktop">
         <div class="desktop-icons">
-            <div class="desktop-icon">
-                <img src="./assets/gui/desktop/internet-explorer.png" alt="Internet Explorer">
-                <span>Internet Explorer</span>
+            <div class="desktop-icon" data-program-name="about-me">
+                <img src="./assets/gui/desktop/about-me.webp" alt="About Me">
+                <span>About Me</span>
             </div>
-            <div class="desktop-icon">
-                <img src="./assets/gui/desktop/messenger.png" alt="Windows Messenger">
-                <span>Windows Messenger</span>
+            <div class="desktop-icon" data-program-name="my-projects">
+                <img src="./assets/gui/desktop/my-projects.webp" alt="My Projects">
+                <span>My Projects</span>
             </div>
-            <div class="desktop-icon">
-                <img src="./assets/gui/desktop/my-documents.png" alt="My Documents">
-                <span>My Documents</span>
+            <div class="desktop-icon" data-program-name="contact-me">
+                <img src="./assets/gui/desktop/email.webp" alt="Contact Me">
+                <span>Contact Me</span>
             </div>
-            <div class="desktop-icon">
-                <img src="./assets/gui/desktop/my-pictures.png" alt="My Pictures">
-                <span>My Pictures</span>
-            </div>
-            <div class="desktop-icon">
-                <img src="./assets/gui/desktop/email.png" alt="Email">
-                <span>Email</span>
-            </div>
-            <div class="desktop-icon">
-                <img src="./assets/gui/desktop/command-prompt.png" alt="Command Prompt">
-                <span>Command Prompt</span>
-            </div>
-            <div class="desktop-icon">
-                <img src="./assets/gui/desktop/notepad.png" alt="Notepad">
-                <span>Notepad</span>
+            <div class="desktop-icon" data-program-name="resume-pdf">
+                <img src="./assets/gui/desktop/resume.webp" alt="Resume.pdf">
+                <span>Resume.pdf</span>
             </div>
         </div>
 
@@ -48,17 +62,17 @@
         
         <div class="taskbar">
             <button class="start-button" id="start-button">
-                <img src="./assets/gui/taskbar/start-button.png" alt="Start">
+                <img src="./assets/gui/taskbar/start-button.webp" alt="Start">
             </button>
             <div class="quick-launch"></div>
             <div class="taskbar-programs"></div>
             <div class="system-tray">
-                <img src="./assets/gui/taskbar/system-tray.png" alt="System Tray" class="system-tray-bg">
+                <img src="./assets/gui/taskbar/system-tray.webp" alt="System Tray" class="system-tray-bg">
                 <div class="tray-content">
                     <div class="tray-icons">
-                        <img src="./assets/gui/taskbar/status.png" alt="Status Icon" class="tray-status-icon" data-tooltip="Status: Ready to Work">
-                        <img src="./assets/gui/taskbar/network.png" alt="Network Icon" class="tray-network-icon" data-tooltip="Connected: 100 Mbps">
-                        <img src="./assets/gui/taskbar/volume.png" alt="Volume Icon" class="tray-volume-icon" data-tooltip="Volume: 75%">
+                        <img src="./assets/gui/taskbar/msn-messenger.webp" alt="Messenger Status Icon" class="tray-status-icon" data-tooltip="Available Now">
+                        <img src="./assets/gui/taskbar/network.webp" alt="Network Icon" class="tray-network-icon" data-tooltip="Connection Successful">
+                        <img src="./assets/gui/taskbar/volume.webp" alt="Volume Icon" class="tray-volume-icon" data-tooltip="Volume: 100%">
                     </div>
                     <div class="time">12:00 PM</div>
                 </div>
@@ -66,19 +80,21 @@
         </div>
     </div>
 
-    <!-- CRT effect layers -->
-    <div class="crt"></div>
+    <script type="module" src="./scripts/main.js"></script>
+    
+    <!-- CRT Effect Overlay -->
+    <div class="crt-effect"></div>
+    <!-- CRT Additional Effects -->
+    <div class="crt-scanline"></div>
     <div class="crt-glow"></div>
     <div class="crt-vignette"></div>
     <div class="crt-noise"></div>
-    <div class="crt-scanline"></div>
-    <div class="crt-aberration"></div>
     <div class="crt-flicker"></div>
-
-    <div id="boot-screen">
-        <!-- ... existing code ... -->
-    </div>
-
-    <script type="module" src="./scripts/main.js"></script>
+    <div class="crt-aberration"></div>
+    <div class="crt-persistence"></div>
+    <div class="flicker"></div>
+    
+    <!-- Boot sequence script (now a module) -->
+    <script type="module" src="./scripts/boot.js"></script>
 </body>
 </html>
