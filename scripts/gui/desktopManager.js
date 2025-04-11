@@ -39,9 +39,9 @@ export default class Desktop {
         // Aspect ratio threshold for ultrawide monitors (typically 21:9 or wider)
         const ultrawideThreshold = 2.1; // 21:9 = 2.33, 16:9 = 1.78
         
-        // Default and ultrawide wallpaper paths
-        const defaultWallpaper = '../../assets/gui/desktop/bliss.jpg';
-        const ultrawideWallpaper = '../../assets/gui/desktop/bliss-ultrawide.jpg';
+        // Default and ultrawide wallpaper paths (Use root-relative paths for deployment)
+        const defaultWallpaper = './assets/gui/desktop/bliss.jpg';
+        const ultrawideWallpaper = './assets/gui/desktop/bliss-ultrawide.jpg';
         
         // Set the appropriate wallpaper
         if (aspectRatio >= ultrawideThreshold) {
