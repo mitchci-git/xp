@@ -3,6 +3,7 @@
  */
 import programData from '../utils/programRegistry.js';
 import { EVENTS } from '../utils/eventBus.js';
+import { getPreloadedIframe } from '../utils/iframePreloader.js'; // Import preloader getter
 
 const TASKBAR_HEIGHT = 30; // Define constant taskbar height
 
@@ -17,11 +18,23 @@ class WindowTemplates {
      * @returns {HTMLElement} DOM element containing the window content
      */
     static getTemplate(templateName, programConfig) {
-        // Handle standard iframe apps via appPath
-        if (templateName === 'iframe-standard' && programConfig?.appPath)
-            return this.createIframeContainer(programConfig.appPath, programConfig.id);
+        // Handle standard iframe apps via appPath - TRY PRELOADED FIRST
+        if (templateName === 'iframe-standard' && programConfig?.appPath) {
+            const programKey = programConfig.id.replace('-window', '');
+            const preloadedIframe = getPreloadedIframe(programKey);
+            if (preloadedIframe) {
+                const container = this.createEmptyContainer();
+                container.classList.add('iframe-container');
+                container.appendChild(preloadedIframe);
+                return container;
+            } else {
+                 // Fallback if not preloaded for some reason
+                console.warn(`No preloaded iframe for ${programKey}, creating standard iframe container.`);
+                return this.createIframeContainer(programConfig.appPath, programConfig.id);
+            }
+        }
         
-        // Create error container for invalid templates
+        // Create error container for invalid templates or non-iframe types
         const content = this.createEmptyContainer();
         const errorMsg = !templateName 
             ? 'Error: Window template not specified or invalid configuration.'
@@ -42,12 +55,13 @@ class WindowTemplates {
     }
 
     /**
-     * Creates an iframe container for apps
+     * Creates an iframe container for apps (NOW MOSTLY A FALLBACK)
      * @param {string} appPath - Path to the application's index.html
      * @param {string} windowId - The unique ID of the window element
      * @returns {HTMLElement} Container with an iframe
      */
     static createIframeContainer(appPath, windowId) {
+        console.log(`Fallback: Creating new iframe for ${windowId}`); // Debug
         const container = document.createElement('div');
         container.className = 'window-body iframe-container'; 
         

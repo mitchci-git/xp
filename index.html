@@ -5,9 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <title>Windows XP Simulation</title>
+
+    <!-- Preload Critical Assets -->
+    <link rel="preload" href="./assets/gui/desktop/bliss.jpg" as="image">
+    <link rel="preload" href="./assets/gui/desktop/bliss-ultrawide.jpg" as="image">
+    <link rel="preload" href="./assets/gui/desktop/about-me.webp" as="image">
+    <link rel="preload" href="./assets/gui/desktop/my-projects.webp" as="image">
+    <link rel="preload" href="./assets/gui/desktop/email.webp" as="image">
+    <link rel="preload" href="./assets/gui/desktop/resume.webp" as="image">
+    <link rel="preload" href="./assets/gui/taskbar/start-button.webp" as="image">
+    <link rel="preload" href="./assets/gui/taskbar/system-tray.webp" as="image">
+    <link rel="preload" href="./assets/sounds/login.wav" as="audio">
+
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="https://unpkg.com/xp.css@0.2.3/dist/XP.css" crossorigin="anonymous">
     <link rel="stylesheet" href="./styles/main.css">
-    <link rel="stylesheet" href="./styles/boot.css">
+    <link rel="stylesheet" href="./styles/utils/boot.css">
 </head>
 <body>
     <!-- Boot Screen -->
@@ -95,6 +108,6 @@
     <div class="flicker"></div>
     
     <!-- Boot sequence script (now a module) -->
-    <script type="module" src="./scripts/boot.js"></script>
+    <script type="module" src="./scripts/utils/boot.js"></script>
 </body>
 </html>

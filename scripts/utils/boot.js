@@ -39,11 +39,11 @@ function initBootSequence(eventBus, EVENTS) {
             bootScreen.style.display = 'none';
             loginScreen.style.display = 'none';
             desktop.style.opacity = '1'; // Make desktop visible instantly
-            // Restore CRT effects visibility when skipping boot sequence
-            console.log('>>> Restoring CRT effects when skipping boot'); // Debug
-            if (crtScanline) crtScanline.style.display = 'block'; 
-            if (crtVignette) crtVignette.style.display = 'block';
-            if (crtGlow) crtGlow.style.display = 'block';
+            // REMOVED: Rely on default CSS visibility for CRT effects when skipping boot
+            // console.log('>>> Restoring CRT effects when skipping boot'); // Debug
+            // if (crtScanline) crtScanline.style.display = 'block'; 
+            // if (crtVignette) crtVignette.style.display = 'block';
+            // if (crtGlow) crtGlow.style.display = 'block';
         } else {
             // Start boot sequence
             startBootSequence();

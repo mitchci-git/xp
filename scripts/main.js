@@ -7,7 +7,8 @@ import Taskbar from './gui/taskbarManager.js';
 import WindowManager from './gui/windowManager.js';
 import { eventBus, EVENTS } from './utils/eventBus.js';
 import programData from './utils/programRegistry.js';
-import { initBootSequence } from './boot.js'; // Import the boot sequence initializer
+import { initBootSequence } from './utils/boot.js'; // Import the boot sequence initializer
+import { preloadIframes } from './utils/iframePreloader.js'; // Import preloader
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize components
@@ -17,6 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize the boot/login sequence AFTER eventBus is ready
     initBootSequence(eventBus, EVENTS);
+
+    // Start preloading iframes (after initial render, slightly delayed)
+    setTimeout(preloadIframes, 100); 
 
     // Subscribe to shutdown event
     console.log('Setting up SHUTDOWN_REQUESTED listener.'); // Debug
