@@ -159,7 +159,7 @@ function initBootSequence(eventBus, EVENTS) {
 
         // Play login sound
         try {
-            const loginSound = new Audio('/assets/sounds/login.wav');
+            const loginSound = new Audio('./assets/sounds/login.wav');
             loginSound.play();
             console.log('Login sound played.'); // Debug
         } catch (error) {
