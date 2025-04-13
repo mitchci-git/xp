@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notepad</title>
+    <link rel="stylesheet" href="https://unpkg.com/xp.css@0.2.3/dist/XP.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="notepad-container">
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <div class="menu-item" data-menu="file">File</div>
+            <div class="menu-item" data-menu="edit">Edit</div>
+            <div class="menu-item" data-menu="format">Format</div>
+            <div class="menu-item" data-menu="view">View</div>
+            <div class="menu-item" data-menu="help">Help</div>
+            
+            <!-- File Menu -->
+            <div id="file-menu" class="dropdown-menu">
+                <div class="menu-option">New</div>
+                <div class="menu-option">Open...</div>
+                <div class="menu-option">Save</div>
+                <div class="menu-option">Save As...</div>
+                <div class="menu-separator"></div>
+                <div class="menu-option">Page Setup...</div>
+                <div class="menu-option">Print...</div>
+                <div class="menu-separator"></div>
+                <div class="menu-option">Exit</div>
+            </div>
+            
+            <!-- Edit Menu -->
+            <div id="edit-menu" class="dropdown-menu">
+                <div class="menu-option">Undo</div>
+                <div class="menu-separator"></div>
+                <div class="menu-option">Cut</div>
+                <div class="menu-option">Copy</div>
+                <div class="menu-option">Paste</div>
+                <div class="menu-option">Delete</div>
+                <div class="menu-separator"></div>
+                <div class="menu-option">Find...</div>
+                <div class="menu-option">Find Next</div>
+                <div class="menu-option">Replace...</div>
+                <div class="menu-option">Go To...</div>
+                <div class="menu-separator"></div>
+                <div class="menu-option">Select All</div>
+                <div class="menu-option">Time/Date</div>
+            </div>
+            
+            <!-- Format Menu -->
+            <div id="format-menu" class="dropdown-menu">
+                <div class="menu-option">Word Wrap</div>
+                <div class="menu-option">Font...</div>
+            </div>
+            
+            <!-- View Menu -->
+            <div id="view-menu" class="dropdown-menu">
+                <div class="menu-option">Status Bar</div>
+            </div>
+            
+            <!-- Help Menu -->
+            <div id="help-menu" class="dropdown-menu">
+                <div class="menu-option">Help Topics</div>
+                <div class="menu-separator"></div>
+                <div class="menu-option">About Notepad</div>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <textarea id="notepad-editor" autofocus></textarea>
+        </div>
+        
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">Ln 1, Col 1</div>
+            <div class="status-item">100%</div>
+            <div class="status-item">Windows (CRLF)</div>
+            <div class="status-item">ANSI</div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+
+    <!-- XP Style Dialog -->
+    <dialog id="xp-dialog">
+        <div class="window active notepad-dialog" style="min-width: auto; min-height: auto;">
+            <div class="title-bar">
+                <div class="title-bar-left">
+                    <div class="title-bar-text">Notepad</div>
+                </div>
+                <div class="title-bar-controls">
+                    <button aria-label="Close" data-action="close" id="xp-dialog-close"></button>
+                </div>
+            </div>
+            <div class="window-inactive-mask"></div>
+            <div class="window-body">
+                <div>
+                    <p>Do you want to save changes to Untitled?</p>
+                    <div class="field-row">
+                        <button id="xp-dialog-ok" style="width: 75px; height: 23px;">Yes</button>
+                        <button id="xp-dialog-no" style="width: 75px; height: 23px;">No</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+</body>
+</html>

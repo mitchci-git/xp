@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume.pdf</title>
+    <style>
+        body {
+            font-family: 'Tahoma', sans-serif;
+            background-color: #ECE9D8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .toolbar {
+            background-color: #ECE9D8;
+            border-bottom: 1px solid #ACA899;
+            padding: 5px 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .tool-button {
+            background-color: #ECE9D8;
+            border: 1px solid #D4D0C8;
+            border-radius: 3px;
+            padding: 3px 8px;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            box-shadow: 1px 1px 0 #fff inset, -1px -1px 0 #707070 inset;
+            cursor: default;
+        }
+        .document-container {
+            flex: 1;
+            overflow: auto;
+            background-color: #7F7F7F;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .document {
+            background-color: white;
+            width: 612px; /* Standard letter size width */
+            height: 792px; /* Standard letter size height */
+            padding: 72px; /* 1-inch margins */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        .page-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #0055EA;
+            border-bottom: 1px solid #ACA899;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .entry {
+            margin-bottom: 15px;
+        }
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+        .placeholder-text {
+            color: #777;
+            font-style: italic;
+        }
+        .status-bar {
+            background-color: #ECE9D8;
+            border-top: 1px solid #ACA899;
+            padding: 3px 10px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button class="tool-button">Print</button>
+        <button class="tool-button">Save</button>
+        <button class="tool-button">Zoom In</button>
+        <button class="tool-button">Zoom Out</button>
+        <button class="tool-button">Rotate</button>
+    </div>
+    
+    <div class="document-container">
+        <div class="document">
+            <div class="page-title">RESUME</div>
+            
+            <div class="section">
+                <div class="section-title">PERSONAL INFORMATION</div>
+                <div class="placeholder-text">Name, address, phone number, and email will appear here.</div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">SUMMARY</div>
+                <div class="placeholder-text">A brief professional summary will be placed in this section.</div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">EXPERIENCE</div>
+                
+                <div class="entry">
+                    <div class="entry-header">
+                        <div>Company Name</div>
+                        <div>2020 - Present</div>
+                    </div>
+                    <div><strong>Position Title</strong></div>
+                    <div class="placeholder-text">Description of responsibilities and achievements.</div>
+                </div>
+                
+                <div class="entry">
+                    <div class="entry-header">
+                        <div>Previous Company</div>
+                        <div>2015 - 2020</div>
+                    </div>
+                    <div><strong>Position Title</strong></div>
+                    <div class="placeholder-text">Description of responsibilities and achievements.</div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">EDUCATION</div>
+                <div class="placeholder-text">Educational background will be listed here.</div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">SKILLS</div>
+                <div class="placeholder-text">Professional skills and competencies will be listed in this section.</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-bar">
+        <div>Page 1 of 1</div>
+        <div>100% zoom</div>
+    </div>
+</body>
+</html> 

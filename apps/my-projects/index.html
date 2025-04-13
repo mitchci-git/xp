@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Projects</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="projects-browser-content">
+        <div class="browser-chrome">
+            <!-- Navigation Buttons -->
+            <button title="Back"><img src="icons/nav-back.webp" alt="Back"></button>
+            <button title="Forward" disabled><img src="icons/nav-forward.webp" alt="Forward"></button>
+            <button title="Refresh"><img src="icons/nav-refresh.webp" alt="Refresh"></button>
+            <button title="Home"><img src="icons/nav-home.webp" alt="Home"></button>
+            <!-- Separator -->
+            <div class="chrome-separator"></div> 
+            <!-- Address Bar Elements -->
+            <label for="address-input">Address</label>
+            <input type="text" id="address-input" value="portfolio://My Projects/" readonly>
+            <button title="Go" class="go-button"><img src="icons/nav-go.webp" alt="Go"></button>
+        </div>
+        <!-- <div class="tab-bar"> -->
+            <!-- Removed tab bar content -->
+        <!-- </div> -->
+        <div class="content-area">
+            <iframe id="project-frame" src="about:blank" frameborder="0"></iframe>
+        </div>
+    </div>
+    <script type="module" src="script.js"></script>
+</body>
+</html> 
