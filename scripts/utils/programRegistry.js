@@ -122,7 +122,7 @@ const programData = {
         "Resume.pdf",
         "desktop/resume.webp",
         "resume-pdf",
-        { dimensions: { width: 800, height: 600 }}
+        { dimensions: { width: 700, height: 800 }}
     ),
 
     // Media Programs

@@ -1,5 +1,3 @@
-IGNORE FOR NOW
-
 # XP Simulation – Refactor Guardrails
 
 ## Primary Directives:

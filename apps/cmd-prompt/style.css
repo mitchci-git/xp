@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css?family=IBM+Plex+Mono:700');
+@import url('https://fonts.googleapis.com/css?family=IBM+Plex+Mono:500,700');
 
 :root {
   --defrag-bgColor: #5561ff;
@@ -9,7 +9,7 @@
   --normalFont: 'IBM Plex Mono', monospaced;
   --cmd-font-family: "Consolas", monospace;
   --cmd-font-size: 15px;
-  --cmd-font-weight: bold;
+  --cmd-font-weight: 500;
   --cmd-text-color: rgb(204, 204, 204);
 }
 
@@ -22,7 +22,7 @@ body.dos {
   overflow-y: hidden;
   word-break: break-all;
   margin: 0;
-  padding: 0 16px 16px 16px;
+  padding: 6px 10px 10px 10px;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -46,6 +46,14 @@ body.dos *,
   color: var(--cmd-text-color) !important;
   text-shadow: 0 0 1px var(--cmd-text-color) !important;
   -webkit-font-smoothing: antialiased !important;
+}
+
+/* Ensure no spacing at the top of command prompt */
+#history {
+  margin-top: 0;
+  padding-top: 0;
+  min-height: 0;
+  display: block;
 }
 
 /* Add space after each history line */
@@ -317,5 +325,5 @@ body.defrag {
 .center { text-align: center }
 
 #ps1 {
-  font-weight: bold;
+  font-weight: var(--cmd-font-weight); /* Use the variable instead of hardcoded 'bold' */
 }

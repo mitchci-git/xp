@@ -1,7 +1,7 @@
 /* Taskbar styling */
 :root {
     --taskbar-height: 30px;
-    --taskbar-item-height: 26px;
+    --taskbar-item-height: 25px; /* Set to 25px */
     --taskbar-active-color: #184F8B;
     --taskbar-hover-color: #3B98F7;
     --taskbar-gradient-start: #2980D5;
@@ -114,9 +114,10 @@
     width: 160px;
     margin: 0 1px;
     padding: 0 8px;
-    border-radius: 6px;
+    border-radius: 5px; /* Adjusted from 4px to 5px */
     display: flex;
     align-items: center;
+    justify-content: flex-start; /* Ensures consistent horizontal alignment */
     color: white;
     font-size: 11px;
     text-shadow: var(--taskbar-text-shadow);
@@ -125,15 +126,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     position: relative;
-    border: 1px solid rgba(0,0,0,0.1);
-    background: linear-gradient(to bottom, var(--taskbar-gradient-start), var(--taskbar-gradient-end));
-    box-shadow: 
-        inset 0 1px 0 rgba(255,255,255,0.25),
-        inset 0 -1px 0 rgba(0,0,0,0.12),
-        inset 1px 0 0 rgba(255,255,255,0.2),
-        inset -1px 0 0 rgba(0,0,0,0.05),
-        1px 0 0 rgba(255,255,255,0.1),
-        0 1px 0 rgba(255,255,255,0.1);
+    border: 1px solid rgba(0,0,0,0.15); /* Slightly lighter border */
+    background: linear-gradient(to bottom, #3590E8 0%, #1E5AA0 100%); /* Slightly less bright gradient */
+    box-shadow:
+        inset 0 1px 1px rgba(255,255,255,0.30), /* Less intense top highlight */
+        inset 0 -1px 1px rgba(0,0,0,0.13), /* Less intense bottom shadow */
+        inset 1px 0 0 rgba(255,255,255,0.22),
+        inset -1px 0 0 rgba(0,0,0,0.08),
+        0 1px 1px rgba(0,0,0,0.15); /* Smaller outer shadow */
     /* Added smooth transition for width changes */
     transition: min-width 0.15s ease, max-width 0.15s ease, width 0.15s ease;
     flex-shrink: 1; /* Allow items to shrink */
@@ -155,23 +155,31 @@
 }
 
 .taskbar-item:hover:not(.active) {
-    background: linear-gradient(to bottom, #3B98F7 0%, #2372CB 100%);
+    background: linear-gradient(to bottom, #4DA2F8 0%, #2678D8 100%); /* Less bright hover gradient */
+    box-shadow:
+        inset 0 1px 1px rgba(255,255,255,0.35),
+        inset 0 -1px 1px rgba(0,0,0,0.14),
+        inset 1px 0 0 rgba(255,255,255,0.28),
+        inset -1px 0 0 rgba(0,0,0,0.09),
+        0 1px 2px rgba(0,0,0,0.2); /* Slightly smaller outer shadow on hover */
 }
 
 .taskbar-item.active {
-    background: linear-gradient(to bottom, #1E62BC 0%, #184F8B 100%);
-    box-shadow: 
-        inset 0 1px 2px rgba(0,0,0,0.15),
-        inset 0 -1px 0 rgba(255,255,255,0.1),
-        inset 1px 0 1px rgba(0,0,0,0.1),
-        inset -1px 0 0 rgba(255,255,255,0.1);
+    background: linear-gradient(to top, #1E62BC 0%, #185294 100%); /* Slightly adjusted active gradient */
+    box-shadow:
+        inset 0 1px 2px rgba(0,0,0,0.25), /* Less intense inner top shadow */
+        inset 0 -1px 0 rgba(255,255,255,0.12), /* Adjusted bottom highlight */
+        inset 1px 0 1px rgba(0,0,0,0.15),
+        inset -1px 0 1px rgba(0,0,0,0.15); /* Adjusted inner side shadows */
 }
 
 .taskbar-item.active:hover {
-    background: linear-gradient(to bottom, #2470CF 0%, #1A5C9D 100%);
+    background: linear-gradient(to top, #226AC4 0%, #1A5C9D 100%); /* Adjusted active hover gradient */
     box-shadow:
-        inset 0 1px 2px rgba(0,0,0,0.15),
-        inset 0 -1px 0 rgba(255,255,255,0.15);
+        inset 0 1px 2px rgba(0,0,0,0.3), /* Adjusted active hover shadow */
+        inset 0 -1px 0 rgba(255,255,255,0.14),
+        inset 1px 0 1px rgba(0,0,0,0.2),
+        inset -1px 0 1px rgba(0,0,0,0.2);
 }
 
 .taskbar-item img {
@@ -179,7 +187,10 @@
     height: var(--icon-size-small);
     margin-right: 6px;
     flex-shrink: 0;
-    position: relative;
+    position: relative; /* Change back to relative for fine-tuning */
+    display: inline-block; /* Better for vertical alignment */
+    top: 1px; /* Slight downward adjustment */
+    vertical-align: middle; /* Ensure vertical centering */
 }
 
 .taskbar-item span {
@@ -187,8 +198,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    position: relative;
+    position: relative; /* Change back to relative for alignment with icon */
     min-width: 0; /* Allows text to shrink properly */
+    display: inline-block; /* Better alignment with icon */
+    vertical-align: middle; /* Ensure vertical centering */
+    line-height: var(--taskbar-item-height); /* Match line height to container height */
 }
 
 /* System tray */

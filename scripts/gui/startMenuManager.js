@@ -80,9 +80,34 @@ export default class StartMenu {
     createAllProgramsMenu() {
         const menuHTML = `
             <ul class="all-programs-items">
+                <li class="all-programs-item" data-program-name="messenger">
+                    <img src="./assets/gui/start-menu/msn-messenger.webp" alt="MSN Messenger">
+                    MSN Messenger
+                </li>
+                <li class="all-programs-item" data-program-name="music-player">
+                    <img src="./assets/gui/start-menu/music-player.webp" alt="Music Player">
+                    Music Player
+                </li>
+                <li class="all-programs-item" data-program-name="my-pictures">
+                    <img src="./assets/gui/start-menu/photo-viewer.webp" alt="Photo Viewer">
+                    Photo Viewer
+                </li>
+                <li class="all-programs-item" data-program-name="notepad">
+                    <img src="./assets/gui/start-menu/notepad.webp" alt="Notepad">
+                    Notepad
+                </li>
+                <li class="all-programs-item" data-program-name="cmd-prompt">
+                    <img src="./assets/gui/start-menu/command-prompt.webp" alt="Command Prompt">
+                    Command Prompt
+                </li>
+                <li class="all-programs-separator"></li>
                 <li class="all-programs-item" data-program-name="about-me">
                     <img src="./assets/gui/start-menu/about-me.webp" alt="About Me">
                     About Me
+                </li>
+                <li class="all-programs-item" data-program-name="my-projects">
+                    <img src="./assets/gui/desktop/my-projects.webp" alt="My Projects">
+                    My Projects
                 </li>
                 <li class="all-programs-item" data-program-name="contact-me">
                     <img src="./assets/gui/start-menu/email.webp" alt="Contact Me">
@@ -100,27 +125,25 @@ export default class StartMenu {
                     <img src="./assets/gui/start-menu/instagram.webp" alt="Instagram">
                     Instagram
                 </li>
-                <li class="all-programs-separator"></li>
-                <li class="all-programs-item" data-program-name="music-player">
-                    <img src="./assets/gui/start-menu/music-player.webp" alt="Music Player">
-                    Music Player
-                </li>
-                <li class="all-programs-item" data-program-name="cmd-prompt">
-                    <img src="./assets/gui/start-menu/command-prompt.webp" alt="Command Prompt">
-                    Command Prompt
-                </li>
-                <li class="all-programs-item" data-program-name="notepad">
-                    <img src="./assets/gui/start-menu/notepad.webp" alt="Notepad">
-                    Notepad
-                </li>
-                <li class="all-programs-item" data-program-name="messenger">
-                    <img src="./assets/gui/start-menu/msn-messenger.webp" alt="MSN Messenger">
-                    MSN Messenger
-                </li>
             </ul>
         `;
-        this._createSubMenu('all-programs-menu', menuHTML, 'allProgramsMenu');
-        // Note: Specific event listeners for All Programs items are handled by delegation setup later
+        const menuElement = this._createSubMenu('all-programs-menu', menuHTML, 'allProgramsMenu');
+        
+        // Add mousedown/mouseup event listeners for the clicked effect
+        const items = menuElement.querySelectorAll('.all-programs-item');
+        items.forEach(item => {
+            item.addEventListener('mousedown', e => {
+                e.preventDefault(); // Prevent text selection
+                e.target.closest('.all-programs-item').classList.add('menu-item-clicked');
+            });
+            
+            // Remove the effect on mouseup, mouseleave, and mouseout to ensure it's removed
+            ['mouseup', 'mouseleave', 'mouseout'].forEach(eventType => {
+                item.addEventListener(eventType, e => {
+                    e.target.closest('.all-programs-item')?.classList.remove('menu-item-clicked');
+                });
+            });
+        });
     }
     
     /**
@@ -169,7 +192,23 @@ export default class StartMenu {
         `;
         const menuElement = this._createSubMenu('most-used-tools-menu', menuHTML, 'mostUsedToolsMenu');
         
-        // Add specific click event listener after creation
+        // Add mousedown/mouseup event listeners for the clicked effect
+        const items = menuElement.querySelectorAll('.most-used-tools-item');
+        items.forEach(item => {
+            item.addEventListener('mousedown', e => {
+                e.preventDefault(); // Prevent text selection
+                e.target.closest('.most-used-tools-item').classList.add('menu-item-clicked');
+            });
+            
+            // Remove the effect on mouseup, mouseleave, and mouseout to ensure it's removed
+            ['mouseup', 'mouseleave', 'mouseout'].forEach(eventType => {
+                item.addEventListener(eventType, e => {
+                    e.target.closest('.most-used-tools-item')?.classList.remove('menu-item-clicked');
+                });
+            });
+        });
+        
+        // Add click event listener for handling clicks
         menuElement.addEventListener('click', this._handleMenuClick.bind(this));
     }
 
@@ -198,6 +237,22 @@ export default class StartMenu {
             </ul>
         `;
         const menuElement = this._createSubMenu('ai-tools-menu', menuHTML, 'aiToolsMenu');
+        
+        // Add mousedown/mouseup event listeners for the clicked effect
+        const items = menuElement.querySelectorAll('.ai-tools-item');
+        items.forEach(item => {
+            item.addEventListener('mousedown', e => {
+                e.preventDefault(); // Prevent text selection
+                e.target.closest('.ai-tools-item').classList.add('menu-item-clicked');
+            });
+            
+            // Remove the effect on mouseup, mouseleave, and mouseout to ensure it's removed
+            ['mouseup', 'mouseleave', 'mouseout'].forEach(eventType => {
+                item.addEventListener(eventType, e => {
+                    e.target.closest('.ai-tools-item')?.classList.remove('menu-item-clicked');
+                });
+            });
+        });
         
         // Add specific click event listener after creation
         menuElement.addEventListener('click', this._handleMenuClick.bind(this));
@@ -354,9 +409,14 @@ export default class StartMenu {
             const clickedOnMenu = this.startMenu.contains(target);
             const clickedOnButton = this.startButton.contains(target);
             const clickedOnAllPrograms = this.allProgramsMenu?.contains(target);
+            
+            // NEW: Check if click was in the Most Used Tools or AI Tools menus
+            const clickedOnMostUsedTools = this.mostUsedToolsMenu?.contains(target);
+            const clickedOnAiTools = this.aiToolsMenu?.contains(target);
 
             // If the click was NOT on menu/button/submenu AND not the overlay/iframe, close.
-            if (!clickedOnMenu && !clickedOnButton && !clickedOnAllPrograms) {
+            if (!clickedOnMenu && !clickedOnButton && !clickedOnAllPrograms && 
+                !clickedOnMostUsedTools && !clickedOnAiTools) {
                 e.stopPropagation();
                 e.preventDefault(); 
                 // Explicitly hide All Programs submenu first
@@ -385,6 +445,10 @@ export default class StartMenu {
         const programName = target.dataset.programName;
         const url = target.dataset.url;
 
+        // Check if the click is on an item in the Most Used Tools or AI Tools submenu
+        const isInMostUsedToolsMenu = target.classList.contains('most-used-tools-item');
+        const isInAiToolsMenu = target.classList.contains('ai-tools-item');
+
         if (action === 'open-program' && programName) {
             this.openProgram(programName);
             this.closeStartMenu();
@@ -397,10 +461,10 @@ export default class StartMenu {
             this.eventBus.publish(EVENTS.LOG_OFF_REQUESTED);
             this.closeStartMenu();
         } else if (action === 'shut-down') {
-             // Shut down: Remove session state and reload page
-             sessionStorage.removeItem('logged_in');
-             window.location.reload();
-             // No need to close menu as page reloads
+            // Shut down: Remove session state and reload page
+            sessionStorage.removeItem('logged_in');
+            window.location.reload();
+            // No need to close menu as page reloads
         } else if (action === 'toggle-all-programs') {
             // Handled by mouseenter/mouseleave for now
         } else if (action === 'toggle-most-used-tools') {
@@ -408,8 +472,18 @@ export default class StartMenu {
         } else if (action === 'toggle-ai-tools') {
             // Handled by mouseenter/mouseleave
         } else if (programName) { 
-             this.openProgram(programName);
-             this.closeStartMenu();
+            // For items in Most Used Tools or AI Tools menus, don't close the menu
+            if (isInMostUsedToolsMenu || isInAiToolsMenu) {
+                // Prevent default to avoid any side effects
+                event.preventDefault();
+                event.stopPropagation();
+                
+                console.log(`Clicked on ${programName} in showcase menu`);
+            } else {
+                // For other program items, open the program and close the menu as before
+                this.openProgram(programName);
+                this.closeStartMenu();
+            }
         }
     }
 
@@ -683,6 +757,12 @@ export default class StartMenu {
             visibility: 'visible' // Make visible now
         });
         
+        // Add mouseleave event to the menu itself
+        this.mostUsedToolsMenu.addEventListener('mouseleave', (e) => {
+            if (e.relatedTarget && (e.relatedTarget === button || e.relatedTarget.closest('#menu-program4'))) return;
+            this.hideMostUsedToolsMenu();
+        });
+        
         this.mostUsedToolsMenu.classList.add('mut-menu-active');
         button.classList.add('active-submenu-trigger');
     }
@@ -721,7 +801,7 @@ export default class StartMenu {
                 this.hideAiToolsMenu();
             });
             this.aiToolsMenu.classList.add('active');
-            aiToolsButton.classList.add('ai-tools-active'); // New active class
+            aiToolsButton.classList.add('active-submenu-trigger'); // Use the same class as Most Used Tools
         }
     }
     
@@ -734,7 +814,7 @@ export default class StartMenu {
             this.aiToolsMenu.classList.remove('active');
             const aiToolsButton = this.startMenu.querySelector('#menu-ai-tools');
             if (aiToolsButton) {
-                aiToolsButton.classList.remove('ai-tools-active'); // New active class
+                aiToolsButton.classList.remove('active-submenu-trigger'); // Use the same class as Most Used Tools
             }
         }
     }

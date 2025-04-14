@@ -27,11 +27,14 @@
 
 .title-bar {
     border-radius: 6px 6px 0 0;
-    margin: 0;
+    margin: 0 -1px; /* Extend 1px left and right */
     padding-bottom: 1px;
     overflow: hidden;
     display: flex;
     justify-content: space-between;
+    width: calc(100% + 2px); /* Increase width by 2px */
+    box-sizing: border-box; /* Ensure width calculation is correct */
+    position: relative; /* Needed for positioning if required */
 }
 
 .title-bar-left {

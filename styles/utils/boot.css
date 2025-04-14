@@ -13,6 +13,7 @@
     justify-content: center;
     align-items: center;
     user-select: none; /* Prevent text selection */
+    cursor: none;
 }
 
 /* Boot screen - black with loading bar */
@@ -29,6 +30,9 @@
     flex-direction: column;
     align-items: center;
     user-select: none; /* Prevent text selection */
+    opacity: 0; /* Initially hidden */
+    animation: fadeIn 0.15s ease-in forwards; /* Changed from 0.3s to 0.15s */
+    animation-delay: 1.5s; /* Delay appearance by 1.5 seconds */
 }
 
 #boot-logo {
@@ -75,12 +79,12 @@
 
 /* Login screen - container for iframe */
 #login-screen {
-    background-color: #000; /* Optional: background while iframe loads */
+    background-color: #000; /* Reverted from transparent to original black */
     opacity: 0; /* Hidden initially */
     pointer-events: none; /* Disabled initially */
     padding: 0; /* Remove padding if any */
     overflow: hidden; /* Hide potential iframe scrollbars */
-    transition: opacity 0.3s ease-in-out; /* Added fast fade-in transition */
+    transition: opacity 0.3s ease-in-out; /* Restored original transition */
     opacity: 0; /* Will be shown after login */
 }
 
@@ -107,6 +111,9 @@
     align-items: flex-start; /* Left-align text */
     line-height: 1.4; /* Reverted */
     user-select: none; /* Prevent text selection */
+    opacity: 0; /* Initially hidden */
+    animation: fadeIn 0.15s ease-in forwards; /* Changed from 0.3s to 0.15s */
+    animation-delay: 1.5s; /* Delay appearance by 1.5 seconds */
 }
 
 .boot-bottom-right {
@@ -114,10 +121,19 @@
     bottom: 50px; /* Increased */
     right: 100px; /* Decreased */
     user-select: none; /* Prevent text selection */
+    opacity: 0; /* Initially hidden */
+    animation: fadeIn 0.15s ease-in forwards; /* Changed from 0.3s to 0.15s */
+    animation-delay: 1.5s; /* Delay appearance by 1.5 seconds */
 }
 
 .boot-bottom-right img {
     display: block; /* Remove potential extra space */
     height: 35px; /* Fixed height */
     width: auto; /* Maintain aspect ratio */
-} 
+}
+
+/* Animation for fading in elements */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

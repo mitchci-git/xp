@@ -8,6 +8,9 @@
  * @module boot
  */
 
+// Variable to track if log off is in cooldown period
+let logOffCooldown = false;
+
 /**
  * Initializes the boot sequence for the Windows XP simulation
  * 
@@ -83,6 +86,13 @@ export function initBootSequence(eventBus, EVENTS) {
         loginScreen.style.opacity = '0';
         loginScreen.style.pointerEvents = 'none';
         
+        // Set the iframe source WITH the logoff parameter to trigger cooldown
+        const loginIframe = document.getElementById('login-iframe');
+        if (loginIframe) {
+            const currentSrc = loginIframe.src.split('?')[0]; // Remove any existing params
+            loginIframe.src = `${currentSrc}?logoff=true`; // Add logoff=true here
+        }
+        
         // Hide CRT effects during boot animation
         if (crtScanline) crtScanline.style.display = 'none';
         if (crtVignette) crtVignette.style.display = 'none';
@@ -102,11 +112,11 @@ export function initBootSequence(eventBus, EVENTS) {
         void bootScreen.offsetWidth;
         
         // ANIMATION SEQUENCE TIMINGS:
-        // 1. Boot screen visible for 5 seconds
+        // 1. Boot screen visible for 6.5 seconds (increased from 5s)
         // 2. Black screen transition for 1 second
         // 3. Login screen fade-in
         
-        // Stage 1: Boot screen animation (5s)
+        // Stage 1: Boot screen animation (6.5s)
         setTimeout(() => {
             bootScreen.style.display = 'none';
 
@@ -123,7 +133,7 @@ export function initBootSequence(eventBus, EVENTS) {
                     loginScreen.style.opacity = '1';
                 }, 50);
             }, 1000);
-        }, 5000);
+        }, 6500); // Changed from 5000 to 6500 (added 1.5s)
     }
     
     /**
@@ -158,6 +168,16 @@ export function initBootSequence(eventBus, EVENTS) {
         
         // Persist login state for this session
         sessionStorage.setItem('logged_in', 'true');
+        
+        // Activate log off cooldown immediately after login
+        logOffCooldown = true;
+        console.log('Log off cooldown ACTIVATED immediately after login.'); // Debug log
+        
+        // Set timeout to deactivate log off cooldown after 4.25 seconds
+        setTimeout(() => {
+            logOffCooldown = false;
+            console.log('Log off cooldown DEACTIVATED after 4.25 seconds.'); // Debug log
+        }, 4250); // Changed from 5000ms to 4250ms
     }
 
     // Event listener for communication with login iframe
@@ -188,36 +208,98 @@ export function initBootSequence(eventBus, EVENTS) {
      * Shows login screen without full reboot
      */
     eventBus.subscribe(EVENTS.LOG_OFF_REQUESTED, () => {
-        // Hide desktop during log off
-        desktop.style.opacity = '0';
-        desktop.style.pointerEvents = 'none';
-
-        // Hide CRT effects during login screen
-        if (crtScanline) crtScanline.style.display = 'none';
-        if (crtVignette) crtVignette.style.display = 'none';
-        if (crtGlow) crtGlow.style.display = 'none';
-
-        // Play logoff sound
-        try {
-            const logoffSound = new Audio('./assets/sounds/logoff.wav');
-            logoffSound.play();
-        } catch (error) {
-            console.error('Error playing logoff sound:', error); 
+        // If in cooldown period, ignore the log off request
+        if (logOffCooldown) {
+            console.log('Log off ignored: cooldown period active');
+            return;
         }
-
-        // Reset login iframe to clear state
+        
+        // Set cooldown flag to prevent rapid log off/on cycles
+        logOffCooldown = true;
+        
+        // Reset login iframe first to ensure it's ready when displayed
         const loginIframe = document.getElementById('login-iframe');
         if (loginIframe) {
-            loginIframe.src = loginIframe.src;
+            // Add logoff parameter to signal iframe to activate cooldown
+            const currentSrc = loginIframe.src.split('?')[0]; // Remove any existing params
+            loginIframe.src = `${currentSrc}?logoff=true`;
+            
+            // Add an onload event to ensure iframe is loaded before showing
+            loginIframe.onload = () => {
+                // Play logoff sound
+                try {
+                    const logoffSound = new Audio('./assets/sounds/logoff.wav');
+                    logoffSound.play();
+                } catch (error) {
+                    console.error('Error playing logoff sound:', error); 
+                }
+                
+                // Hide CRT effects
+                if (crtScanline) crtScanline.style.display = 'none';
+                if (crtVignette) crtVignette.style.display = 'none';
+                if (crtGlow) crtGlow.style.display = 'none';
+                
+                // Prepare login screen (hidden but ready)
+                loginScreen.style.display = 'flex';
+                loginScreen.style.opacity = '0';
+                loginScreen.style.pointerEvents = 'auto';
+                
+                // Force browser reflow to ensure display changes are processed
+                void loginScreen.offsetWidth;
+                
+                // Hide desktop and show login screen
+                desktop.style.opacity = '0';
+                desktop.style.pointerEvents = 'none';
+                
+                // Short timeout to ensure desktop starts fading before login appears
+                setTimeout(() => {
+                    loginScreen.style.opacity = '1';
+                    
+                    // Keep session storage intact but flag Windows as logged out
+                    // This lets us distinguish between full boot and log-off state
+                    sessionStorage.setItem('logged_in', 'false');
+                }, 50);
+            };
+            
+            // Fallback in case onload doesn't fire (e.g., cached iframe)
+            setTimeout(() => {
+                if (loginScreen.style.opacity !== '1') {
+                    console.log('Using fallback for login screen display');
+                    loginScreen.style.display = 'flex';
+                    loginScreen.style.opacity = '1';
+                    desktop.style.opacity = '0';
+                    desktop.style.pointerEvents = 'none';
+                    sessionStorage.setItem('logged_in', 'false');
+                }
+            }, 1000);
+        } else {
+            // Fallback if iframe element not found
+            console.error('Login iframe not found');
+            
+            // Play logoff sound
+            try {
+                const logoffSound = new Audio('./assets/sounds/logoff.wav');
+                logoffSound.play();
+            } catch (error) {
+                console.error('Error playing logoff sound:', error); 
+            }
+            
+            // Hide desktop during log off
+            desktop.style.opacity = '0';
+            desktop.style.pointerEvents = 'none';
+            
+            // Hide CRT effects during login screen
+            if (crtScanline) crtScanline.style.display = 'none';
+            if (crtVignette) crtVignette.style.display = 'none';
+            if (crtGlow) crtGlow.style.display = 'none';
+            
+            // Show login screen
+            loginScreen.style.display = 'flex';
+            loginScreen.style.opacity = '1';
+            loginScreen.style.pointerEvents = 'auto';
+            
+            // Update session storage
+            sessionStorage.setItem('logged_in', 'false');
         }
-        
-        // Show login screen
-        loginScreen.style.display = 'flex';
-        loginScreen.style.opacity = '1';
-        loginScreen.style.pointerEvents = 'auto';
-        
-        // Keep session storage intact but flag Windows as logged out
-        // This lets us distinguish between full boot and log-off state
-        sessionStorage.setItem('logged_in', 'false');
     });
-} 
+}

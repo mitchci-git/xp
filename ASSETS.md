@@ -4,6 +4,15 @@ This document provides a comprehensive overview of all assets used in the Window
 
 ## GUI Assets
 
+### Boot/Login Assets
+
+| Asset | Path | Purpose | Recommended Dimensions |
+|-------|------|---------|------------------------|
+| Loading Logo | ./assets/gui/boot/loading.webp | Boot screen loading logo | ~200x100px |
+| Boot Wordmark | ./assets/gui/boot/boot-wordmark.webp | Boot screen bottom-right text | ~150x20px |
+| User Login | ./assets/gui/boot/userlogin.webp | High-resolution user picture for login screen | 150x150px |
+| Shutdown | ./assets/gui/boot/shutdown.webp | High-resolution shutdown button for login screen | 48x48px |
+
 ### Desktop Icons (32x32px recommended)
 
 | Asset | Path | Purpose | 
@@ -176,4 +185,4 @@ The following assets are listed in the documentation but appear to be unused in 
 2. Resume (`./assets/gui/start-menu/resume.webp`) - Appears to be unused in the Start Menu
 
 ### Project Hub
-1. Placeholder (`./apps/my-web-work/projecthub/images/placeholder.webp`) - Not referenced in the code 
+1. Placeholder (`./apps/my-web-work/projecthub/images/placeholder.webp`) - Not referenced in the code

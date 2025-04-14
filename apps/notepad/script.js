@@ -116,7 +116,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleMenuAction(action) {
         switch(action) {
             case 'New':
-                showXPDialog();
+                const dialog = document.getElementById('xp-dialog');
+                if (dialog) {
+                    dialog.showModal(); // Directly show the dialog when 'New' is clicked
+                } else {
+                    console.error('Dialog element not found.');
+                }
                 break;
                 
             case 'Copy':
@@ -178,10 +183,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Setup XP-style dialog
+    let checkButtonState; // Declare the function reference at a higher scope
+    
     function setupXPDialog() {
         const dialog = document.getElementById('xp-dialog');
         const closeBtn = dialog.querySelector('[data-action="close"]');
-        const yesBtn = document.getElementById('xp-dialog-ok');
+        const realYesBtn = document.getElementById('xp-dialog-ok');
+        const fakeYesBtn = document.getElementById('fake-disabled-yes');
         const noBtn = document.getElementById('xp-dialog-no');
 
         // Setup close button
@@ -189,12 +197,13 @@ document.addEventListener('DOMContentLoaded', function() {
             dialog.close();
         });
 
-        // Setup action buttons
-        yesBtn.addEventListener('click', () => {
+        // Setup real Yes button - saves changes and clears the document
+        realYesBtn.addEventListener('click', () => {
             dialog.close();
             clearNotepad();
         });
 
+        // Setup No button
         noBtn.addEventListener('click', () => {
             dialog.close();
             clearNotepad();
@@ -203,7 +212,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showXPDialog() {
         const dialog = document.getElementById('xp-dialog');
+        const realYesBtn = document.getElementById('xp-dialog-ok');
+        const fakeYesBtn = document.getElementById('fake-disabled-yes');
+        const notepadWindow = document.querySelector('.notepad-container .window');
+
+        // Check if the document has been modified
+        const isEmpty = notepadEditor.value.trim() === '';
+        
+        // CRITICAL CHANGE: Show either the real or fake button based on content
+        if (isEmpty) {
+            // When empty - show fake disabled button, hide real button
+            realYesBtn.style.display = 'none';
+            fakeYesBtn.style.display = 'block';
+        } else {
+            // When there's content - show real clickable button, hide fake button
+            realYesBtn.style.display = 'block';
+            fakeYesBtn.style.display = 'none';
+        }
+        
+        // Function to toggle between the buttons based on content
+        const updateButtonState = () => {
+            const isEmpty = notepadEditor.value.trim() === '';
+            if (isEmpty) {
+                realYesBtn.style.display = 'none';
+                fakeYesBtn.style.display = 'block';
+            } else {
+                realYesBtn.style.display = 'block';
+                fakeYesBtn.style.display = 'none';
+            }
+        };
+        
+        // Listen for input changes to update the button state
+        notepadEditor.addEventListener('input', updateButtonState);
+
+        // Set the Notepad window to inactive state
+        notepadWindow.classList.remove('active');
+        notepadWindow.classList.add('inactive');
+
+        // Set the dialog as the active window
+        dialog.classList.add('active');
+
         dialog.showModal();
+
+        // Restore the Notepad window to active state when the dialog is closed
+        dialog.addEventListener('close', () => {
+            notepadWindow.classList.remove('inactive');
+            notepadWindow.classList.add('active');
+            dialog.classList.remove('active');
+            
+            // Remove the input listener when dialog is closed
+            notepadEditor.removeEventListener('input', updateButtonState);
+        }, { once: true });
     }
 
     function clearNotepad() {

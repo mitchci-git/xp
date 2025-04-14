@@ -39,24 +39,18 @@ body, html {
 }
 
 /* Disabled menu items */
-.menu-item[data-menu="edit"],
-.menu-item[data-menu="format"],
-.menu-item[data-menu="view"],
-.menu-item[data-menu="help"] {
+.menu-item.disabled {
     color: #a0a0a0;
     cursor: default;
+    pointer-events: none;
+}
+
+.menu-item:hover:not(.disabled) {
+    background-color: #e5f3ff;
 }
 
 .menu-item:hover {
     background-color: #e5f3ff;
-}
-
-/* Prevent hover effect on disabled menu items */
-.menu-item[data-menu="edit"]:hover,
-.menu-item[data-menu="format"]:hover,
-.menu-item[data-menu="view"]:hover,
-.menu-item[data-menu="help"]:hover {
-    background-color: transparent;
 }
 
 .menu-item.active {
@@ -88,18 +82,18 @@ body, html {
 }
 
 /* Disabled menu options */
-.menu-option:not(:nth-child(1)):not(:nth-child(9)) {
+.menu-option.disabled {
     color: #a0a0a0;
     cursor: default;
+    pointer-events: none;
+}
+
+.menu-option:hover:not(.disabled) {
+    background-color: #e5f3ff;
 }
 
 .menu-option:hover {
     background-color: #e5f3ff;
-}
-
-/* Prevent hover effect on disabled menu options */
-.menu-option:not(:nth-child(1)):not(:nth-child(9)):hover {
-    background-color: transparent;
 }
 
 .menu-separator {
@@ -124,17 +118,21 @@ body, html {
 #notepad-editor {
     width: 100%;
     height: 100%;
-    padding: 2px;
-    font-family: 'Tahoma', sans-serif;
-    font-size: 15px;
-    line-height: 1.3;
-    letter-spacing: 0.2px;
-    color: #000000;
+    padding: 8px; /* Uniform 8px padding on all sides as specified */
+    font-family: 'Lucida Console', monospace; /* Changed to authentic Windows XP Notepad font */
+    font-size: 16px; /* Set to exact 16px as specified */
+    font-weight: normal; /* Changed to normal weight as specified */
+    line-height: 1.3; /* Keeping the specified line height */
+    color: #000000; /* Exact black color as specified */
     resize: none;
     border: none;
     outline: none;
-    background-color: #ffffff;
-    overflow: auto; /* Add scrollbars when needed */
+    background-color: #FFFFFF; /* Exact white background as specified */
+    overflow-y: auto; /* Vertical scrollbar only when needed */
+    overflow-x: hidden; /* Hide horizontal scrollbar for word wrap */
+    white-space: pre-wrap; /* Enable word wrap */
+    word-wrap: break-word; /* Ensure words break properly */
+    cursor: text; /* Default text I-beam cursor */
 }
 
 /* Status Bar */
@@ -181,30 +179,7 @@ body, html {
     left: 180px;
 }
 
-/* Notepad Dialog Styling */
-.notepad-dialog {
-    width: 320px; /* Further reduced width */
-    max-width: 80vw; /* Responsive width */
-    height: auto;
-}
-
-/* Dialog content container */
-.notepad-dialog .window-body > div {
-    padding: 3px 8px; /* Further reduced horizontal and vertical padding */
-}
-
-.notepad-dialog p {
-    margin: 5px 0 7px; /* Smaller margins */
-    text-align: center;
-}
-
-.notepad-dialog .field-row {
-    justify-content: center;
-    gap: 4px; /* Reduced gap between buttons */
-    margin-bottom: 4px; /* Smaller bottom margin */
-}
-
-/* Only positioning for the dialog, no custom styling */
+/* Dialog styling */
 #xp-dialog {
     position: fixed;
     top: 50%;
@@ -215,8 +190,89 @@ body, html {
     padding: 0;
     background: transparent;
     margin: 0;
+    user-select: none;
 }
 
 #xp-dialog::backdrop {
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: transparent;
+}
+
+/* Disable text selection for the Notepad popup */
+#xp-dialog * {
+    user-select: none;
+}
+
+/* Match exactly the standard window styling including shadows */
+#xp-dialog .window {
+    border: 2px solid #0055EA;
+    border-top-width: 2px; /* Ensure there's a top border */
+    border-radius: 8px;
+    box-shadow: none; /* Remove default shadow */
+    overflow: hidden;
+    position: relative; /* For pseudo-element positioning */
+}
+
+/* Add custom shadow with pseudo-element to ensure it respects border radius */
+#xp-dialog .window::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 8px;
+    box-shadow: 1px 1px 6px rgba(0, 0, 0, 0.4);
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Fix title bar spacing and dimensions */
+#xp-dialog .title-bar {
+    margin: 0 -1px;
+    width: calc(100% + 2px);
+    box-sizing: border-box;
+    height: 30px; /* Set exact height to 30px */
+    position: relative;
+    top: -1px; /* Move up 1px total (0.5px + 0.5px) */
+    border-radius: 6px 6px 0 0;
+    overflow: hidden;
+}
+
+/* Match titlebar text styling with main program */
+#xp-dialog .title-bar-text {
+    font-weight: bold;
+    color: white;
+    padding: 3px 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'Tahoma', sans-serif;
+    font-size: 12px;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.7);
+}
+
+/* Fix for title bar buttons in dialog */
+#xp-dialog .title-bar-controls button {
+    position: relative;
+    margin: 3px 2px;
+    padding: 0;
+    width: 22px;
+    height: 22px;
+    border: none;
+}
+
+/* Move the close button closer to the right edge */
+#xp-dialog .title-bar-controls {
+    margin-right: -2px; /* Changed from -1px to -2px */
+}
+
+/* Styling for disabled buttons in dialog */
+#xp-dialog button:disabled,
+#xp-dialog-ok:disabled {
+    opacity: 0.5 !important;
+    background-color: #f0f0f0 !important;
+    color: #888888 !important;
+    cursor: not-allowed !important;
+    box-shadow: inset -1px -1px #999, inset 1px 1px #fff, inset -2px -2px #dfdfdf, inset 2px 2px #dfdfdf !important;
+    pointer-events: none !important;
 }

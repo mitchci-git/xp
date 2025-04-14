@@ -1,4 +1,21 @@
 // Login Screen Logic
+// Variable to track if login is in cooldown period
+let loginCooldown = false;  // Start with NO cooldown by default
+
+// Check if this is being loaded after a log off (via URL parameter)
+const urlParams = new URLSearchParams(window.location.search);
+const isLogOff = urlParams.get('logoff') === 'true';
+const isInitial = urlParams.get('initial') === 'true';
+
+// Only activate cooldown if this is loaded after a log off
+if (isLogOff) {
+    loginCooldown = true;
+    console.log('Login cooldown activated due to log off');
+} else {
+    // If it's the initial load (not logoff), log that
+    console.log('Initial login cooldown activated');
+}
+
 const userProfiles = document.querySelectorAll('.back-gradient'); // Now selects only one
 // const loginPassword1 = document.querySelector('.login-password1'); // Removed
 // const loginPassword2 = document.querySelector('.login-password2'); // Removed
@@ -10,6 +27,12 @@ const userProfiles = document.querySelectorAll('.back-gradient'); // Now selects
 userProfiles.forEach((profileElement) => {
     // No need to remove 'active' from others if there's only one
     profileElement.addEventListener('click', function () {
+        // Check if login is in cooldown period
+        if (loginCooldown) {
+            console.log('Login prevented: cooldown period active');
+            return;
+        }
+        
         // Add .active to the clicked profile (even if redundant, keeps logic consistent)
         profileElement.classList.add('active');
         
@@ -34,6 +57,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     } else {
         console.error('Login screen: Could not find shutdown icon!'); // Debug
+    }
+    
+    // Only set a timeout to remove the login cooldown if it's active (due to logoff or initial)
+    if (loginCooldown) {
+        const cooldownDuration = 2000; // Changed to 2 seconds
+        console.log(`Setting login cooldown timeout: ${cooldownDuration}ms`); // Log the new duration
+        setTimeout(() => {
+            loginCooldown = false;
+            console.log('Login cooldown period ended');
+        }, cooldownDuration); 
     }
 });
 

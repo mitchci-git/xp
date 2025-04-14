@@ -12,20 +12,20 @@
         <!-- Menu Bar -->
         <div class="menu-bar">
             <div class="menu-item" data-menu="file">File</div>
-            <div class="menu-item" data-menu="edit">Edit</div>
-            <div class="menu-item" data-menu="format">Format</div>
-            <div class="menu-item" data-menu="view">View</div>
-            <div class="menu-item" data-menu="help">Help</div>
+            <div class="menu-item disabled" data-menu="edit">Edit</div>
+            <div class="menu-item disabled" data-menu="format">Format</div>
+            <div class="menu-item disabled" data-menu="view">View</div>
+            <div class="menu-item disabled" data-menu="help">Help</div>
             
             <!-- File Menu -->
             <div id="file-menu" class="dropdown-menu">
                 <div class="menu-option">New</div>
-                <div class="menu-option">Open...</div>
-                <div class="menu-option">Save</div>
-                <div class="menu-option">Save As...</div>
+                <div class="menu-option disabled">Open...</div>
+                <div class="menu-option disabled">Save</div>
+                <div class="menu-option disabled">Save As...</div>
                 <div class="menu-separator"></div>
-                <div class="menu-option">Page Setup...</div>
-                <div class="menu-option">Print...</div>
+                <div class="menu-option disabled">Page Setup...</div>
+                <div class="menu-option disabled">Print...</div>
                 <div class="menu-separator"></div>
                 <div class="menu-option">Exit</div>
             </div>
@@ -84,21 +84,23 @@
 
     <!-- XP Style Dialog -->
     <dialog id="xp-dialog">
-        <div class="window active notepad-dialog" style="min-width: auto; min-height: auto;">
+        <div class="window active" style="width: 250px; min-width: auto; min-height: auto;">
             <div class="title-bar">
-                <div class="title-bar-left">
-                    <div class="title-bar-text">Notepad</div>
-                </div>
+                <div class="title-bar-text">Notepad</div>
                 <div class="title-bar-controls">
-                    <button aria-label="Close" data-action="close" id="xp-dialog-close"></button>
+                    <button aria-label="Close" id="xp-dialog-close" data-action="close"></button>
                 </div>
             </div>
-            <div class="window-inactive-mask"></div>
             <div class="window-body">
-                <div>
-                    <p>Do you want to save changes to Untitled?</p>
-                    <div class="field-row">
-                        <button id="xp-dialog-ok" style="width: 75px; height: 23px;">Yes</button>
+                <div style="padding: 6px 12px;">
+                    <p style="margin: 6px 0 12px; text-align: center;">Do you want to save changes to Untitled?</p>
+                    <div class="field-row" style="justify-content: center; gap: 10px; margin-bottom: 6px;">
+                        <!-- Active Yes button that will be shown when there's text -->
+                        <button id="xp-dialog-ok" style="width: 75px; height: 23px; display: none;">Yes</button>
+                        
+                        <!-- Fake disabled button with EXACT same styling as the No button -->
+                        <button id="fake-disabled-yes" disabled style="width: 75px; height: 23px; opacity: 0.5; pointer-events: none;">Yes</button>
+                        
                         <button id="xp-dialog-no" style="width: 75px; height: 23px;">No</button>
                     </div>
                 </div>

@@ -1,5 +1,3 @@
-IGNORE FOR NOW
-
 GitHub Copilot
 Architectural Intent
 Why Responsibilities Are Split Between These Specific Files
