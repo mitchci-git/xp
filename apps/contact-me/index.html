@@ -4,103 +4,780 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Me</title>
+    <link rel="stylesheet" href="https://unpkg.com/xp.css@0.2.3/dist/XP.css" crossorigin="anonymous"> <!-- Added XP.css link -->
     <style>
         body {
-            font-family: 'Tahoma', sans-serif;
-            background-color: #ECE9D8;
+            font-family: 'Tahoma', Arial, sans-serif;
             margin: 0;
             padding: 0;
             color: #000;
             height: 100vh;
-            overflow: auto;
-        }
-        .window-content {
-            border: none;
-            border-radius: 0;
-            padding: 20px;
-            background-color: #fff;
-            height: 100%;
-            box-sizing: border-box;
-        }
-        h1 {
-            color: #0055EA;
-            text-align: center;
-            font-size: 18px;
-            margin-bottom: 15px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .form-input {
-            width: 100%;
-            padding: 5px;
-            background-color: #FFFFFF;
-            border: 1px solid #7B9EBD;
-            box-sizing: border-box;
-        }
-        .form-textarea {
-            width: 100%;
-            padding: 5px;
-            background-color: #FFFFFF;
-            border: 1px solid #7B9EBD;
-            height: 100px;
-            resize: none;
-            box-sizing: border-box;
-        }
-        .button {
+            overflow: hidden;
             background-color: #ECE9D8;
-            border: 1px solid #D4D0C8;
-            border-radius: 3px;
-            padding: 5px 15px;
-            font-family: 'Tahoma', sans-serif;
-            font-size: 12px;
+        }
+        
+        .email-window {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background-color: #ECE9D8;
+        }
+        
+        .toolbar {
+            background-color: #ECE9D8; /* Reverted to darker grey */
+            border-bottom: 1px solid #ACA899;
+            padding: 2px 10px 2px 10px;
+            display: flex;
+            align-items: center;
+            height: 70px; /* Increased from 52px to 70px */
+            box-sizing: border-box;
+            margin-top: 0; /* Remove top margin if any */
+        }
+        
+        .toolbar-buttons {
+            display: flex;
+            align-items: center;
+            margin-left: -4px;
+        }
+        
+        /* Convert toolbar buttons to use XP.css button styles directly */
+        .toolbar-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            margin: 0 4px;
+            /* Use the button styles from XP.css library directly */
+        }
+        
+        .toolbar-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .toolbar-icon img {
+            width: 28px;
+            height: 28px;
+            display: block;
+        }
+        
+        /* Remove special larger social icon rule for consistency */
+        .toolbar-button:not(.with-text) .toolbar-icon img {
+            width: 28px;
+            height: 28px;
+        }
+        
+        .separator {
+            width: 1px;
+            height: 45px; /* Increased from 36px to 45px */
+            background-color: #ACA899;
+            margin: 0 10px; /* Increased from 8px to 10px */
+        }
+        
+        .main-content {
+            flex: 1;
+            background-color: #ECE9D8;
+            display: flex;
+            flex-direction: column;
+            padding: 10px 10px 10px 10px;
+            overflow: hidden;
+            padding-top: 10px; /* Ensure 10px above To field */
+        }
+        
+        .email-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin: 0; /* Remove all margins */
+            background-color: #ECE9D8;
+        }
+        
+        .field-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            height: 22px;
+        }
+        
+        .field-row:last-child {
+            margin-bottom: 0; /* Remove special margin for last field */
+        }
+        
+        .field-label {
+            font-size: 13px;
+            color: #000;
+            font-weight: normal;
+            width: 50px;
+            text-align: right;
+            padding-right: 5px;
+            letter-spacing: 0px;
+            user-select: none;
+        }
+        
+        .field-input {
+            font-family: 'Tahoma', Arial, sans-serif;
+            font-size: 13px;
+            border: 1px solid #7B9EBD;
+            padding: 3px 5px;
+            background-color: #FFFFFF;
+            width: 100%;
+            height: 22px;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        .field-input.readonly {
+            background-color: #F0F0F0;
+            color: #000000; /* Make To field text black instead of grey */
             cursor: default;
-            box-shadow: 1px 1px 0 #fff inset, -1px -1px 0 #707070 inset;
-            margin-top: 10px;
+            user-select: none;
         }
-        .info {
-            background-color: #F5F5F5;
-            border: 1px solid #D4D0C8;
-            padding: 10px;
-            margin-top: 20px;
+        
+        .field-input:focus {
+            border-color: #0055EA;
+            outline: none;
+        }
+        
+        .divider-container {
+            padding-top: 10px;
+            padding-bottom: 0;
+            display: block;
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: #ACA899;
+            margin: 0;
+            width: 100%;
+        }
+        
+        .email-body-container {
+            flex: 1;
+            background-color: #FFFFFF;
+            border: 1px solid #7B9EBD;
+            display: flex;
+            overflow: hidden;
+            margin: 0; /* Remove top margin */
+        }
+        
+        .email-body {
+            flex: 1;
+            border: none;
+            padding: 5px 6px 0 6px; /* Set top padding to 10px for space above first line */
+            font-size: 13px;
+            resize: none;
+            font-family: 'Tahoma', Arial, sans-serif;
+            background-color: #FFFFFF;
+            width: 100%;
+            height: calc(100% - 20px);
+            line-height: 1.4;
+            color: #000000;
+            outline: none;
+        }
+
+        /* >>> START: Added Notepad Menu Bar CSS <<< */
+        /* Menu Bar */
+        .menu-bar {
+            display: flex;
+            background-color: #ECE9D8; /* Changed to darker grey */
+            border-bottom: 1px solid #d7d7d7;
+            padding: 2px 0;
+            user-select: none;
             font-size: 12px;
+            flex-shrink: 0; /* Prevent shrinking */
         }
+
+        .menu-item {
+            padding: 2px 8px;
+            cursor: default;
+            position: relative;
+        }
+
+        /* Disabled menu items */
+        .menu-item.disabled {
+            color: #a0a0a0;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .menu-item:hover:not(.disabled) {
+            background-color: #e5f3ff;
+        }
+
+        .menu-item.active {
+            background-color: #cce8ff;
+        }
+
+        /* Dropdown Menus */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 24px; /* Position relative to menu-bar */
+            background-color: #ffffff;
+            border: 1px solid #d7d7d7;
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            min-width: 150px;
+            font-size: 11px;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .menu-option {
+            padding: 4px 20px 4px 30px;
+            cursor: default;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        /* Disabled menu options */
+        .menu-option.disabled {
+            color: #a0a0a0;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .menu-option:hover:not(.disabled) {
+            background-color: #e5f3ff;
+        }
+
+        .menu-separator {
+            height: 1px;
+            background-color: #d7d7d7;
+            margin: 4px 0;
+        }
+
+        /* Menu Positioning */
+        #file-menu { left: 0; }
+        #edit-menu { left: 40px; }
+        #format-menu { left: 80px; }
+        #view-menu { left: 130px; }
+        #help-menu { left: 180px; }
+        /* >>> END: Added Notepad Menu Bar CSS <<< */
+
+        /* --- FIX: Prevent Notepad styles from affecting XP.css popups --- */
+        /* Ensure Notepad styles only apply inside .email-window, not to global .window popups */
+        .email-window .menu-bar,
+        .email-window .menu-item,
+        .email-window .dropdown-menu,
+        .email-window .menu-option,
+        .email-window .menu-separator {
+            /* All menu bar styles scoped to .email-window */
+        }
+        .email-window .field-row,
+        .email-window .field-label,
+        .email-window .field-input,
+        .email-window .email-body,
+        .email-window .main-content,
+        .email-window .divider-container,
+        .email-window .divider,
+        .email-window .toolbar,
+        .email-window .toolbar-buttons,
+        .email-window .toolbar-button,
+        .email-window .toolbar-icon,
+        .email-window .toolbar-icon img,
+        .email-window .separator {
+            /* All Notepad/Contact Me styles scoped to .email-window */
+        }
+        /* --- END FIX --- */
+
+        .field-input::placeholder, .email-body::placeholder {
+            color: #b0b0b0;
+            opacity: 1;
+            font-style: italic;
+        }
+
+        /* --- FORMAT TOOLBAR (fresh) --- */
+        .format-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            background: #ECE9D8;
+            padding: 0;
+            border: none;
+            min-height: 28px;
+            height: 28px;
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        .format-toolbar .format-btn,
+        .format-toolbar select {
+            background: #f4f4f4;
+            color: #a0a0a0;
+            border: 1px solid #d7d7d7;
+            font-size: 13px;
+            padding: 0 8px;
+            margin: 0 2px;
+            pointer-events: none;
+            opacity: 1;
+            min-width: 28px;
+            min-height: 22px;
+            height: 22px;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .format-toolbar select {
+            min-width: 48px;
+            padding: 0 6px;
+        }
+        .format-toolbar .format-btn b,
+        .format-toolbar .format-btn i,
+        .format-toolbar .format-btn u {
+            font-size: 13px;
+        }
+        .format-toolbar .format-separator {
+            width: 1px;
+            height: 22px;
+            background: #d7d7d7;
+            margin: 0 10px;
+        }
+        .format-toolbar * {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
     </style>
 </head>
 <body>
-    <div class="window-content">
-        <h1>Contact Me</h1>
-        
-        <div class="form-group">
-            <label class="form-label">Your Name:</label>
-            <input type="text" class="form-input" value="Windows User" disabled>
+    <div class="email-window">
+        <!-- >>> START: Added Notepad Menu Bar HTML <<< -->
+        <div class="menu-bar">
+            <div class="menu-item" data-menu="file">File</div>
+            <div class="menu-item disabled" data-menu="edit">Edit</div>
+            <div class="menu-item disabled" data-menu="format">Format</div>
+            <div class="menu-item disabled" data-menu="view">View</div>
+            <div class="menu-item disabled" data-menu="help">Help</div>
+
+            <!-- File Menu -->
+            <div id="file-menu" class="dropdown-menu">
+                <div class="menu-option" data-action="new">New</div>
+                <div class="menu-option disabled">Open...</div>
+                <div class="menu-option disabled">Save</div>
+                <div class="menu-option disabled">Save As...</div>
+                <div class="menu-separator"></div>
+                <div class="menu-option disabled">Page Setup...</div>
+                <div class="menu-option disabled">Print...</div>
+                <div class="menu-separator"></div>
+                <div class="menu-option" data-action="exit">Exit</div> <!-- Allow Exit -->
+            </div>
+
+            <!-- Edit Menu (All Disabled) -->
+            <div id="edit-menu" class="dropdown-menu">
+                <div class="menu-option disabled">Undo</div>
+                <div class="menu-separator"></div>
+                <div class="menu-option disabled">Cut</div>
+                <div class="menu-option disabled">Copy</div>
+                <div class="menu-option disabled">Paste</div>
+                <div class="menu-option disabled">Delete</div>
+                <div class="menu-separator"></div>
+                <div class="menu-option disabled">Find...</div>
+                <div class="menu-option disabled">Find Next</div>
+                <div class="menu-option disabled">Replace...</div>
+                <div class="menu-option disabled">Go To...</div>
+                <div class="menu-separator"></div>
+                <div class="menu-option disabled">Select All</div>
+                <div class="menu-option disabled">Time/Date</div>
+            </div>
+
+            <!-- Format Menu (All Disabled) -->
+            <div id="format-menu" class="dropdown-menu">
+                <div class="menu-option disabled">Word Wrap</div>
+                <div class="menu-option disabled">Font...</div>
+            </div>
+
+            <!-- View Menu (All Disabled) -->
+            <div id="view-menu" class="dropdown-menu">
+                <div class="menu-option disabled">Status Bar</div>
+            </div>
+
+            <!-- Help Menu (All Disabled) -->
+            <div id="help-menu" class="dropdown-menu">
+                <div class="menu-option disabled">Help Topics</div>
+                <div class="menu-separator"></div>
+                <div class="menu-option disabled">About Contact Me</div> <!-- Changed text -->
+            </div>
+        </div>
+        <!-- >>> END: Added Notepad Menu Bar HTML <<< -->
+
+        <div class="toolbar">
+            <div class="toolbar-buttons" style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                <div class="toolbar-group-left" style="display:flex; align-items:center;">
+                    <button class="toolbar-button" data-tooltip="Send Message" id="send-message-btn">
+                        <div class="toolbar-icon">
+                            <img src="assets/send.webp" alt="Send">
+                        </div>
+                    </button>
+                    <button class="toolbar-button" data-tooltip="Delete Message">
+                        <div class="toolbar-icon">
+                            <img src="assets/delete.webp" alt="Delete">
+                        </div>
+                    </button>
+                    <div class="separator"></div>
+                </div>
+                <div class="toolbar-group-right" style="display:flex; align-items:center;">
+                    <div class="separator"></div>
+                    <button class="toolbar-button" data-tooltip="LinkedIn" onclick="window.open('https://www.linkedin.com/', '_blank')">
+                        <div class="toolbar-icon">
+                            <img src="assets/linkedin.webp" alt="LinkedIn">
+                        </div>
+                    </button>
+                    <button class="toolbar-button" data-tooltip="Instagram" onclick="window.open('https://www.instagram.com/', '_blank')">
+                        <div class="toolbar-icon">
+                            <img src="assets/insta.webp" alt="Instagram">
+                        </div>
+                    </button>
+                </div>
+            </div>
         </div>
         
-        <div class="form-group">
-            <label class="form-label">Email Address:</label>
-            <input type="text" class="form-input" value="example@mail.com" disabled>
-        </div>
-        
-        <div class="form-group">
-            <label class="form-label">Subject:</label>
-            <input type="text" class="form-input" value="Placeholder Subject" disabled>
-        </div>
-        
-        <div class="form-group">
-            <label class="form-label">Message:</label>
-            <textarea class="form-textarea" disabled>Placeholder message text. This Contact Me form is a template and will be replaced with actual content in the future.</textarea>
-        </div>
-        
-        <button class="button">Send Message</button>
-        
-        <div class="info">
-            <strong>Note:</strong> This is a placeholder contact form. Actual contact information and functionality will be implemented in the future.
+        <div class="main-content">
+            <div class="email-fields">
+                <div class="field-row">
+                    <div class="field-label">To:</div>
+                    <input type="text" class="field-input readonly" value="mitchqqis@gmail.com" readonly>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">From:</div>
+                    <input type="text" class="field-input" value="" placeholder="Your email address" style="letter-spacing:0px;">
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">Subject:</div>
+                    <input type="text" class="field-input" value="" placeholder="Subject of your message" style="letter-spacing:0px;">
+                </div>
+            </div>
+            
+            <div class="divider-container">
+                <div class="divider"></div>
+            </div>
+            <div style="height:5px;"></div>
+            <div class="format-toolbar">
+                <select disabled>
+                    <option>Tahoma</option>
+                </select>
+                <select disabled>
+                    <option>12</option>
+                </select>
+                <div class="format-separator"></div>
+                <button class="format-btn" disabled title="Bold"><b>B</b></button>
+                <button class="format-btn" disabled title="Italic"><i>I</i></button>
+                <button class="format-btn" disabled title="Underline"><u>U</u></button>
+                <button class="format-btn" disabled title="Text Color">A</button>
+                <button class="format-btn" disabled title="Highlight">🖍</button>
+                <button class="format-btn" disabled title="Align Left">⯇</button>
+                <button class="format-btn" disabled title="Align Center">≡</button>
+                <button class="format-btn" disabled title="Align Right">⯈</button>
+            </div>
+            <div style="height:5px;"></div>
+            <div class="email-body-container">
+                <textarea class="email-body" placeholder="Write your message here"></textarea>
+            </div>
         </div>
     </div>
+    
+    <script type="module">
+        import { setupTooltips } from '../../scripts/utils/tooltip.js';
+        import { setupIframeActivation } from '../../scripts/utils/iframeManager.js'; // Import standard helper
+
+        // Initialize tooltips on all toolbar buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            setupTooltips('.toolbar-button[data-tooltip]');
+            setupIframeActivation(); // Setup iframe activation
+
+            // Add click event listener to the delete button
+            const deleteButton = document.querySelector('.toolbar-button[data-tooltip="Delete Message"]');
+            if (deleteButton) {
+                deleteButton.addEventListener('click', (e) => {
+                    // Remove any existing popup
+                    const existing = document.getElementById('xp-demo-popup');
+                    if (existing) existing.remove();
+                    // Add inactive mask to contact-me window
+                    const contactWin = document.querySelector('.email-window');
+                    if (contactWin && !document.getElementById('contact-inactive-mask')) {
+                        const mask = document.createElement('div');
+                        mask.id = 'contact-inactive-mask';
+                        mask.style.position = 'fixed';
+                        mask.style.top = '0';
+                        mask.style.left = '0';
+                        mask.style.width = '100vw';
+                        mask.style.height = '100vh';
+                        mask.style.background = 'rgba(255,255,255,0.35)';
+                        mask.style.zIndex = '9999';
+                        mask.style.pointerEvents = 'auto';
+                        mask.style.cursor = 'default';
+                        mask.addEventListener('mousedown', e => e.preventDefault());
+                        mask.addEventListener('mouseup', e => e.preventDefault());
+                        mask.addEventListener('click', e => e.preventDefault());
+                        mask.addEventListener('focus', e => e.preventDefault());
+                        document.body.appendChild(mask);
+                    }
+                    // Remove focus from any element to prevent flashing caret
+                    document.activeElement && document.activeElement.blur();
+                    // Create popup (no min/max, Yes/Cancel, centered)
+                    const popup = document.createElement('div');
+                    popup.id = 'xp-demo-popup';
+                    // Center relative to contact-me window
+                    const parentWindow = document.querySelector('.email-window');
+                    let left = '50vw', top = '50vh', transform = 'translate(-50%, -50%)';
+                    if (parentWindow) {
+                        const rect = parentWindow.getBoundingClientRect();
+                        left = (rect.left + rect.width / 2) + 'px';
+                        top = (rect.top + rect.height / 2) + 'px';
+                    }
+                    popup.innerHTML = `
+                      <div class="window" style="margin: 0; width: 250px; position: fixed; left: ${left}; top: ${top}; transform: ${transform}; z-index: 10000; user-select: none;">
+                        <div class="title-bar">
+                          <div class="title-bar-text">Confirm Delete</div>
+                          <div class="title-bar-controls">
+                            <button aria-label="Close" id="popup-close"></button>
+                          </div>
+                        </div>
+                        <div class="window-body">
+                          <p style="user-select: none; text-align: center;">Are you sure? You will lose unsaved changes.</p>
+                          <section class="field-row" style="justify-content: center; user-select: none; gap: 10px;">
+                            <button id="popup-ok">Yes</button>
+                            <button id="popup-cancel">Cancel</button>
+                          </section>
+                        </div>
+                      </div>
+                    `;
+                    document.body.appendChild(popup);
+                    // Trap focus in popup while open
+                    setTimeout(() => {
+                        if (popup) {
+                            const firstBtn = popup.querySelector('button');
+                            if (firstBtn) firstBtn.focus();
+                        }
+                    }, 0);
+                    // Add event listeners for Yes and Cancel
+                    function closePopupAndMask() {
+                        popup.remove();
+                        const mask = document.getElementById('contact-inactive-mask');
+                        if (mask) mask.remove();
+                    }
+                    popup.querySelector('#popup-ok').addEventListener('click', () => {
+                        document.querySelectorAll('.field-input:not(.readonly)').forEach(input => input.value = '');
+                        document.querySelector('.email-body').value = '';
+                        closePopupAndMask();
+                    });
+                    popup.querySelector('#popup-cancel').addEventListener('click', closePopupAndMask);
+                    popup.querySelector('#popup-close').addEventListener('click', closePopupAndMask);
+                });
+            }
+
+            // Add click event listener to the send button for mailto
+            const sendButton = document.getElementById('send-message-btn');
+            if (sendButton) {
+                sendButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const to = "mitchqqis@gmail.com";
+                    const subjectInput = document.querySelector('input[placeholder="Subject of your message"]');
+                    const messageInput = document.querySelector('.email-body');
+                    const subject = subjectInput.value;
+                    const body = messageInput.value;
+                    const mailto = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    window.location.href = mailto;
+                    // Reset fields after opening mail client
+                    setTimeout(() => {
+                        document.querySelector('input[placeholder="Your email address"]').value = '';
+                        subjectInput.value = '';
+                        messageInput.value = '';
+                    }, 100);
+                });
+            }
+
+            // >>> START: Added Notepad Menu Bar JS <<<
+            setupMenus();
+            // >>> END: Added Notepad Menu Bar JS <<<
+        });
+
+        // >>> START: Added Notepad Menu Bar JS Functions <<<
+        let activeMenu = null;
+
+        function setupMenus() {
+            const menuItems = document.querySelectorAll('.menu-bar .menu-item');
+            const dropdownMenus = document.querySelectorAll('.menu-bar .dropdown-menu');
+
+            // Menu item click handlers
+            menuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (this.classList.contains('disabled')) return; // Skip disabled top-level items
+
+                    const menuType = this.getAttribute('data-menu');
+                    const menu = document.getElementById(`${menuType}-menu`);
+
+                    if (!menu) return; // Exit if no corresponding menu found
+
+                    // Close any other open menu
+                    if (activeMenu && activeMenu !== menuType) {
+                        closeAllMenus();
+                    }
+
+                    // Toggle the clicked menu
+                    if (menu.classList.contains('show')) {
+                        closeAllMenus();
+                    } else {
+                        closeAllMenus(); // Close others before showing new one
+                        menu.classList.add('show');
+                        this.classList.add('active');
+                        activeMenu = menuType;
+                    }
+                    e.stopPropagation();
+                });
+            });
+
+            // Menu option click handlers
+            document.querySelectorAll('.menu-bar .menu-option').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    if (this.classList.contains('disabled')) return; // Skip disabled options
+
+                    const action = this.getAttribute('data-action') || this.textContent; // Use data-action if available
+                    handleMenuAction(action);
+                    closeAllMenus();
+                    e.stopPropagation();
+                });
+            });
+
+            // Close menus when clicking outside
+            document.addEventListener('click', function(e) {
+                // Check if the click is outside the menu bar
+                if (!e.target.closest('.menu-bar')) {
+                    closeAllMenus();
+                }
+            });
+
+            // Prevent menu from closing when clicking inside a menu
+            dropdownMenus.forEach(menu => {
+                menu.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            });
+        }
+
+        function closeAllMenus() {
+            document.querySelectorAll('.menu-bar .dropdown-menu').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            document.querySelectorAll('.menu-bar .menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            activeMenu = null;
+        }
+
+        function handleMenuAction(action) {
+            switch(action) {
+                case 'new':
+                    // Remove any existing popup
+                    const existing = document.getElementById('xp-demo-popup');
+                    if (existing) existing.remove();
+                    // Add inactive mask to contact-me window
+                    const contactWin = document.querySelector('.email-window');
+                    if (contactWin && !document.getElementById('contact-inactive-mask')) {
+                        const mask = document.createElement('div');
+                        mask.id = 'contact-inactive-mask';
+                        mask.style.position = 'fixed';
+                        mask.style.top = '0';
+                        mask.style.left = '0';
+                        mask.style.width = '100vw';
+                        mask.style.height = '100vh';
+                        mask.style.background = 'rgba(255,255,255,0.35)';
+                        mask.style.zIndex = '9999';
+                        mask.style.pointerEvents = 'auto';
+                        mask.style.cursor = 'default';
+                        mask.addEventListener('mousedown', e => e.preventDefault());
+                        mask.addEventListener('mouseup', e => e.preventDefault());
+                        mask.addEventListener('click', e => e.preventDefault());
+                        mask.addEventListener('focus', e => e.preventDefault());
+                        document.body.appendChild(mask);
+                    }
+                    document.activeElement && document.activeElement.blur();
+                    const popup = document.createElement('div');
+                    popup.id = 'xp-demo-popup';
+                    const parentWindow = document.querySelector('.email-window');
+                    let left = '50vw', top = '50vh', transform = 'translate(-50%, -50%)';
+                    if (parentWindow) {
+                        const rect = parentWindow.getBoundingClientRect();
+                        left = (rect.left + rect.width / 2) + 'px';
+                        top = (rect.top + rect.height / 2) + 'px';
+                    }
+                    popup.innerHTML = `
+                      <div class="window" style="margin: 0; width: 250px; position: fixed; left: ${left}; top: ${top}; transform: ${transform}; z-index: 10000; user-select: none;">
+                        <div class="title-bar">
+                          <div class="title-bar-text">Confirm New</div>
+                          <div class="title-bar-controls">
+                            <button aria-label="Close" id="popup-close"></button>
+                          </div>
+                        </div>
+                        <div class="window-body">
+                          <p style="user-select: none; text-align: center;">Are you sure? You will lose unsaved changes.</p>
+                          <section class="field-row" style="justify-content: center; user-select: none; gap: 10px;">
+                            <button id="popup-ok">Yes</button>
+                            <button id="popup-cancel">Cancel</button>
+                          </section>
+                        </div>
+                      </div>
+                    `;
+                    document.body.appendChild(popup);
+                    setTimeout(() => {
+                        if (popup) {
+                            const firstBtn = popup.querySelector('button');
+                            if (firstBtn) firstBtn.focus();
+                        }
+                    }, 0);
+                    function closePopupAndMask() {
+                        popup.remove();
+                        const mask = document.getElementById('contact-inactive-mask');
+                        if (mask) mask.remove();
+                    }
+                    popup.querySelector('#popup-ok').addEventListener('click', () => {
+                        document.querySelectorAll('.field-input:not(.readonly)').forEach(input => input.value = '');
+                        document.querySelector('.email-body').value = '';
+                        closePopupAndMask();
+                    });
+                    popup.querySelector('#popup-cancel').addEventListener('click', closePopupAndMask);
+                    popup.querySelector('#popup-close').addEventListener('click', closePopupAndMask);
+                    break;
+                case 'exit': // Handle Exit action
+                    if (window.parent && window.parent !== window) {
+                        const params = new URLSearchParams(window.location.search);
+                        const windowId = params.get('windowId');
+                        window.parent.postMessage({
+                            type: 'close-window',
+                            windowId: windowId,
+                            payload: null,
+                            timestamp: Date.now()
+                        }, window.origin);
+                    }
+                    break;
+                // Add cases for other actions if needed, otherwise they do nothing
+                // case 'About Contact Me':
+                //     alert('Contact Me App v1.0');
+                //     break;
+                default:
+                    // Optional: Show alert for unimplemented actions
+                    // if (!action.includes('...')) { // Avoid alerts for placeholder actions ending in ...
+                    //     alert(`${action} is not implemented in this app.`);
+                    // }
+                    break;
+            }
+        }
+        // >>> END: Added Notepad Menu Bar JS Functions <<<
+
+    </script>
 </body>
-</html> 
+</html>

@@ -81,31 +81,5 @@
     </div>
 
     <script type="module" src="script.js"></script>
-
-    <!-- XP Style Dialog -->
-    <dialog id="xp-dialog">
-        <div class="window active" style="width: 250px; min-width: auto; min-height: auto;">
-            <div class="title-bar">
-                <div class="title-bar-text">Notepad</div>
-                <div class="title-bar-controls">
-                    <button aria-label="Close" id="xp-dialog-close" data-action="close"></button>
-                </div>
-            </div>
-            <div class="window-body">
-                <div style="padding: 6px 12px;">
-                    <p style="margin: 6px 0 12px; text-align: center;">Do you want to save changes to Untitled?</p>
-                    <div class="field-row" style="justify-content: center; gap: 10px; margin-bottom: 6px;">
-                        <!-- Active Yes button that will be shown when there's text -->
-                        <button id="xp-dialog-ok" style="width: 75px; height: 23px; display: none;">Yes</button>
-                        
-                        <!-- Fake disabled button with EXACT same styling as the No button -->
-                        <button id="fake-disabled-yes" disabled style="width: 75px; height: 23px; opacity: 0.5; pointer-events: none;">Yes</button>
-                        
-                        <button id="xp-dialog-no" style="width: 75px; height: 23px;">No</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </dialog>
 </body>
 </html>

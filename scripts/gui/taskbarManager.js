@@ -178,20 +178,20 @@ export default class Taskbar {
     }
 
     _applyTaskbarLayout(taskbarItems, layoutMode, availableWidth) {
-        const widths = {
-            default: 160,
-            reduced: Math.floor(availableWidth / taskbarItems.length),
-            'icon-only': 36,
-        };
+        const minWidth = 36; // Minimum width for icon-only
+        const maxWidth = 160; // Default max width
+        const itemCount = taskbarItems.length;
+        let itemWidth = Math.floor(availableWidth / itemCount);
+        if (itemWidth > maxWidth) itemWidth = maxWidth;
+        if (itemWidth < minWidth) itemWidth = minWidth;
 
-        taskbarItems.forEach((item, index) => {
-            if (layoutMode === 'overflow' && index >= Math.floor(availableWidth / widths['icon-only'])) {
-                item.style.display = 'none';
-            } else {
-                item.style.display = 'flex';
-                item.style.width = `${widths[layoutMode]}px`;
-                item.classList.toggle('icon-only', layoutMode === 'icon-only');
-            }
+        // If we hit icon-only width, add the icon-only class
+        const useIconOnly = itemWidth === minWidth;
+
+        taskbarItems.forEach(item => {
+            item.style.display = 'flex';
+            item.style.width = `${itemWidth}px`;
+            item.classList.toggle('icon-only', useIconOnly);
         });
     }
 }

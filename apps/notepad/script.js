@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuItems = document.querySelectorAll('.menu-item');
     const dropdownMenus = document.querySelectorAll('.dropdown-menu');
     let activeMenu = null;
+    let currentDialogId = null;
     
     // Setup menu interactions
     setupMenus();
@@ -116,12 +117,82 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleMenuAction(action) {
         switch(action) {
             case 'New':
-                const dialog = document.getElementById('xp-dialog');
-                if (dialog) {
-                    dialog.showModal(); // Directly show the dialog when 'New' is clicked
-                } else {
-                    console.error('Dialog element not found.');
+                // Remove any existing popup
+                const existing = document.getElementById('xp-demo-popup');
+                if (existing) existing.remove();
+                // Add inactive mask to notepad window
+                const notepadWin = document.querySelector('.notepad-container');
+                if (notepadWin && !document.getElementById('notepad-inactive-mask')) {
+                    const mask = document.createElement('div');
+                    mask.id = 'notepad-inactive-mask';
+                    mask.style.position = 'fixed';
+                    mask.style.top = '0';
+                    mask.style.left = '0';
+                    mask.style.width = '100vw';
+                    mask.style.height = '100vh';
+                    mask.style.background = 'rgba(255,255,255,0.35)';
+                    mask.style.zIndex = '9999';
+                    mask.style.pointerEvents = 'auto';
+                    mask.style.cursor = 'default';
+                    // Prevent all pointer events to Notepad except popup
+                    mask.addEventListener('mousedown', e => e.preventDefault());
+                    mask.addEventListener('mouseup', e => e.preventDefault());
+                    mask.addEventListener('click', e => e.preventDefault());
+                    mask.addEventListener('focus', e => e.preventDefault());
+                    document.body.appendChild(mask);
                 }
+                // Remove focus from any element to prevent flashing caret
+                document.activeElement && document.activeElement.blur();
+                // Trap focus in popup while open
+                setTimeout(() => {
+                    if (popup) {
+                        const firstBtn = popup.querySelector('button');
+                        if (firstBtn) firstBtn.focus();
+                    }
+                }, 0);
+                // Create popup (identical to Contact Me)
+                const popup = document.createElement('div');
+                popup.id = 'xp-demo-popup';
+                // Center relative to notepad window
+                const parentWindow = document.querySelector('.notepad-container');
+                let left = '50vw', top = '50vh', transform = 'translate(-50%, -50%)';
+                if (parentWindow) {
+                    const rect = parentWindow.getBoundingClientRect();
+                    left = (rect.left + rect.width / 2) + 'px';
+                    top = (rect.top + rect.height / 2) + 'px';
+                }
+                popup.innerHTML = `
+                  <div class="window" style="margin: 0; width: 250px; position: fixed; left: ${left}; top: ${top}; transform: ${transform}; z-index: 10000; user-select: none;">
+                    <div class="title-bar">
+                      <div class="title-bar-text">Confirm New</div>
+                      <div class="title-bar-controls">
+                        <button aria-label="Close" id="popup-close"></button>
+                      </div>
+                    </div>
+                    <div class="window-body">
+                      <p style="user-select: none; text-align: center;">Are you sure? You will lose unsaved changes.</p>
+                      <section class="field-row" style="justify-content: center; user-select: none; gap: 10px;">
+                        <button id="popup-ok">Yes</button>
+                        <button id="popup-cancel">Cancel</button>
+                      </section>
+                    </div>
+                  </div>
+                `;
+                document.body.appendChild(popup);
+                // OK: clear notepad, Cancel/Close: just close popup
+                function closePopupAndMask() {
+                    popup.remove();
+                    const mask = document.getElementById('notepad-inactive-mask');
+                    if (mask) mask.remove();
+                }
+                popup.querySelector('#popup-ok').addEventListener('click', () => {
+                    notepadEditor.value = '';
+                    updateStatusBar();
+                    notepadEditor.focus();
+                    closePopupAndMask();
+                });
+                popup.querySelector('#popup-cancel').addEventListener('click', closePopupAndMask);
+                popup.querySelector('#popup-close').addEventListener('click', closePopupAndMask);
                 break;
                 
             case 'Copy':
@@ -169,10 +240,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 break;
                 
-            case 'About Notepad':
-                alert('Windows XP Notepad\nVersion 5.1\n\n© Microsoft Corporation. All rights reserved.');
-                break;
-                
             default:
                 // For most menu items, just show a message
                 if (action.endsWith('...')) {
@@ -182,95 +249,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Setup XP-style dialog
-    let checkButtonState; // Declare the function reference at a higher scope
-    
-    function setupXPDialog() {
-        const dialog = document.getElementById('xp-dialog');
-        const closeBtn = dialog.querySelector('[data-action="close"]');
-        const realYesBtn = document.getElementById('xp-dialog-ok');
-        const fakeYesBtn = document.getElementById('fake-disabled-yes');
-        const noBtn = document.getElementById('xp-dialog-no');
-
-        // Setup close button
-        closeBtn.addEventListener('click', () => {
-            dialog.close();
-        });
-
-        // Setup real Yes button - saves changes and clears the document
-        realYesBtn.addEventListener('click', () => {
-            dialog.close();
-            clearNotepad();
-        });
-
-        // Setup No button
-        noBtn.addEventListener('click', () => {
-            dialog.close();
-            clearNotepad();
-        });
-    }
-
-    function showXPDialog() {
-        const dialog = document.getElementById('xp-dialog');
-        const realYesBtn = document.getElementById('xp-dialog-ok');
-        const fakeYesBtn = document.getElementById('fake-disabled-yes');
-        const notepadWindow = document.querySelector('.notepad-container .window');
-
-        // Check if the document has been modified
-        const isEmpty = notepadEditor.value.trim() === '';
-        
-        // CRITICAL CHANGE: Show either the real or fake button based on content
-        if (isEmpty) {
-            // When empty - show fake disabled button, hide real button
-            realYesBtn.style.display = 'none';
-            fakeYesBtn.style.display = 'block';
-        } else {
-            // When there's content - show real clickable button, hide fake button
-            realYesBtn.style.display = 'block';
-            fakeYesBtn.style.display = 'none';
-        }
-        
-        // Function to toggle between the buttons based on content
-        const updateButtonState = () => {
-            const isEmpty = notepadEditor.value.trim() === '';
-            if (isEmpty) {
-                realYesBtn.style.display = 'none';
-                fakeYesBtn.style.display = 'block';
-            } else {
-                realYesBtn.style.display = 'block';
-                fakeYesBtn.style.display = 'none';
-            }
-        };
-        
-        // Listen for input changes to update the button state
-        notepadEditor.addEventListener('input', updateButtonState);
-
-        // Set the Notepad window to inactive state
-        notepadWindow.classList.remove('active');
-        notepadWindow.classList.add('inactive');
-
-        // Set the dialog as the active window
-        dialog.classList.add('active');
-
-        dialog.showModal();
-
-        // Restore the Notepad window to active state when the dialog is closed
-        dialog.addEventListener('close', () => {
-            notepadWindow.classList.remove('inactive');
-            notepadWindow.classList.add('active');
-            dialog.classList.remove('active');
-            
-            // Remove the input listener when dialog is closed
-            notepadEditor.removeEventListener('input', updateButtonState);
-        }, { once: true });
-    }
-
     function clearNotepad() {
         notepadEditor.value = '';
         updateStatusBar();
         notepadEditor.focus();
     }
-
-    // Initialize the XP dialog
-    setupXPDialog();
 });

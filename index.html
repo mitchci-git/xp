@@ -17,6 +17,12 @@
     <link rel="preload" href="./assets/gui/taskbar/system-tray.webp" as="image">
     <link rel="preload" href="./assets/sounds/login.wav" as="audio">
     <link rel="preload" href="./assets/sounds/logoff.wav" as="audio">
+    <!-- Prefetch likely-to-be-used app icons for faster menu opening -->
+    <link rel="prefetch" href="./assets/gui/start-menu/photoshop.webp" as="image">
+    <link rel="prefetch" href="./assets/gui/start-menu/illustrator.webp" as="image">
+    <link rel="prefetch" href="./assets/gui/start-menu/after-effects.webp" as="image">
+    <link rel="prefetch" href="./assets/gui/start-menu/vscode.webp" as="image">
+    <link rel="prefetch" href="./assets/gui/start-menu/figma.webp" as="image">
 
     <!-- Stylesheets -->
     <link rel="stylesheet" href="https://unpkg.com/xp.css@0.2.3/dist/XP.css" crossorigin="anonymous">
@@ -55,19 +61,19 @@
     <div class="desktop">
         <div class="desktop-icons">
             <div class="desktop-icon" data-program-name="about-me">
-                <img src="./assets/gui/desktop/about-me.webp" alt="About Me">
+                <img src="./assets/gui/desktop/about-me.webp" alt="About Me" loading="eager">
                 <span>About Me</span>
             </div>
             <div class="desktop-icon" data-program-name="my-projects">
-                <img src="./assets/gui/desktop/my-projects.webp" alt="My Projects">
+                <img src="./assets/gui/desktop/my-projects.webp" alt="My Projects" loading="eager">
                 <span>My Projects</span>
             </div>
             <div class="desktop-icon" data-program-name="contact-me">
-                <img src="./assets/gui/desktop/email.webp" alt="Contact Me">
+                <img src="./assets/gui/desktop/email.webp" alt="Contact Me" loading="eager">
                 <span>Contact Me</span>
             </div>
             <div class="desktop-icon" data-program-name="resume-pdf">
-                <img src="./assets/gui/desktop/resume.webp" alt="Resume.pdf">
+                <img src="./assets/gui/desktop/resume.webp" alt="Resume.pdf" loading="eager">
                 <span>Resume.pdf</span>
             </div>
         </div>
@@ -93,6 +99,8 @@
             </div>
         </div>
     </div>
+
+    <!-- Removed test popup button and script -->
 
     <script type="module" src="./scripts/main.js"></script>
     

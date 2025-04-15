@@ -180,7 +180,7 @@ export default class WindowManager {
     _createWindowElement(program) {
         const windowElement = document.createElement('div');
         windowElement.id = program.id;
-        windowElement.className = 'window';
+        windowElement.className = 'app-window'; // Use app-window for custom app styling
         windowElement.setAttribute('data-program', program.id.replace('-window', ''));
 
         windowElement.innerHTML = this._getWindowBaseHTML(program);
@@ -549,13 +549,15 @@ export default class WindowManager {
                 transform: windowElement.style.transform || ''
             };
 
-            // Apply essential maximized styles via JS
+            // Dynamically measure the taskbar height
             const vw = document.documentElement.clientWidth;
             const vh = document.documentElement.clientHeight;
+            const taskbar = document.querySelector('.taskbar');
+            const taskbarHeight = taskbar ? taskbar.offsetHeight : TASKBAR_HEIGHT;
             windowElement.style.top = '0px';
             windowElement.style.left = '0px';
             windowElement.style.width = vw + 'px';
-            windowElement.style.height = (vh - TASKBAR_HEIGHT) + 'px';
+            windowElement.style.height = (vh - taskbarHeight) + 'px';
             windowElement.style.transform = 'none';
             
             state.isMaximized = true;

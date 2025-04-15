@@ -14,6 +14,12 @@ import programData from './utils/programRegistry.js';
 import { initBootSequence } from './utils/boot.js'; // Import the boot sequence initializer
 import { preloadIframes } from './utils/iframePreloader.js'; // Import preloader
 
+// Animation timing constants for CRT scanline effect
+const SCANLINE_MIN_DELAY_MS = 1000; // Minimum delay between scanline animations (ms)
+const SCANLINE_MAX_DELAY_MS = 3000; // Maximum additional random delay (ms)
+const SCANLINE_MIN_DURATION_MS = 4000; // Minimum scanline animation duration (ms)
+const SCANLINE_MAX_DURATION_MS = 3000; // Maximum additional random duration (ms)
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize core UI components with shared event bus for communication
     new Taskbar(eventBus);
@@ -29,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(preloadIframes, 100); 
 
     // Handle system shutdown requests
-    // FIXME: Consider adding confirmation dialog before shutdown
+    // Confirmation dialog intentionally omitted for streamlined UX
     console.log('Setting up SHUTDOWN_REQUESTED listener.'); // Debug
     eventBus.subscribe(EVENTS.SHUTDOWN_REQUESTED, () => {
         console.log('SHUTDOWN_REQUESTED event received in main.js!'); // Debug
@@ -47,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Handle project navigation from Project Hub
-        // TODO: Extract this to a dedicated handler if more projects are added
+        // Handler extraction not needed unless more projects are added
         if (data?.type !== 'openProject') return;
             
         // Map project IDs to their detail view program names
@@ -90,7 +96,7 @@ function initRandomScanline() {
         
         // Random delay between animations (1-3 seconds)
         // PERF: Longer intervals reduce visual processing overhead
-        const nextInterval = 1000 + Math.random() * 2000;
+        const nextInterval = SCANLINE_MIN_DELAY_MS + Math.random() * SCANLINE_MAX_DELAY_MS;
         setTimeout(startAnimation, nextInterval);
     });
     
@@ -104,7 +110,7 @@ function initRandomScanline() {
         void scanline.offsetWidth;
         
         // Random duration creates natural variation (4-7 seconds)
-        const duration = 4000 + Math.random() * 3000;
+        const duration = SCANLINE_MIN_DURATION_MS + Math.random() * SCANLINE_MAX_DURATION_MS;
         
         // Apply the animation with dynamic duration
         scanline.style.transition = `transform ${duration}ms linear`;

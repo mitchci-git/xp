@@ -166,12 +166,6 @@ button {
   transition: border-color 0.3s;
 }
 
-/* Apply effects on hover */
-.back-gradient:hover {
-  /* opacity: 1; No longer needed as default is 1 */
-  /* background: linear-gradient(...); Moved to ::before */
-}
-
 /* Fade in gradient overlay on hover */
 .back-gradient:hover::before {
     opacity: 1;
@@ -247,8 +241,6 @@ button {
 }
 
 @media screen and (max-width: 768px) {
-  .home-edition {
-  }
   .login-screen::after {
     display: none;
   }

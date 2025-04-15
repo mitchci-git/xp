@@ -114,6 +114,11 @@ export default class Desktop {
         window.addEventListener('pointerdown', (e) => {
             if (e.target !== this.overlay && e.target !== this.desktop) return;
             
+            // Unselect all icons if not holding Ctrl (for new drag selection)
+            if (!e.ctrlKey) {
+                this.clearSelection();
+            }
+
             const rect = this.desktop.getBoundingClientRect();
             this.startX = e.clientX - rect.left;
             this.startY = e.clientY - rect.top;

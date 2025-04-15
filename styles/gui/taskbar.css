@@ -109,9 +109,6 @@
 /* Taskbar program buttons */
 .taskbar-item {
     height: var(--taskbar-item-height);
-    min-width: 160px;
-    max-width: 160px;
-    width: 160px;
     margin: 0 1px;
     padding: 0 8px;
     border-radius: 5px; /* Adjusted from 4px to 5px */
@@ -135,7 +132,7 @@
         inset -1px 0 0 rgba(0,0,0,0.08),
         0 1px 1px rgba(0,0,0,0.15); /* Smaller outer shadow */
     /* Added smooth transition for width changes */
-    transition: min-width 0.15s ease, max-width 0.15s ease, width 0.15s ease;
+    transition: width 0.15s ease;
     flex-shrink: 1; /* Allow items to shrink */
 }
 
@@ -198,6 +195,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 100%;
     position: relative; /* Change back to relative for alignment with icon */
     min-width: 0; /* Allows text to shrink properly */
     display: inline-block; /* Better alignment with icon */

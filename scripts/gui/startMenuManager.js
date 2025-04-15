@@ -265,7 +265,7 @@ export default class StartMenu {
         return `
             <div class="menutopbar">
                 <img src="./assets/gui/start-menu/user.webp" alt="User" class="userpicture">
-                <span class="username">Mitch Ivin</span>
+                <span class="username">Mitchell Ivin</span>
             </div>
             <div class="start-menu-middle">
                 <div class="middle-section middle-left">
@@ -445,9 +445,64 @@ export default class StartMenu {
         const programName = target.dataset.programName;
         const url = target.dataset.url;
 
-        // Check if the click is on an item in the Most Used Tools or AI Tools submenu
+        // Check if the click is on an item in the Most Used Tools submenu
         const isInMostUsedToolsMenu = target.classList.contains('most-used-tools-item');
+        // Check if the click is on an item in the AI Tools submenu
         const isInAiToolsMenu = target.classList.contains('ai-tools-item');
+
+        // --- Custom popup for Most Used Tools and AI Tools ---
+        if (isInMostUsedToolsMenu || isInAiToolsMenu) {
+            // Remove any existing popup and overlay
+            const existing = document.getElementById('xp-demo-popup');
+            if (existing) existing.remove();
+            const existingOverlay = document.getElementById('xp-demo-popup-overlay');
+            if (existingOverlay) existingOverlay.remove();
+            // Create invisible overlay to block interaction
+            const overlay = document.createElement('div');
+            overlay.id = 'xp-demo-popup-overlay';
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.zIndex = '9999';
+            overlay.style.background = 'transparent';
+            overlay.style.pointerEvents = 'auto';
+            document.body.appendChild(overlay);
+            // Create popup
+            const popup = document.createElement('div');
+            popup.id = 'xp-demo-popup';
+            popup.innerHTML = `
+              <div class="window" style="margin: 0; width: 270px; position: fixed; left: 50vw; top: 50vh; transform: translate(-50%, -50%); z-index: 10000; user-select: none;">
+                <div class="title-bar">
+                  <div class="title-bar-text">Program Not Found</div>
+                  <div class="title-bar-controls">
+                    <button aria-label="Close" id="popup-close" style="cursor: default;"></button>
+                  </div>
+                </div>
+                <div class="window-body">
+                  <p style="user-select: none; text-align: center; margin-bottom: 10px;">The selected program could not be found.</p>
+                  <section class="field-row" style="justify-content: center; user-select: none;">
+                    <button id="popup-ok" style="cursor: default;">OK</button>
+                  </section>
+                </div>
+              </div>
+            `;
+            popup.setAttribute('tabindex', '-1');
+            popup.focus();
+            document.body.appendChild(popup);
+            // Close on any button click
+            popup.querySelectorAll('button').forEach(btn => {
+              btn.addEventListener('click', () => {
+                popup.remove();
+                overlay.remove();
+              });
+            });
+            // Close the start menu after showing the popup
+            this.closeStartMenu();
+            return;
+        }
+        // --- End custom popup ---
 
         if (action === 'open-program' && programName) {
             this.openProgram(programName);
@@ -456,34 +511,12 @@ export default class StartMenu {
             window.open(url, '_blank');
             this.closeStartMenu();
         } else if (action === 'log-off') {
-            // Log off: Remove session state and publish event
             sessionStorage.removeItem('logged_in');
             this.eventBus.publish(EVENTS.LOG_OFF_REQUESTED);
             this.closeStartMenu();
         } else if (action === 'shut-down') {
-            // Shut down: Remove session state and reload page
             sessionStorage.removeItem('logged_in');
             window.location.reload();
-            // No need to close menu as page reloads
-        } else if (action === 'toggle-all-programs') {
-            // Handled by mouseenter/mouseleave for now
-        } else if (action === 'toggle-most-used-tools') {
-            // Handled by mouseenter/mouseleave
-        } else if (action === 'toggle-ai-tools') {
-            // Handled by mouseenter/mouseleave
-        } else if (programName) { 
-            // For items in Most Used Tools or AI Tools menus, don't close the menu
-            if (isInMostUsedToolsMenu || isInAiToolsMenu) {
-                // Prevent default to avoid any side effects
-                event.preventDefault();
-                event.stopPropagation();
-                
-                console.log(`Clicked on ${programName} in showcase menu`);
-            } else {
-                // For other program items, open the program and close the menu as before
-                this.openProgram(programName);
-                this.closeStartMenu();
-            }
         }
     }
 

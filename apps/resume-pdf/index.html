@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume.pdf</title>
+    <link rel="stylesheet" href="https://unpkg.com/xp.css@0.2.3/dist/XP.css" crossorigin="anonymous"> <!-- Added XP.css link -->
     <style>
         body {
             font-family: 'Tahoma', sans-serif;
@@ -15,63 +16,259 @@
             height: 100vh;
             overflow: hidden;
         }
+
+        /* >>> START: Added Notepad Menu Bar CSS <<< */
+        /* Menu Bar */
+        .menu-bar {
+            display: flex;
+            background-color: #ECE9D8; /* Changed to darker grey */
+            border-bottom: 1px solid #d7d7d7;
+            padding: 2px 0;
+            user-select: none;
+            font-size: 12px;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .menu-item {
+            padding: 2px 8px;
+            cursor: default;
+            position: relative;
+        }
+
+        /* Disabled menu items */
+        .menu-item.disabled {
+            color: #a0a0a0;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .menu-item:hover:not(.disabled) {
+            background-color: #e5f3ff;
+        }
+
+        .menu-item.active {
+            background-color: #cce8ff;
+        }
+
+        /* Dropdown Menus */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 24px; /* Position relative to menu-bar */
+            background-color: #ffffff;
+            border: 1px solid #d7d7d7;
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            min-width: 150px;
+            font-size: 11px;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .menu-option {
+            padding: 4px 20px 4px 30px;
+            cursor: default;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        /* Disabled menu options */
+        .menu-option.disabled {
+            color: #a0a0a0;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .menu-option:hover:not(.disabled) {
+            background-color: #e5f3ff;
+        }
+
+        .menu-separator {
+            height: 1px;
+            background-color: #d7d7d7;
+            margin: 4px 0;
+        }
+
+        /* Menu Positioning */
+        #file-menu { left: 0; }
+        /* >>> END: Added Notepad Menu Bar CSS <<< */
+
         .toolbar {
-            background-color: #ECE9D8;
+            background-color: #ECE9D8; /* Changed to darker grey */
             border-bottom: 1px solid #ACA899;
             padding: 5px 10px;
             display: flex;
             gap: 10px;
+            margin-top: 0; /* Ensure no top margin */
+            justify-content: flex-end; /* Right-justify buttons */
         }
-        .tool-button {
-            background-color: #ECE9D8;
-            border: 1px solid #D4D0C8;
-            border-radius: 3px;
-            padding: 3px 8px;
-            font-family: 'Tahoma', sans-serif;
-            font-size: 11px;
-            box-shadow: 1px 1px 0 #fff inset, -1px -1px 0 #707070 inset;
-            cursor: default;
+        .toolbar button {
             user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-        }
-        .tool-button:active {
-            box-shadow: -1px -1px 0 #fff inset, 1px 1px 0 #707070 inset;
         }
         .document-container {
             flex: 1;
             overflow: auto;
             background-color: #7F7F7F;
             padding: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            text-align: center;
         }
         .resume-image {
             max-width: 100%;
             height: auto;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            display: inline-block;
         }
     </style>
 </head>
 <body>
-    <div class="toolbar">
-        <button class="tool-button" id="download-button">Download</button>
-        <button class="tool-button" id="print-button">Print</button>
+    <!-- >>> START: Added Notepad Menu Bar HTML <<< -->
+    <div class="menu-bar">
+        <div class="menu-item" data-menu="file">File</div>
+        <div class="menu-item disabled" data-menu="edit">Edit</div>
+        <div class="menu-item disabled" data-menu="format">Format</div>
+        <div class="menu-item disabled" data-menu="view">View</div>
+        <div class="menu-item disabled" data-menu="help">Help</div>
+
+        <!-- File Menu -->
+        <div id="file-menu" class="dropdown-menu">
+            <div class="menu-option disabled">New</div>
+            <div class="menu-option disabled">Open...</div>
+            <div class="menu-option" data-action="save">Save</div>
+            <div class="menu-option disabled">Save As...</div>
+            <div class="menu-separator"></div>
+            <div class="menu-option disabled">Page Setup...</div>
+            <div class="menu-option" data-action="print">Print</div>
+            <div class="menu-separator"></div>
+            <div class="menu-option" data-action="exit">Exit</div>
+        </div>
+        <!-- Removed unused Edit, Format, View, Help menus for dead code cleanup -->
     </div>
-    
+    <!-- >>> END: Added Notepad Menu Bar HTML <<< -->
+
     <div class="document-container" id="document-container">
         <img src="./assets/resume.webp" alt="My Resume" class="resume-image" id="resume-image">
     </div>
 
+    <div class="toolbar" style="user-select: none;">
+        <button id="download-button" style="user-select: none;">Save</button>
+        <button id="print-button" style="user-select: none;">Print</button>
+    </div>
+
     <script>
+    // >>> START: Added Notepad Menu Bar JS Functions <<<
+    let activeMenu = null;
+
+    function setupMenus() {
+        const menuItems = document.querySelectorAll('.menu-bar .menu-item');
+        const dropdownMenus = document.querySelectorAll('.menu-bar .dropdown-menu');
+
+        // Menu item click handlers
+        menuItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                if (this.classList.contains('disabled')) return; // Skip disabled top-level items
+
+                const menuType = this.getAttribute('data-menu');
+                const menu = document.getElementById(`${menuType}-menu`);
+
+                if (!menu) return; // Exit if no corresponding menu found
+
+                // Close any other open menu
+                if (activeMenu && activeMenu !== menuType) {
+                    closeAllMenus();
+                }
+
+                // Toggle the clicked menu
+                if (menu.classList.contains('show')) {
+                    closeAllMenus();
+                } else {
+                    closeAllMenus(); // Close others before showing new one
+                    menu.classList.add('show');
+                    this.classList.add('active');
+                    activeMenu = menuType;
+                }
+                e.stopPropagation();
+            });
+        });
+
+        // Only File menu remains, so no need to handle other menus
+        document.querySelectorAll('.menu-bar .menu-option').forEach(option => {
+            option.addEventListener('click', function(e) {
+                if (this.classList.contains('disabled')) return; // Skip disabled options
+
+                const action = this.getAttribute('data-action') || this.textContent; // Use data-action if available
+                handleMenuAction(action);
+                closeAllMenus();
+                e.stopPropagation();
+            });
+        });
+
+        // Close menus when clicking outside
+        document.addEventListener('click', function(e) {
+            // Check if the click is outside the menu bar
+            if (!e.target.closest('.menu-bar')) {
+                closeAllMenus();
+            }
+        });
+
+        // Prevent menu from closing when clicking inside a menu
+        dropdownMenus.forEach(menu => {
+            menu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+    }
+
+    function closeAllMenus() {
+        document.querySelectorAll('.menu-bar .dropdown-menu').forEach(menu => {
+            menu.classList.remove('show');
+        });
+        document.querySelectorAll('.menu-bar .menu-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        activeMenu = null;
+    }
+
+    function handleMenuAction(action) {
+        switch(action) {
+            case 'exit':
+                if (window.parent && window.parent !== window) {
+                    const params = new URLSearchParams(window.location.search);
+                    const windowId = params.get('windowId');
+                    window.parent.postMessage({
+                        type: 'close-window',
+                        windowId: windowId,
+                        payload: null,
+                        timestamp: Date.now()
+                    }, window.origin);
+                }
+                break;
+            case 'save':
+                if (window.downloadButton) {
+                    window.downloadButton.click();
+                }
+                break;
+            case 'print':
+                if (window.printButton) {
+                    window.printButton.click();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    // >>> END: Added Notepad Menu Bar JS Functions <<<
+
+    // Existing IIFE for resume viewer functionality
     (function() {
         // Get elements
         var container = document.getElementById('document-container');
         var image = document.getElementById('resume-image');
         var printButton = document.getElementById('print-button');
         var downloadButton = document.getElementById('download-button');
+        window.printButton = printButton;
+        window.downloadButton = downloadButton;
         
         // Function to check window size and adjust view
         function checkWindowSize() {
@@ -98,7 +295,7 @@
             downloadButton.addEventListener('click', function() {
                 var link = document.createElement('a');
                 link.href = './assets/resume.pdf';
-                link.download = 'resume_MitchIvin.pdf';
+                link.download = 'resume.pdf'; // Instantly download
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -108,6 +305,10 @@
         // Initialize and set up resize handler
         checkWindowSize();
         window.addEventListener('resize', checkWindowSize);
+
+        // >>> START: Initialize Notepad Menu Bar <<<
+        setupMenus();
+        // >>> END: Initialize Notepad Menu Bar <<<
     })();
     </script>
 </body>
