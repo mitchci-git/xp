@@ -46,30 +46,23 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 50px;
-            height: 50px;
-            margin: 0 4px;
-            /* Use the button styles from XP.css library directly */
+            width: 45px;
+            height: 45px;
+            margin: 0 2px;
         }
         
         .toolbar-icon {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         
         .toolbar-icon img {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             display: block;
-        }
-        
-        /* Remove special larger social icon rule for consistency */
-        .toolbar-button:not(.with-text) .toolbar-icon img {
-            width: 28px;
-            height: 28px;
         }
         
         .separator {
@@ -264,28 +257,6 @@
 
         /* --- FIX: Prevent Notepad styles from affecting XP.css popups --- */
         /* Ensure Notepad styles only apply inside .email-window, not to global .window popups */
-        .email-window .menu-bar,
-        .email-window .menu-item,
-        .email-window .dropdown-menu,
-        .email-window .menu-option,
-        .email-window .menu-separator {
-            /* All menu bar styles scoped to .email-window */
-        }
-        .email-window .field-row,
-        .email-window .field-label,
-        .email-window .field-input,
-        .email-window .email-body,
-        .email-window .main-content,
-        .email-window .divider-container,
-        .email-window .divider,
-        .email-window .toolbar,
-        .email-window .toolbar-buttons,
-        .email-window .toolbar-button,
-        .email-window .toolbar-icon,
-        .email-window .toolbar-icon img,
-        .email-window .separator {
-            /* All Notepad/Contact Me styles scoped to .email-window */
-        }
         /* --- END FIX --- */
 
         .field-input::placeholder, .email-body::placeholder {
@@ -414,7 +385,7 @@
         <!-- >>> END: Added Notepad Menu Bar HTML <<< -->
 
         <div class="toolbar">
-            <div class="toolbar-buttons" style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+            <div class="toolbar-buttons" style="width:100%; display:flex; justify-content:flex-start; align-items:center;">
                 <div class="toolbar-group-left" style="display:flex; align-items:center;">
                     <button class="toolbar-button" data-tooltip="Send Message" id="send-message-btn">
                         <div class="toolbar-icon">
@@ -426,9 +397,6 @@
                             <img src="assets/delete.webp" alt="Delete">
                         </div>
                     </button>
-                    <div class="separator"></div>
-                </div>
-                <div class="toolbar-group-right" style="display:flex; align-items:center;">
                     <div class="separator"></div>
                     <button class="toolbar-button" data-tooltip="LinkedIn" onclick="window.open('https://www.linkedin.com/', '_blank')">
                         <div class="toolbar-icon">

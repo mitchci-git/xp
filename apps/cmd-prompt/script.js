@@ -1,21 +1,23 @@
-// Extracted repeated DOM manipulation logic into helper functions
+// Helper function to select a single DOM element by CSS selector
 function getElement(selector) {
     return document.querySelector(selector);
 }
 
+// Helper function to create a DOM element with an optional class name
 function createElement(tag, className = '') {
     const element = document.createElement(tag);
     if (className) element.className = className;
     return element;
 }
 
-// Updated existing code to use helper functions
+// Get references to main UI elements for the command prompt
 const history = getElement('#history');
 const input = getElement('#input');
 const ps1 = getElement('#ps1');
 const caret = getElement('#caret');
 const body = getElement('body');
 
+// Set the initial body class to DOS mode
 body.classList.add('dos');
 
 let command = "";
@@ -24,11 +26,11 @@ const commandHistory = [];
 let path = [];
 let historyPos = 0;
 
-// Added comments to clarify command processing logic
+// Process a command entered by the user and return the output string
 function processCommand(text) {
     let actualCommand;
     let parameters;
-    
+    // Split the command and its parameters
     if (text.indexOf(" ") !== -1) {
         actualCommand = text.substring(0, text.indexOf(" "));
         parameters = text.substring(text.indexOf(" ") + 1, text.length).split(" ");
@@ -36,7 +38,7 @@ function processCommand(text) {
         actualCommand = text;
         parameters = [];
     }
-    
+    // Handle command logic and return output
     try {
         if ((actualCommand.indexOf(":") === 1) && (actualCommand.length === 2)) {
             driveLetter = actualCommand.charAt(0).toUpperCase();
@@ -76,7 +78,7 @@ function processCommand(text) {
             case "exit":
                 return init();
             default:
-                // Command not recognized
+                // Return error for unrecognized command
                 return `'${text}' is not recognized as an internal or external command,<br>operable program or batch file.<br>`;
         }
     } catch (err) {
@@ -84,6 +86,7 @@ function processCommand(text) {
     }
 }
 
+// Change the current directory based on the user's input
 function processDirectoryChange(dirs) {
     if (dirs === undefined) {
         return "";
@@ -100,6 +103,7 @@ function processDirectoryChange(dirs) {
     return "";
 }
 
+// Update the path array to reflect directory changes
 function changeDirectory(dir) {
     if ((dir === ".") || (dir === "")) {
         return;
@@ -113,6 +117,7 @@ function changeDirectory(dir) {
     return "";
 }
 
+// Generate a directory listing output string for the current or given directory
 function processDir(dir) {
     if (dir === undefined) {
         dir = driveLetter + ":\\" + path.join("\\");
@@ -127,10 +132,10 @@ function processDir(dir) {
     output += " 01/01/2009&#9;01:00 AM&#9;&lt;DIR&gt;&#9;&#9;..\n";
     output += "               0 File(s)              0 bytes\n";
     output += "               2 Dir(s)   98,061,203,456 bytes free\n\n";
-
     return output;
 }
 
+// Return a help string listing all supported commands
 function printHelp() {
     let output = "";
     output += "Supported commands are:\n";
@@ -141,51 +146,42 @@ function printHelp() {
     output += " cls\n";
     output += " dir\n";
     output += " cd [directory]\n\n";
-
     return output;
 }
 
+// Print a line of output to the command history area
 function println(text) {
   const line = createElement('div');
   line.innerHTML = `${text}`;
-
   history.appendChild(line);
 }
 
+// Initialize the command prompt with the Windows XP version banner
 function init() {
     println("Microsoft Windows XP [Version 5.1.2600]<br>(C) Copyright 1985-2001 Microsoft Corp.");
 }
 
-
+// Move the caret to the end of the input field and focus it
 function focusAndMoveCursorToTheEnd(e) {  
   input.focus();
-  
   const range = document.createRange();
   const selection = window.getSelection();
   const { childNodes } = input;
   const lastChildNode = childNodes && childNodes.length - 1;
-  
   range.selectNodeContents(lastChildNode === -1 ? input : childNodes[lastChildNode]);
   range.collapse(false);
-
   selection.removeAllRanges();
   selection.addRange(range);
 }
 
-// Every time the selection changes, add or remove the .noCursor
-// class to show or hide, respectively, the bug square cursor.
-// Note this function could also be used to enforce showing always
-// a big square cursor by always selecting 1 chracter from the current
-// cursor position, unless it's already at the end, in which case the
-// #cursor element should be displayed instead.
+// Listen for selection changes and update the caret display based on cursor position
+// If the selection is not at the end, hide the square caret. If at the end, show it.
 document.addEventListener('selectionchange', () => {
   if (document.activeElement.id !== 'input') return;
-  
   const range = window.getSelection().getRangeAt(0);
   const start = range.startOffset;
   const end = range.endOffset;
   const length = input.textContent.length;
-  
   if (end < length) {
     input.classList.add('noCaret');
   } else {
@@ -193,62 +189,51 @@ document.addEventListener('selectionchange', () => {
   }
 });
 
+// Listen for input events to sanitize pasted content and manage caret display
 input.addEventListener('input', () => {    
-  // If we paste HTML, format it as plain text and break it up
-  // input individual lines/commands:
   if (input.childElementCount > 0) {
+    // If HTML is pasted, keep only the last line as plain text
     const lines = input.innerText.replace(/\n$/, '').split('\n');
     const lastLine = lines[lines.length - 1];
-    
     input.textContent = lastLine;
-    
     focusAndMoveCursorToTheEnd();
   }
-  
-  // If we delete everything, display the square caret again:
+  // If input is empty, ensure the square caret is visible
   if (input.innerText.length === 0) {
     input.classList.remove('noCaret');
   }  
 });
 
+// Listen for keydown events to keep the input focused when typing outside the field
+// This ensures the prompt always receives keyboard input
+// Move the caret to the end if needed
 document.addEventListener('keydown', (e) => {   
-  // If some key is pressed outside the input, focus it and move the cursor
-  // to the end:
   if (e.target !== input) focusAndMoveCursorToTheEnd();
 });
 
+// Listen for Enter key to process the command and print the result
 input.addEventListener('keydown', (e) => {    
   if (e.key === 'Enter') {
     e.preventDefault();
     const commandText = input.textContent;
     const outputText = processCommand(commandText);
     const currentPrompt = ps1.textContent; // Get prompt from #ps1 span
-    
-    // Combine prompt, echo (with space), and output into one println call
     println(`${currentPrompt} ${commandText}<br>${outputText}`);    
-    
     input.textContent = '';
   }
 });
 
-// Set the focus to the input so that you can start typing straight away:
+// Focus the input field and print the initial banner when the app loads
 input.focus();
-
 init();
 
-//
-// Defrag
-//////////////////////////
-
-// Added comments to clarify the purpose of complex commands
+// Defrag command implementation: simulates a disk defragmentation process with UI updates and animations
 function defrag() {
-    // Simulates a defragmentation process with animations and DOM updates
-    // Constants
+    // Set up constants for the defrag simulation
     const TOTAL_BLOCKS = 1300;
     const TOTALCLUSTERS = 12600 + ~~(Math.random() * 4250);
     const CLUSTERSPERBLOCK = ~~(TOTALCLUSTERS / TOTAL_BLOCKS);
-
-    // DOM
+    // Get references to all relevant DOM elements for the defrag UI
     const modals = document.querySelectorAll('#defrag-testing.dialog, #defrag-reading.dialog, #defrag-analyzing.dialog, #defrag-finished.dialog');
     const screens = document.querySelectorAll('#defrag-surface, #defrag-info');
     const surface = getElement('#defrag-surface');
@@ -262,24 +247,21 @@ function defrag() {
     const ps1 = getElement('#ps1');
     const caret = getElement('#caret');
     const body = getElement('body');
-    
-    // Initialize variables
+    // Initialize state for the defrag simulation
     let currentBlock = 0;
     let timer;
     let blocks;
     let totalBlocks;
-    
+    // Hide the command prompt and show the defrag UI
     history.hidden = true;
     caret.classList.add('off');
     input.hidden = true;
     ps1.hidden = true;
     body.setAttribute("class", "defrag");
     screen.hidden = false;
-
-    // Block generator
+    // Generate the visual representation of disk blocks
     const genBlock = () => {
       const num = ~~(Math.random() * 500);
-
       if (num < 1) {
         return 'bad';
       }
@@ -292,34 +274,27 @@ function defrag() {
         return 'unused';
       }
     };
-
-    // Generate surface
     for (let i = 0; i < TOTAL_BLOCKS; i++) {
       const span = createElement('span', `block ${genBlock()}`);
       surface.appendChild(span);
     }
-
-    // After generating surface, initialize blocks and totalBlocks
+    // Initialize block references and update cluster info
     blocks = document.querySelectorAll('.block');
     totalBlocks = document.querySelectorAll('.used.frag').length;
     const folders = getElement('#defrag-folders');
-
     getElement('#defrag-clustersperblock').textContent = CLUSTERSPERBLOCK.toLocaleString('en');
-
-    // Time Counter
+    // Track elapsed time and update the timer display
     let time = 0;
     const updateTime = () => {
       elapsedTime.textContent = new Date(time * 1000).toISOString().substr(11, 8);
       time++;
     };
-
-    // Ending phase
+    // Show the finished modal and stop the timer when defrag is complete
     const endDefrag = () => {
       modals[3].hidden = false;
       clearInterval(timer);
     };
-
-    // Reading phase
+    // Simulate reading and updating each block during defrag
     const readBlock = () => {
       currentCluster.textContent = CLUSTERSPERBLOCK * currentBlock;
       if (blocks[currentBlock].classList.contains('frag')) {
@@ -340,35 +315,31 @@ function defrag() {
         blocks[currentBlock].classList.remove('unused');
         blocks[currentBlock].classList.add('used');
       } 
-      
       currentBlock++;
-      
       setTimeout(readBlock, 50 + ~~(Math.random() * 50) + [0, 0, 0, 50, 200][~~(Math.random() * 5)]);
     };
-
+    // Start the timer and begin the defrag process
     const startDefrag = () => {
       timer = setInterval(updateTime, 1000);
       setTimeout(readBlock, 500);
     };
-
+    // List of folder tags to animate during the analyzing phase
     const TAGS = [
       'GAMES', 'DOS', 'WINDOWS', 'AUTODESK', 'EMM386', 'PCSHELL',
       'ZIP', 'RAR', 'PORN', 'COREL', 'WOLF3D', 'TRACKERS', 'WORM',
       'NORTON', 'DOSHELL', 'INDY', 'MONKEY', 'SIMON', 'WORKS', '2DISK'
     ];
-
+    // Show the sequence of modals and animate folder tags before starting defrag
     const startDialogs = () => {
       setTimeout(() => {
         modals[0].hidden = true;
         modals[1].hidden = false;
       }, 3000);
-
       setTimeout(() => {
         modals[1].hidden = true;
         modals[2].hidden = false;
         extractTags(TAGS);
       }, 5000);
-
       setTimeout(() => {
         modals[2].hidden = true;
         screens[0].classList.remove('off');
@@ -376,7 +347,7 @@ function defrag() {
         startDefrag();
       }, 7000);
     };
-
+    // Animate the display of folder tags during the analyzing phase
     const extractTags = tags => {
       if (tags.length > 0) {
         setTimeout(() => {
@@ -385,9 +356,8 @@ function defrag() {
         }, 100);
       }
     };
-
     startDialogs();
-    
+    // Restore the command prompt UI when exiting defrag
     getElement('#exitDefrag').addEventListener('click', function () {
         screen.hidden = true;
         history.hidden = false;
@@ -396,7 +366,7 @@ function defrag() {
         ps1.hidden = false;
         body.setAttribute("class", "dos");
     });
-
+    // Show or hide the help dialog when F1 or Escape is pressed
     document.addEventListener('keydown', function (e) {
       const help = getElement("#defrag-help-dialog");
       if (e.code === 'F1') {
@@ -408,5 +378,4 @@ function defrag() {
           help.hidden = true;
       }
     });
-
 }

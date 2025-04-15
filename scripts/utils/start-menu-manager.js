@@ -1,9 +1,9 @@
 // ...existing code...
         if (isInMostUsedToolsMenu) {
-            // Remove any existing popup
+            // Remove the popup if it already exists to prevent duplicates
             const existing = document.getElementById('xp-demo-popup');
             if (existing) existing.remove();
-            // Create popup
+            // Create a new popup window to inform the user the program was not found
             const popup = document.createElement('div');
             popup.id = 'xp-demo-popup';
             popup.innerHTML = `
@@ -25,11 +25,11 @@
             popup.setAttribute('tabindex', '-1');
             popup.focus();
             document.body.appendChild(popup);
-            // Close on any button click
+            // Add click event listeners to all buttons in the popup to close it when clicked
             popup.querySelectorAll('button').forEach(btn => {
               btn.addEventListener('click', () => popup.remove());
             });
-            // Close the start menu after showing the popup
+            // Close the start menu after displaying the popup
             this.closeStartMenu();
             return;
         }

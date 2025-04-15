@@ -145,11 +145,25 @@ ul {
 .showcase {
   width: 100%;
   height: 400px;
-  background: url('https://i.ibb.co/zGSDGCL/slide1.webp') no-repeat center center/cover;
-  margin-bottom: 20px;
+  /* background removed, now uses <img> */
   position: relative;
   overflow: hidden;
   margin-top: 35px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+}
+
+.showcase-cover-image,
+.card-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: none;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
   border-radius: 10px;
 }
 
@@ -157,6 +171,7 @@ ul {
 .showcase-overlay {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background-color: rgba(0, 0, 0, 0.65);
   display: flex;
   flex-direction: column;
@@ -167,6 +182,7 @@ ul {
   color: #fff;
   opacity: 0;
   transition: opacity 0.4s ease;
+  border-radius: 10px;
 }
 
 .showcase:hover .showcase-overlay {
@@ -211,18 +227,26 @@ ul {
 .card-item {
   width: 100%;
   height: 350px;
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  color: #fff;
+  background: #222; /* fallback */
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   position: relative;
   overflow: hidden;
-  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.card-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: none;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
 }
 
 /* Set background images for each card */
@@ -253,6 +277,7 @@ ul {
 .card-overlay {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background-color: rgba(0, 0, 0, 0.65);
   display: flex;
   flex-direction: column;
@@ -296,9 +321,13 @@ ul {
 }
 
 .footer-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 20px 0 20px;
+  max-width: 850px;
+  min-width: 850px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  padding: 0; /* Remove horizontal padding for perfect alignment */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -595,15 +624,39 @@ ul {
   padding: 5px;
 }
 
-.lightbox-inflow-container .lightbox-close:hover {
+lightbox-inflow-container .lightbox-close:hover {
   color: #000;
+}
+
+/* Ensure consistent width for #main-content-container.container */
+#main-content-container.container {
+  max-width: 850px;
+  min-width: 850px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Remove any special rules for maximized windows */
+@media (min-width: 1200px) {
+  #main-content-container.container {
+    max-width: 800px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+  }
 }
 
 /* --- Media Query for Wider Screens --- */
 @media (min-width: 1200px) { 
   #main-content-container.container { 
-    max-width: 1400px; /* Reduce max-width for wider screens */
-    /* Alternatively, use max-width: none; or a percentage like 95% */
+    max-width: 800px; 
+    width: 100%; 
+    margin: 0 auto; 
   }
 
   .image-carousel {
@@ -617,4 +670,57 @@ ul {
   }
 
   /* Active/hovered items still use flex-grow: 5 */
+}
+
+@media (min-width: 1200px) {
+  .window.maximized[data-program="my-projects"] #main-content-container.container {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+/* --- FORCE PROJECT HUB CONTENT TO FIXED WIDTH --- */
+#main-content-container.container {
+  width: 100%;
+  max-width: 850px;
+  min-width: 850px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Prevent resizing on maximize by targeting the window */
+.window[data-program="my-projects"] #main-content-container.container {
+  width: 850px;
+  min-width: 850px;
+  max-width: 850px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* If you want to add extra space on maximize, add padding to the window, not the content */
+.window.maximized[data-program="my-projects"] {
+  padding-left: max(0px, (100vw - 850px) / 2);
+  padding-right: max(0px, (100vw - 850px) / 2);
+}
+
+/* Set header and footer to fixed width */
+.main-nav > .container,
+.footer-inner {
+  max-width: 850px;
+  min-width: 850px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }

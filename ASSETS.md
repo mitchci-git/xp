@@ -167,22 +167,4 @@ The following standardized asset names are used throughout the project:
 
 ## Unused Assets
 
-The following assets are listed in the documentation but appear to be unused in the codebase:
-
-### Desktop Icons
-1. My Computer (`./assets/gui/desktop/my-computer.webp`) - Referenced but not actively displayed
-2. Adobe Creative Suite (`./assets/gui/desktop/creative-suite.webp`)
-3. Adobe Photoshop (`./assets/gui/desktop/photoshop.webp`)
-4. Adobe Premiere Pro (`./assets/gui/desktop/premiere.webp`)
-5. Adobe Illustrator (`./assets/gui/desktop/illustrator.webp`)
-6. VS Code (`./assets/gui/desktop/vscode.webp`)
-7. Blender (`./assets/gui/desktop/blender.webp`)
-8. Computer (`./assets/gui/desktop/computer.webp`)
-9. Recycle (`./assets/gui/desktop/recycle.webp`)
-
-### Start Menu Icons
-1. Internet (`./assets/gui/start-menu/internet.webp`) - Referenced in code but not displayed in UI
-2. Resume (`./assets/gui/start-menu/resume.webp`) - Appears to be unused in the Start Menu
-
-### Project Hub
-1. Placeholder (`./apps/my-web-work/projecthub/images/placeholder.webp`) - Not referenced in the code
+<!-- All assets in this section have been removed from the project and are no longer present in the workspace. -->

@@ -151,9 +151,16 @@
         <img src="./assets/resume.webp" alt="My Resume" class="resume-image" id="resume-image">
     </div>
 
-    <div class="toolbar" style="user-select: none;">
-        <button id="download-button" style="user-select: none;">Save</button>
-        <button id="print-button" style="user-select: none;">Print</button>
+    <div class="toolbar" style="user-select: none; display: flex; justify-content: space-between;">
+        <div class="toolbar-left" style="display: flex; gap: 10px;">
+            <button id="print-button" style="user-select: none;">Print</button>
+            <button id="download-button" style="user-select: none;">Save</button>
+        </div>
+        <div class="toolbar-right" style="display: flex; gap: 10px;">
+            <button id="zoom-in-button" title="Zoom In">Zoom In</button>
+            <button id="zoom-out-button" title="Zoom Out">Zoom Out</button>
+            <button id="actual-size-button" title="Actual Size">Actual Size</button>
+        </div>
     </div>
 
     <script>
@@ -270,17 +277,66 @@
         window.printButton = printButton;
         window.downloadButton = downloadButton;
         
+        const baseWidth = 472; // px
+        let zoom = 1;
+        const minZoom = 0.4;
+        const maxZoom = 2.5;
+        const zoomStep = 0.15;
+        function setZoom() {
+            image.style.width = (baseWidth * zoom) + 'px';
+            // Remove centering if image is wider than container
+            if (image.offsetWidth > container.offsetWidth) {
+                image.style.display = '';
+                image.style.marginLeft = '';
+                image.style.marginRight = '';
+            } else {
+                image.style.display = 'block';
+                image.style.marginLeft = 'auto';
+                image.style.marginRight = 'auto';
+            }
+        }
+        // Detect maximized state by checking parent window for .maximized class on the containing window
+        function checkIfMaximized() {
+            try {
+                if (window.parent && window.parent !== window) {
+                    const iframes = window.parent.document.getElementsByTagName('iframe');
+                    for (let i = 0; i < iframes.length; i++) {
+                        if (iframes[i].contentWindow === window) {
+                            const win = iframes[i].closest('.window, .app-window');
+                            if (win && win.classList.contains('maximized')) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {}
+            return false;
+        }
+        function updateZoomForMaximize() {
+            if (checkIfMaximized()) {
+                zoom = 2.0;
+            } else {
+                zoom = 1.3;
+            }
+            setZoom();
+        }
+        updateZoomForMaximize();
+        window.addEventListener('resize', updateZoomForMaximize);
+        window.addEventListener('message', function(event) {
+            if (!event.data || typeof event.data !== 'object') return;
+            if (event.data.type === 'window-maximized') {
+                zoom = 2.0;
+                setZoom();
+            } else if (event.data.type === 'window-unmaximized') {
+                zoom = 1.3;
+                setZoom();
+            }
+        });
+
         // Function to check window size and adjust view
         function checkWindowSize() {
-            if (window.innerWidth > 1000) {
-                // Maximized view
-                container.style.padding = '10px';
-                image.style.maxWidth = '50%';
-            } else {
-                // Normal view
-                container.style.padding = '10px';
-                image.style.maxWidth = '100%';
-            }
+            container.style.padding = '10px';
+            image.style.maxWidth = 'none';
         }
         
         // Print button functionality
@@ -309,6 +365,28 @@
         // >>> START: Initialize Notepad Menu Bar <<<
         setupMenus();
         // >>> END: Initialize Notepad Menu Bar <<<
+
+        const zoomInButton = document.getElementById('zoom-in-button');
+        const zoomOutButton = document.getElementById('zoom-out-button');
+        const actualSizeButton = document.getElementById('actual-size-button');
+        zoomInButton.onclick = function() {
+            if (zoom < maxZoom) {
+                zoom += zoomStep;
+                if (zoom > maxZoom) zoom = maxZoom;
+                setZoom();
+            }
+        };
+        zoomOutButton.onclick = function() {
+            if (zoom > minZoom) {
+                zoom -= zoomStep;
+                if (zoom < minZoom) zoom = minZoom;
+                setZoom();
+            }
+        };
+        actualSizeButton.onclick = function() {
+            updateZoomForMaximize();
+        };
+        setZoom();
     })();
     </script>
 </body>

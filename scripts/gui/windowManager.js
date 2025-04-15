@@ -114,7 +114,8 @@ export default class WindowManager {
         }, true);
 
         window.addEventListener('message', (event) => {
-            if (event.origin !== window.origin) return;
+            // Accept messages from same-origin or file protocol (local dev)
+            if (!(window.location.protocol === 'file:' || event.origin === window.origin)) return;
 
             const windowElement = this._getWindowFromIframeSource(event.source);
             if (!windowElement) return;
@@ -922,10 +923,15 @@ export default class WindowManager {
     }
     
     _getWindowFromIframeSource(eventSource) {
+        // Find the iframe whose contentWindow matches eventSource
         const iframe = Array.from(document.querySelectorAll('iframe')).find(
             iframe => iframe.contentWindow === eventSource
         );
-        return iframe ? iframe.closest('.window') : null;
+        // Support both .window and .app-window containers
+        if (!iframe) return null;
+        let win = iframe.closest('.app-window');
+        if (!win) win = iframe.closest('.window');
+        return win;
     }
     
     _findTopWindow() {
